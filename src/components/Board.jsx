@@ -67,8 +67,9 @@ function PlayerZone({ player, isActive }) {
   return (
     <div className={`min-w-[200px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
       <div className="text-[10px] font-mono font-black text-amber-200/90">
-        {player.name}
-        <span className="inline-flex items-center gap-1 bg-black/55 rounded-full px-2 py-0.5 border border-black/40 ml-2">
+        <span className="inline-flex items-center gap-1 bg-black/55 rounded-full px-2 py-0.5 border border-black/40">
+          <span className="max-w-[140px] truncate">{player.name}</span>
+          <span className="opacity-70 px-1">•</span>
           <span>{player.gold}g</span>
           <span className="opacity-70 px-1">•</span>
           <span>{points}p</span>
