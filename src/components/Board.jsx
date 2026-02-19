@@ -21,14 +21,14 @@ function StaggeredBacks({ count }) {
   const n = Math.min(count ?? 0, 5);
   if (n <= 0) return null;
   return (
-    <div className="relative h-10 w-12">
+    <div className="relative h-24 w-28">
       {Array.from({ length: n }).map((_, i) => (
         <img
           key={i}
           src="/assets/ui/building_back.jpg"
           alt=""
-          className="absolute top-0 w-8 aspect-[2/3] object-cover rounded border border-black/40 shadow-lg"
-          style={{ left: `${i * 6}px`, zIndex: i }}
+          className="absolute top-0 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl"
+          style={{ left: `${i * 18}px`, zIndex: i }}
         />
       ))}
     </div>
@@ -76,7 +76,7 @@ function PlayerZone({ player, isActive }) {
             <img
               src={roleImg}
               alt="Role"
-              className={`absolute -right-8 top-1 w-10 aspect-[2/3] object-cover rounded border border-black/40 shadow-xl ${player.roleRevealed ? '' : 'opacity-90'}`}
+              className={`absolute -right-20 top-2 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl ${player.roleRevealed ? '' : 'opacity-90'}`}
               title={player.role?.name}
             />
           )}

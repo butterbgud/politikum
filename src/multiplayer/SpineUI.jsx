@@ -4,9 +4,11 @@ import { LobbyClient, Client as VanillaClient } from 'boardgame.io/client';
 import React, { useEffect, useState, useRef } from 'react';
 
 // SFX (ported from SP; no animations)
+let SFX_ENABLED = true;
 const sfxCacheRef = { current: {} };
 const playSfx = (name, { volume = 0.75 } = {}) => {
   try {
+    if (!SFX_ENABLED) return;
     if (!name) return;
     const cache = sfxCacheRef.current;
     const src = `/assets/sfx/${name}.ogg`;
@@ -323,6 +325,12 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   };
 
   const [logCollapsed, setLogCollapsed] = useState(false);
+  const [devCheatsOpen, setDevCheatsOpen] = useState(DEV);
+
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const v = window.localStorage.getItem('citadel.soundEnabled');
+    return v == null ? true : v === '1' || v === 'true';
+  });
 
   const [tutorialEnabled, setTutorialEnabled] = useState(() => {
     const v = window.localStorage.getItem('citadel.tutorialEnabled');
@@ -332,6 +340,11 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   useEffect(() => {
     window.localStorage.setItem('citadel.tutorialEnabled', tutorialEnabled ? '1' : '0');
   }, [tutorialEnabled]);
+
+  useEffect(() => {
+    window.localStorage.setItem('citadel.soundEnabled', soundEnabled ? '1' : '0');
+    SFX_ENABLED = !!soundEnabled;
+  }, [soundEnabled]);
 
   const dispatch = (action) => {
     // PROXY: If Host (0) is running a bot turn, route via submitBotAction
@@ -400,11 +413,13 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
       if (k === 'l') { e.preventDefault(); setLogCollapsed((v) => !v); }
       if (k === 't') { e.preventDefault(); setTutorialEnabled((v) => !v); }
+      if (k === 'm') { e.preventDefault(); setSoundEnabled((v) => !v); }
+      if (k === '`') { e.preventDefault(); setDevCheatsOpen((v) => !v); }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [ctx.phase, boardState.interaction, playerID, tutorialEnabled]);
+  }, [ctx.phase, boardState.interaction, playerID, tutorialEnabled, soundEnabled, devCheatsOpen]);
 
   // Removed spammy decree auto-print
 
@@ -456,7 +471,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
   return (
     <div className={`h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-col ${ctx.phase === 'lobby' ? 'justify-center' : ''}`} style={{ backgroundImage: `url(${BG})` }}>
-      <DevCheats moves={moves} />
+      {devCheatsOpen && <DevCheats moves={moves} />}
       <div className={isInGame ? "bg-transparent flex-1 overflow-y-auto p-8 select-none" : "bg-transparent p-8 flex items-center justify-center h-full w-full"}>
         <div className="fixed top-2 left-2 z-[9999] text-[10px] font-mono font-black text-amber-200 bg-black/70 px-2 py-1 rounded border border-amber-900/30">
             {__GIT_BRANCH__}:{__GIT_SHA__} | PHASE={ctx.phase} PLAYER={playerID} ACTIVE={ctx.currentPlayer}
@@ -750,9 +765,10 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
+                        <button onClick={() => setDevCheatsOpen((v) => !v)} className="w-8 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Dev cheats (`)">DEV</button>
                         <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Hotkeys (H)">H</button>
                         <button onClick={() => setTutorialEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Tutorial (T)">T</button>
-                        <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Sound (M)">M</button>
+                        <button onClick={() => setSoundEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Sound (M)">{soundEnabled ? 'M' : 'M'}</button>
                       </div>
                       <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronicles & Chat</h3>
                       <button
