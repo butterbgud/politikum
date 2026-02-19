@@ -215,7 +215,7 @@ export const CitadelWelcome = ({ onJoin }) => {
   };
 
   return (
-    <div className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row" style={{ backgroundImage: "url('/assets/ui/logo_olde_hansa.png')" }}>
+    <div className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row" style={{ backgroundImage: "url('/assets/ui/logo_olde_hansa.webp')" }}>
       <div className="bg-transparent p-8 flex items-center justify-center w-full">
         <div className="flex gap-8 items-start max-w-7xl w-full mx-auto px-4 max-h-[85vh]">
           
@@ -427,7 +427,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   }, [G?.players, ctx.currentPlayer, ctx.phase, playerID]);
 
   const BG = (ctx.phase === 'lobby')
-    ? '/assets/ui/logo_olde_hansa.png'
+    ? '/assets/ui/logo_olde_hansa.webp'
     : '/assets/ui/table.webp';
 
   return (
