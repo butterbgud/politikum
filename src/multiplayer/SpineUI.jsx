@@ -326,6 +326,10 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [devCheatsOpen, setDevCheatsOpen] = useState(DEV);
+  const [hotkeysEnabled, setHotkeysEnabled] = useState(() => {
+    const v = window.localStorage.getItem('citadel.hotkeysEnabled');
+    return v == null ? true : v === '1' || v === 'true';
+  });
 
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const v = window.localStorage.getItem('citadel.soundEnabled');
@@ -345,6 +349,10 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     window.localStorage.setItem('citadel.soundEnabled', soundEnabled ? '1' : '0');
     SFX_ENABLED = !!soundEnabled;
   }, [soundEnabled]);
+
+  useEffect(() => {
+    window.localStorage.setItem('citadel.hotkeysEnabled', hotkeysEnabled ? '1' : '0');
+  }, [hotkeysEnabled]);
 
   const dispatch = (action) => {
     // PROXY: If Host (0) is running a bot turn, route via submitBotAction
@@ -398,7 +406,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       }
 
       // Draft hotkeys: press role id 1..8 to pick that role when it's your pick
-      if (ctx.phase === 'draft' && isMyTurn && /^[1-8]$/.test(k)) {
+      if (hotkeysEnabled && ctx.phase === 'draft' && isMyTurn && /^[1-8]$/.test(k)) {
         const roleId = Number(k);
         const ok = (G?.availableRoles || []).some(r => Number(r.id) === roleId);
         if (ok) {
@@ -414,7 +422,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       if (k === 'e' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'END_TURN' }); }
 
       // Build hotkeys: 1..9 builds that card from your hand (if buildable)
-      if (ctx.phase === 'action' && isMyTurn && !boardState.interaction && /^[1-9]$/.test(k)) {
+      if (hotkeysEnabled && ctx.phase === 'action' && isMyTurn && !boardState.interaction && /^[1-9]$/.test(k)) {
         const idx = Number(k) - 1;
         const card = (me?.hand || [])[idx];
         if (card) {
@@ -426,6 +434,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       if (k === 'l') { e.preventDefault(); setLogCollapsed((v) => !v); }
       if (k === 't') { e.preventDefault(); setTutorialEnabled((v) => !v); }
       if (k === 'm') { e.preventDefault(); setSoundEnabled((v) => !v); }
+      if (k === 'h') { e.preventDefault(); setHotkeysEnabled((v) => !v); }
       if (k === '`') { e.preventDefault(); setDevCheatsOpen((v) => !v); }
     };
 
@@ -594,7 +603,16 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 {isMyTurn ? (
                   <div className="flex gap-4 justify-center items-end -space-x-12">
                     {(G?.availableRoles || []).map(role => (
-                      <button key={role.id} onClick={() => dispatch({ type: 'PICK_ROLE', payload: { roleId: role.id } })} className="p-0 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-visible w-36 pt-3 hover:-translate-y-6 hover:z-10"><div className="w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-amber-900/30 shadow-2xl transition-transform hover:border-amber-400"><img src={ROLE_IMG_BY_ID[role.id] || role.img} alt={role.name} className="w-full h-full object-cover" /></div></button>
+                      <button key={role.id} onClick={() => dispatch({ type: 'PICK_ROLE', payload: { roleId: role.id } })} className="p-0 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-visible w-36 pt-3 hover:-translate-y-6 hover:z-10">
+                        <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-amber-900/30 shadow-2xl transition-transform hover:border-amber-400">
+                          {hotkeysEnabled && (
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                              <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">[{role.id}]</div>
+                            </div>
+                          )}
+                          <img src={ROLE_IMG_BY_ID[role.id] || role.img} alt={role.name} className="w-full h-full object-cover" />
+                        </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -943,9 +961,10 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             DEV
                           </button>
                           <button
+                            onClick={() => setHotkeysEnabled((v) => !v)}
                             className={
                               "w-6 h-6 rounded border text-[10px] font-black " +
-                              (false ? "bg-emerald-900/60 border-emerald-400/40 text-emerald-200" : "bg-black/40 border-slate-800 text-slate-300")
+                              (hotkeysEnabled ? "bg-emerald-900/60 border-emerald-400/40 text-emerald-200" : "bg-black/40 border-slate-800 text-slate-300")
                             }
                             title="Hotkeys (H)"
                           >
