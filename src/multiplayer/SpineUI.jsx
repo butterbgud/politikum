@@ -701,7 +701,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   </div>
 
                   {/* Hand fan */}
-                  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[160px] z-[999] pointer-events-auto">
+                  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[100px] z-[999] pointer-events-auto">
                     <div
                       className="relative h-56 overflow-visible"
                       style={{ width: `${handWidth}px` }}
