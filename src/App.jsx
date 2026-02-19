@@ -67,6 +67,9 @@ function GameUI() {
   });
   const isInGame = state.phase !== 'lobby';
 
+  // Viewer seat (human) should not jump to bots during their turns
+  const viewerId = state.localPlayerId ?? state.currentPlayerId;
+  const viewer = state.players.find(p => p.id === viewerId);
 
   // Debug: reflect phase in tab title
   useEffect(() => {
@@ -511,24 +514,25 @@ if (state.interaction.type === 'DESTROY') {
                  <div className="mt-12 border-t border-slate-800 pt-8 text-left">
                     <h3 className="text-xl text-amber-600 font-serif font-bold mb-6 uppercase tracking-widest flex justify-between items-center">
                          
-                        <span className="text-xs text-slate-600 normal-case tracking-normal italic font-normal">{state.players.find(p => p.id === state.currentPlayerId)?.city?.length || 0} districts built</span>
+                        <span className="text-xs text-slate-600 normal-case tracking-normal italic font-normal">{viewer?.city?.length || 0} districts built</span>
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar min-h-[160px]">
-                        {state.players.find(p => p.id === state.currentPlayerId)?.city?.map(card => (
+                        {viewer?.city?.map(card => (
                             <div key={card.id} className="relative w-36 aspect-[2/3] rounded-xl border border-slate-800 overflow-hidden flex-shrink-0 grayscale-[0.2] transition-transform hover:-rotate-1 shadow-lg shadow-black">
                                 <img src={card.img} alt={card.name} className="w-full h-full object-cover" />
                             </div>
                         ))}
-                        {(!state.players.find(p => p.id === state.currentPlayerId)?.city?.length) && <div className="text-slate-800 italic py-12 px-4 font-serif">No structures yet constructed in this domain.</div>}
+                        {(!viewer?.city?.length) && <div className="text-slate-800 italic py-12 px-4 font-serif">No structures yet constructed in this domain.</div>}
                     </div>
 
                     <h3 className="text-xl text-amber-600 font-serif font-bold mb-6 mt-8 uppercase tracking-widest"></h3>
                     <div className="relative h-56 overflow-visible">
-                        {(state.players.find(p => p.id === state.currentPlayerId)?.hand || []).map((card, idx, arr) => {
-                            const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
-                            const buildLimit = currentPlayer?.buildLimit ?? 1;
-                            const builtThisTurn = currentPlayer?.builtThisTurn ?? 0;
-                            const canBuild = (currentPlayer?.gold >= card.cost) && (builtThisTurn < buildLimit);
+                        {(viewer?.hand || []).map((card, idx, arr) => {
+                            const actingPlayer = state.players.find(p => p.id === state.currentPlayerId);
+                            const isMyTurn = viewer?.id === actingPlayer?.id;
+                            const buildLimit = viewer?.buildLimit ?? 1;
+                            const builtThisTurn = viewer?.builtThisTurn ?? 0;
+                            const canBuild = isMyTurn && (viewer?.gold >= card.cost) && (builtThisTurn < buildLimit);
 
                             const n = Math.max(1, arr.length);
                             const t = n <= 1 ? 0.5 : idx / (n - 1);
@@ -552,7 +556,7 @@ if (state.interaction.type === 'DESTROY') {
                                 </button>
                             );
                         })}
-                        {(!state.players.find(p => p.id === state.currentPlayerId)?.hand?.length) && <div className="text-slate-800 italic py-12 px-4 font-serif">The archive of plans is currently empty.</div>}
+                        {(!viewer?.hand?.length) && <div className="text-slate-800 italic py-12 px-4 font-serif">The archive of plans is currently empty.</div>}
                     </div>
                  </div>
               </div>

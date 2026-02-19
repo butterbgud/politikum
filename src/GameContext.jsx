@@ -5,6 +5,7 @@ const initialState = {
   phase: 'lobby', // lobby, draft, action, build, end
   turn: 0,
   currentPlayerId: null,
+  localPlayerId: null, // viewer seat (human) for stable HUD
   kingId: null,
   players: [], // { id, name, gold, hand: [], city: [], role: null }
   deck: [
@@ -557,12 +558,14 @@ function gameReducer(state, action) {
           log: [...state.log, "Cannot add more players. Max 7 reached."]
         };
       }
+      const newId = state.players.length + 1;
       return {
         ...state,
+        localPlayerId: state.localPlayerId ?? newId,
         players: [
           ...state.players,
           { 
-            id: state.players.length + 1, 
+            id: newId, 
             name: action.payload, 
             isBot: false,
             gold: 2, 
