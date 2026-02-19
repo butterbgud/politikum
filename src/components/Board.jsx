@@ -17,19 +17,20 @@ function seatTransforms(seatCount) {
   return base[seatCount] || base[3];
 }
 
-function HandBack({ count }) {
-  const n = count ?? 0;
+function StaggeredBacks({ count }) {
+  const n = Math.min(count ?? 0, 5);
   if (n <= 0) return null;
   return (
-    <div className="relative h-12 w-10">
-      <img
-        src="/assets/ui/building_back.jpg"
-        alt=""
-        className="absolute inset-0 w-10 aspect-[2/3] object-cover rounded border border-black/40 shadow-xl"
-      />
-      <div className="absolute -top-2 -right-2 bg-black/75 border border-amber-600/40 text-amber-200 font-mono font-black text-[10px] px-1.5 py-0.5 rounded">
-        {n}
-      </div>
+    <div className="relative h-10 w-12">
+      {Array.from({ length: n }).map((_, i) => (
+        <img
+          key={i}
+          src="/assets/ui/building_back.jpg"
+          alt=""
+          className="absolute top-0 w-8 aspect-[2/3] object-cover rounded border border-black/40 shadow-lg"
+          style={{ left: `${i * 6}px`, zIndex: i }}
+        />
+      ))}
     </div>
   );
 }
@@ -69,7 +70,7 @@ function PlayerZone({ player, isActive }) {
       </div>
       <div className="mt-2 flex gap-3 items-center">
         <div className="relative">
-          <HandBack count={handCount} />
+          <StaggeredBacks count={handCount} />
           {/* role card, offset to the side of the hand */}
           {player.role && (
             <img
