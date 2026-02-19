@@ -28,7 +28,7 @@ function StaggeredBacks({ count }) {
           src="/assets/ui/building_back.jpg"
           alt=""
           className="absolute top-0 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl"
-          style={{ left: `${i * 18}px`, zIndex: i }}
+          style={{ left: `${i * 12}px`, zIndex: i }}
         />
       ))}
     </div>
@@ -62,6 +62,7 @@ function PlayerZone({ player, isActive }) {
   const handCount = (player.hand || []).length;
   const points = (player.city || []).reduce((acc, c) => acc + (c.cost || 0), 0);
   const roleImg = (player.role && player.roleRevealed) ? (player.role.img) : "/assets/ui/character_back.jpg";
+  const showRoleCard = !!player.role && (player.roleRevealed || isActive);
 
   return (
     <div className={`min-w-[200px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
@@ -72,7 +73,7 @@ function PlayerZone({ player, isActive }) {
         <div className="relative">
           <StaggeredBacks count={handCount} />
           {/* role card, offset to the side of the hand */}
-          {player.role && (
+          {showRoleCard && (
             <img
               src={roleImg}
               alt="Role"
@@ -81,7 +82,9 @@ function PlayerZone({ player, isActive }) {
             />
           )}
         </div>
-        <CityFan cards={player.city} />
+        <div className="relative">
+          <CityFan cards={player.city} />
+        </div>
       </div>
     </div>
   );
