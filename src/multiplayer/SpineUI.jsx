@@ -322,6 +322,8 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     playerName: G?.players?.[playerID]?.name
   };
 
+  const [logCollapsed, setLogCollapsed] = useState(false);
+
   const [tutorialEnabled, setTutorialEnabled] = useState(() => {
     const v = window.localStorage.getItem('citadel.tutorialEnabled');
     return v == null ? true : v === '1' || v === 'true';
@@ -386,6 +388,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       if (k === 'a' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'ACTIVATE_ABILITY' }); }
       if (k === 'e' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'END_TURN' }); }
 
+      if (k === 'l') { e.preventDefault(); setLogCollapsed((v) => !v); }
       if (k === 't') { e.preventDefault(); setTutorialEnabled((v) => !v); }
     };
 
@@ -726,18 +729,32 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 </>
               );
             })()}
-            <div className="fixed bottom-4 left-4 max-w-sm w-full z-[950]">
-                <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col h-72">
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Chronicles & Chat</h3>
-                    <div className="flex-1 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[11px] font-mono">
-                        {G?.log?.map((entry, i) => (<div key={`log-${i}`} className="leading-tight border-l border-slate-900 pl-2 text-slate-400">{entry}</div>))}
-                        {G?.chat?.map((msg, i) => (<div key={`chat-${i}`} className="leading-tight border-l border-amber-900/40 pl-2"><span className="text-amber-600 font-bold mr-2">{msg.sender}:</span><span className="text-amber-100">{msg.text}</span></div>))}
-                        <div ref={logEndRef} />
+            <div className="fixed bottom-4 left-4 max-w-sm w-full z-[950] pointer-events-auto">
+                <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronicles & Chat</h3>
+                      <button
+                        onClick={() => setLogCollapsed((v) => !v)}
+                        className="text-[9px] font-black uppercase tracking-widest text-amber-500/80 hover:text-amber-400"
+                        title="Toggle log (L)"
+                      >
+                        {logCollapsed ? 'Expand' : 'Collapse'}
+                      </button>
                     </div>
-                    <form onSubmit={(e) => { e.preventDefault(); if (chatInput.trim()) { dispatch({ type: 'SUBMIT_CHAT', payload: { text: chatInput } }); setChatInput(""); } }} className="mt-3 flex gap-2 border-t border-slate-800/50 pt-3">
-                        <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Message..." className="flex-1 bg-black/40 border border-slate-800 rounded px-2 py-1 text-[10px] text-amber-100" />
-                        <button type="submit" className="px-3 py-1 bg-amber-900/40 border border-amber-900/20 rounded text-[9px] font-black text-amber-500 uppercase">Send</button>
-                    </form>
+
+                    {!logCollapsed && (
+                      <>
+                        <div className="flex-1 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[11px] font-mono h-72">
+                            {G?.log?.map((entry, i) => (<div key={`log-${i}`} className="leading-tight border-l border-slate-900 pl-2 text-slate-400">{entry}</div>))}
+                            {G?.chat?.map((msg, i) => (<div key={`chat-${i}`} className="leading-tight border-l border-amber-900/40 pl-2"><span className="text-amber-600 font-bold mr-2">{msg.sender}:</span><span className="text-amber-100">{msg.text}</span></div>))}
+                            <div ref={logEndRef} />
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); if (chatInput.trim()) { dispatch({ type: 'SUBMIT_CHAT', payload: { text: chatInput } }); setChatInput(""); } }} className="mt-3 flex gap-2 border-t border-slate-800/50 pt-3">
+                            <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Message..." className="flex-1 bg-black/40 border border-slate-800 rounded px-2 py-1 text-[10px] text-amber-100" />
+                            <button type="submit" className="px-3 py-1 bg-amber-900/40 border border-amber-900/20 rounded text-[9px] font-black text-amber-500 uppercase">Send</button>
+                        </form>
+                      </>
+                    )}
                 </div>
             </div>
           </div>
