@@ -435,7 +435,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       <DevCheats moves={moves} />
       <div className={isInGame ? "bg-black/25 flex-1 overflow-y-auto p-8 select-none" : "bg-transparent p-8 flex items-center justify-center h-full w-full"}>
         <div className="fixed top-2 left-2 z-[9999] text-[10px] font-mono font-black text-amber-200 bg-black/70 px-2 py-1 rounded border border-amber-900/30">
-            PHASE={ctx.phase} PLAYER={playerID} ACTIVE={ctx.currentPlayer}
+            {__GIT_BRANCH__}:{__GIT_SHA__} | PHASE={ctx.phase} PLAYER={playerID} ACTIVE={ctx.currentPlayer}
         </div>
 
         {ctx.phase === 'lobby' && (

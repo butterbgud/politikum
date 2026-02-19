@@ -102,7 +102,7 @@ function GameUI() {
       <div className={isInGame ? "bg-black/25 flex-1 overflow-y-auto p-8" : "bg-transparent p-8 flex items-center justify-center"} style={{ borderRadius: "1.25rem" }}>
       {/* DEBUG_PHASE_BADGE */}
       <div className="fixed top-2 left-2 z-[9999] text-[10px] font-mono font-black text-amber-200 bg-black/70 px-2 py-1 rounded border border-amber-900/30">
-        phase={state.phase} players={state.players?.length ?? 0} current={state.currentPlayerId ?? null}
+        {__GIT_BRANCH__}:{__GIT_SHA__} | phase={state.phase} players={state.players?.length ?? 0} current={state.currentPlayerId ?? null}
       </div>
 
         
