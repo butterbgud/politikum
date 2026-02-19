@@ -388,6 +388,16 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       if (k === 'a' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'ACTIVATE_ABILITY' }); }
       if (k === 'e' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'END_TURN' }); }
 
+      // Build hotkeys: 1..9 builds that card from your hand (if buildable)
+      if (ctx.phase === 'action' && isMyTurn && !boardState.interaction && /^[1-9]$/.test(k)) {
+        const idx = Number(k) - 1;
+        const card = (me?.hand || [])[idx];
+        if (card) {
+          e.preventDefault();
+          dispatch({ type: 'BUILD_DISTRICT', payload: { cardId: card.id } });
+        }
+      }
+
       if (k === 'l') { e.preventDefault(); setLogCollapsed((v) => !v); }
       if (k === 't') { e.preventDefault(); setTutorialEnabled((v) => !v); }
     };
@@ -710,7 +720,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             aria-disabled={!canBuild}
                             className={
                               'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
-                              (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer shadow-[0_0_18px_rgba(251,191,36,0.25)] animate-pulse' : 'border-slate-900 opacity-60 cursor-not-allowed')
+                              (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
                             }
                             style={{
                               right: `${right}px`,
@@ -720,6 +730,13 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             }}
                             title={card.name}
                           >
+                            {canBuild && (idx < 9) && (
+                              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
+                                <div className="bg-black/70 border border-amber-500/40 text-amber-200 font-mono font-black text-[10px] px-2 py-0.5 rounded">
+                                  {idx + 1}
+                                </div>
+                              </div>
+                            )}
                             <img src={card.img} alt={card.name} className="w-full h-full object-cover" />
                           </button>
                         );
