@@ -772,7 +772,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               const handStep = 34;
               const handN = Math.max(1, hand.length);
               const handWidth = (handN - 1) * handStep + 144;
-              const canUseRoleAbility = isMyTurn && !me?.abilityUsed && !me?.isKilled && [1,2,3,8].includes(me?.role?.id);
+              const canUseRoleAbility = isMyTurn && !me?.abilityUsed && !me?.isKilled && (me?.role?.id != null) && [1,2,3,8].includes(me.role.id);
 
               return (
                 <>
