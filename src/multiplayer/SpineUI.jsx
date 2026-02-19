@@ -651,7 +651,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 <>
                   {/* Built districts */}
                   <div
-                    className="fixed bottom-10 left-1/2 -translate-x-1/2 translate-x-[-260px] z-[999] pointer-events-auto"
+                    className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[-260px] z-[999] pointer-events-auto"
                   >
                     <div
                       className="relative h-24"
@@ -701,7 +701,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   </div>
 
                   {/* Hand fan */}
-                  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[180px] z-[999] pointer-events-auto">
+                  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[240px] z-[999] pointer-events-auto">
                     <div
                       className="relative h-56 overflow-visible"
                       style={{ width: `${handWidth}px` }}
