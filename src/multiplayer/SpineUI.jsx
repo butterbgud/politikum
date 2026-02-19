@@ -400,7 +400,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
   const BG = (ctx.phase === 'lobby')
     ? '/assets/ui/logo_olde_hansa.png'
-    : '/assets/bg/table.webp';
+    : '/assets/ui/table.webp';
 
   return (
     <div className={`h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-col ${ctx.phase === 'lobby' ? 'justify-center' : ''}`} style={{ backgroundImage: `url(${BG})` }}>

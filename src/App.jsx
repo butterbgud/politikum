@@ -97,7 +97,7 @@ function GameUI() {
   return (
     <div 
       className={`h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-col ${state.phase === 'lobby' ? 'justify-center' : ''}`} 
-      style={{ backgroundImage: `url(${state.phase === 'lobby' ? '/assets/ui/logo_olde_hansa.webp' : '/assets/bg/table.jpg'})` }}
+      style={{ backgroundImage: `url(${state.phase === 'lobby' ? '/assets/ui/logo_olde_hansa.webp' : '/assets/ui/table.webp'})` }}
     >
       <div className={isInGame ? "bg-black/25 flex-1 overflow-y-auto p-8" : "bg-transparent p-8 flex items-center justify-center"} style={{ borderRadius: "1.25rem" }}>
       {/* DEBUG_PHASE_BADGE */}
