@@ -508,7 +508,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
           <div className="w-full relative h-full">
             <Board state={boardState} viewerId={playerID} dispatch={dispatch} />
             {ctx.phase === 'draft' && (
-              <div className="fixed inset-0 z-[500] bg-black/80 flex flex-col items-center justify-center p-8 backdrop-blur-md">
+              <div className="fixed inset-0 z-[500] bg-black/25 flex flex-col items-center justify-center p-8 backdrop-blur-md">
                 <h2 className="text-4xl text-amber-500 font-serif font-black uppercase tracking-[0.2em] mb-12">Role Draft</h2>
                 {isMyTurn ? (
                   <div className="flex gap-4 justify-center items-end -space-x-12">
