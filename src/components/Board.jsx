@@ -17,20 +17,27 @@ function seatTransforms(seatCount) {
   return base[seatCount] || base[3];
 }
 
-function StaggeredBacks({ count }) {
+function HandStack({ count, roleCardSrc }) {
   const n = Math.min(count ?? 0, 5);
   if (n <= 0) return null;
+  const step = 12;
+  const cardClass = "absolute top-0 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl";
+
   return (
     <div className="relative h-24 w-28">
-      {Array.from({ length: n }).map((_, i) => (
-        <img
-          key={i}
-          src="/assets/ui/building_back.jpg"
-          alt=""
-          className="absolute top-0 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl"
-          style={{ left: `${i * 12}px`, zIndex: i }}
-        />
-      ))}
+      {Array.from({ length: n }).map((_, i) => {
+        const isTop = i === n - 1;
+        const src = (isTop && roleCardSrc) ? roleCardSrc : "/assets/ui/building_back.jpg";
+        return (
+          <img
+            key={i}
+            src={src}
+            alt=""
+            className={cardClass}
+            style={{ left: `${i * step}px`, zIndex: i }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -62,7 +69,7 @@ function PlayerZone({ player, isActive }) {
   const handCount = (player.hand || []).length;
   const points = (player.city || []).reduce((acc, c) => acc + (c.cost || 0), 0);
   const roleImg = (player.role && (player.roleRevealed || isActive)) ? (player.role.img) : "/assets/ui/character_back.jpg";
-  const showRoleCard = !!player.role;
+  const roleCardSrc = player.role ? roleImg : null;
 
   return (
     <div className={`min-w-[200px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
@@ -79,16 +86,7 @@ function PlayerZone({ player, isActive }) {
       </div>
       <div className="mt-2 flex gap-3 items-center">
         <div className="relative">
-          <StaggeredBacks count={handCount} />
-          {/* role card, offset to the side of the hand */}
-          {showRoleCard && (
-            <img
-              src={roleImg}
-              alt="Role"
-              className={`absolute -right-20 top-2 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl ${player.roleRevealed ? '' : 'opacity-90'}`}
-              title={(player.roleRevealed || isActive) ? player.role?.name : 'Role (hidden)'}
-            />
-          )}
+          <HandStack count={handCount} roleCardSrc={roleCardSrc} />
         </div>
         <div className="relative">
           <CityFan cards={player.city} />

@@ -830,7 +830,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                         );
                       })}
 
-                      {/* Role card at rightmost of hand */}
+                      {/* Role card at rightmost of hand (fan style) */}
                       {me?.role && (
                         <button
                           onClick={() => {
@@ -845,9 +845,9 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                               : 'cursor-default border-black/40')
                           }
                           style={{
-                            left: `${handN * handStep + 20}px`,
+                            left: `${handN * handStep}px`,
                             zIndex: 2000,
-                            transform: `rotate(${10}deg)`,
+                            transform: `rotate(${10}deg) scale(${(hoverActionHandIndex == null) ? 1 : scaleByDist(Math.abs(handN - hoverActionHandIndex))})`,
                             transformOrigin: 'bottom center',
                           }}
                           title={(me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)'}
