@@ -480,8 +480,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             return (
                                 <div key={i} className="flex justify-between items-center bg-amber-950/20 p-3 rounded-xl border border-amber-900/20">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-6 h-6 rounded-full bg-amber-950 flex items-center justify-center text-amber-600 text-[10px] font-bold border border-amber-900/50">{p.name?.[0]?.toUpperCase() || '?'}</div>
-                                        <span className="font-serif text-amber-100 text-sm truncate w-32">{p.name} {p.isBot && <span className="text-[9px] text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded ml-1 font-sans">BOT</span>}</span>
+                                        <span className="font-serif text-amber-100 text-sm truncate w-40">{p.name} {p.isBot && <span className="text-[9px] text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded ml-1 font-sans">BOT</span>}</span>
                                     </div>
                                     {playerID === '0' && i !== 0 && <button onClick={() => moves.removePlayer(p.id)} className="text-red-900/60 hover:text-red-500 text-[9px] uppercase font-bold">[Dismiss]</button>}
                                 </div>
