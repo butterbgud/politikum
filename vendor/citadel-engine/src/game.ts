@@ -176,8 +176,8 @@ const canPlayerBuildAny = (p) => {
 // Logic check: returns true if player has a character ability they can/should use
 const canPlayerUseAbility = (p) => {
     if (p.abilityUsed) return false;
-    // Simple check: Assassin, Thief, Warlord have active targetable abilities
-    return [1, 2, 8].includes(p.role?.id);
+    // Simple check: Assassin, Thief, Magician, Warlord have active targetable abilities
+    return [1, 2, 3, 8].includes(p.role?.id);
 };
 
 // Unique district helpers
@@ -507,6 +507,46 @@ export const CitadelGame = {
             const targetName = ROLES.find(r => r.id === payload.target).name;
             G.log.push(`${p.name} plans to rob the ${targetName}.`);
         }
+        else if (payload.type === 'MAGIC') {
+            if (payload.target === 'SWAP_PLAYER') {
+                const options = G.players.filter(pl => pl.id !== playerID).map(pl => pl.id);
+                p.interaction = { type: 'MAGIC_SWAP_PLAYER', options };
+                return;
+            }
+            if (payload.target === 'SWAP_DECK') {
+                const options = (p.hand || []).map(c => c.id);
+                p.interaction = { type: 'MAGIC_SWAP_DECK', options };
+                return;
+            }
+        }
+        else if (payload.type === 'MAGIC_SWAP_PLAYER') {
+            const otherId = payload.target;
+            const other = G.players.find(pl => pl.id === otherId);
+            if (other && other.id !== playerID) {
+                const tmp = p.hand;
+                p.hand = other.hand;
+                other.hand = tmp;
+                p.abilityUsed = true;
+                G.log.push(`${p.name} swapped hands with ${other.name} (Magician).`);
+            }
+        }
+        else if (payload.type === 'MAGIC_SWAP_DECK') {
+            const selectedIds = Array.isArray(payload.selectedIds) ? payload.selectedIds : (p.hand || []).map(c => c.id);
+            const selected = (p.hand || []).filter(c => selectedIds.includes(c.id));
+            const keep = (p.hand || []).filter(c => !selectedIds.includes(c.id));
+            const count = selected.length;
+            if (count > 0) {
+                const drawn = G.deck.splice(0, count);
+                p.hand = [...keep, ...drawn];
+                G.districtDiscard = G.districtDiscard || [];
+                G.districtDiscard.push(...selected);
+                p.abilityUsed = true;
+                G.log.push(`${p.name} exchanged ${count} card(s) with the deck (Magician).`);
+            } else {
+                G.log.push(`${p.name} chose not to exchange any cards (Magician).`);
+                p.abilityUsed = true;
+            }
+        }
         else if (payload.type === 'DESTROY') {
             const targetP = G.players.find(pl => pl.id === payload.playerId);
             const cardIdx = targetP?.city.findIndex(c => c.id === payload.cardId);
@@ -533,6 +573,9 @@ export const CitadelGame = {
         }
         else if (p.role.id === 2) { // Thief
             p.interaction = { type: 'STEAL', options: [3,4,5,6,7,8].filter(id => id !== G.killedRoleId) };
+        }
+        else if (p.role.id === 3) { // Magician
+            p.interaction = { type: 'MAGIC', options: ['SWAP_PLAYER', 'SWAP_DECK'] };
         }
         else if (p.role.id === 8) { // Warlord
             const options = [];

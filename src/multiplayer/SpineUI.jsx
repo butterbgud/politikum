@@ -599,6 +599,52 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               </div>
             )}
 
+            {/* Interaction overlays (Magician etc.) */}
+            {ctx.phase === 'action' && isMyTurn && boardState.interaction?.type === 'MAGIC' && (
+              <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 pointer-events-auto">
+                <div className="bg-black/70 border border-amber-900/30 rounded-3xl p-6 shadow-2xl max-w-xl w-full">
+                  <div className="text-amber-400 font-black uppercase tracking-widest text-xs mb-4">Magician</div>
+                  <div className="flex gap-3">
+                    <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'MAGIC', target: 'SWAP_PLAYER' } })} className="flex-1 py-3 rounded-xl bg-amber-900/40 border border-amber-900/20 text-amber-200 font-black uppercase text-xs tracking-widest">Swap with player</button>
+                    <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'MAGIC', target: 'SWAP_DECK' } })} className="flex-1 py-3 rounded-xl bg-amber-900/40 border border-amber-900/20 text-amber-200 font-black uppercase text-xs tracking-widest">Exchange with deck</button>
+                  </div>
+                  <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-4 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest">Cancel (ESC)</button>
+                </div>
+              </div>
+            )}
+
+            {ctx.phase === 'action' && isMyTurn && boardState.interaction?.type === 'MAGIC_SWAP_PLAYER' && (
+              <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 pointer-events-auto">
+                <div className="bg-black/70 border border-amber-900/30 rounded-3xl p-6 shadow-2xl max-w-xl w-full">
+                  <div className="text-amber-400 font-black uppercase tracking-widest text-xs mb-4">Choose player to swap hands</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(boardState.interaction.options || []).map((pid) => (
+                      <button key={pid} onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'MAGIC_SWAP_PLAYER', target: pid } })} className="py-3 rounded-xl bg-black/40 border border-amber-900/20 text-amber-200 font-black uppercase text-xs tracking-widest">
+                        {(G?.players?.[pid]?.name) || `Player ${pid}`}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-4 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest">Cancel (ESC)</button>
+                </div>
+              </div>
+            )}
+
+            {ctx.phase === 'action' && isMyTurn && boardState.interaction?.type === 'MAGIC_SWAP_DECK' && (
+              <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 pointer-events-auto">
+                <div className="bg-black/70 border border-amber-900/30 rounded-3xl p-6 shadow-2xl max-w-xl w-full">
+                  <div className="text-amber-400 font-black uppercase tracking-widest text-xs mb-2">Exchange with deck</div>
+                  <div className="text-amber-100/70 text-xs mb-4">Quick action: exchanges your entire hand with the deck (same count).</div>
+                  <button
+                    onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'MAGIC_SWAP_DECK' } })}
+                    className="w-full py-3 rounded-xl bg-amber-900/40 border border-amber-900/20 text-amber-200 font-black uppercase text-xs tracking-widest"
+                  >
+                    Exchange now
+                  </button>
+                  <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-4 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest">Cancel (ESC)</button>
+                </div>
+              </div>
+            )}
+
             {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (
               <div className="fixed bottom-6 left-6 z-[1000] pointer-events-auto select-none">
                 <div className="relative w-56 h-56">
@@ -659,7 +705,10 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                         <img
                           src={(me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg'}
                           alt="Role"
-                          className="w-36 aspect-[2/3] object-cover rounded-xl border border-black/40 shadow-2xl"
+                          className={
+                            "w-36 aspect-[2/3] object-cover rounded-xl border shadow-2xl " +
+                            ((isMyTurn && me?.hasTakenAction && !me?.abilityUsed) ? "border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.55)]" : "border-black/40")
+                          }
                           title={(me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)'}
                         />
                       </div>
