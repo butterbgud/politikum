@@ -679,7 +679,7 @@ export const CitadelGame = {
                 const p = G.players[ctx.currentPlayer];
                 if (p.isBot) {
                     // Action Bots still need work, but for now just end turn
-                    G.log.push(`[B] ${p.name} is thinking...`);
+                    G.log.push(`${p.name} is thinking...`);
                     p.gold += 2;
                     events.endTurn();
                 }
