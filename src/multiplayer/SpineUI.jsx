@@ -656,14 +656,19 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                     {(boardState.interaction.options || []).map((rid, i, arr) => {
                       const n = Math.max(1, arr.length);
                       const t = n <= 1 ? 0.5 : i / (n - 1);
-                      const rot = (t - 0.5) * 22;
-                      const x = (t - 0.5) * 520;
+                      const rot = (t - 0.5) * 18;
+                      const x = i * 34; // tight overlap like hand fan
+                      const dist = (hoverActionHandIndex == null) ? 99 : Math.abs(i - hoverActionHandIndex);
+                      const scale = (hoverActionHandIndex == null) ? 1 : scaleByDist(dist);
+                      const z = (hoverActionHandIndex == null) ? i : (1000 - dist);
+
                       return (
                         <button
                           key={rid}
                           onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: boardState.interaction.type, target: rid } })}
-                          className="absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 border-black/40 shadow-2xl transition-transform hover:scale-[1.05]"
-                          style={{ left: `calc(50% + ${x}px)`, transform: `translateX(-50%) rotate(${rot}deg)`, transformOrigin: 'bottom center' }}
+                          onMouseEnter={() => setHoverActionHandIndex(i)}
+                          className="absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 border-black/40 shadow-2xl transition-transform duration-200"
+                          style={{ left: `${x}px`, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                         >
                           <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                             <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">({rid})</div>
