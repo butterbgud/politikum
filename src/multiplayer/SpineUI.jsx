@@ -444,8 +444,8 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     // Dev mode: force bots to just take gold + end turn (keeps game flowing)
     const BOTFAST = params.get('botfast') === '1';
 
-    // In dev mode, don't auto-run bots unless explicitly enabled.
-    const AUTOBOT = params.get('autobot') === '1';
+    // Auto-run bots by default (host drives). Use ?autobot=0 to disable.
+    const AUTOBOT = params.get('autobot') !== '0';
 
     // Only Player 0 (host) drives bots.
     const iShouldAct = (playerID === '0' && currentSeat.isBot);
