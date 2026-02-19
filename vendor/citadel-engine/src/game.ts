@@ -130,6 +130,7 @@ function advanceRole(G, events) {
             nextP.hasTakenAction = false;
             nextP.builtThisTurn = 0;
             nextP.abilityUsed = false;
+            nextP.usedUniqueThisTurn = {};
             nextP.interaction = null;
             nextP.buildLimit = (nextRole === 7) ? 3 : 1; // Architect builds up to 3
 
@@ -217,6 +218,7 @@ export const CitadelGame = {
       isKilled: false,
       isRobbed: false,
       abilityUsed: false,
+      usedUniqueThisTurn: {},
       score: 0,
       isBot: id === 0 ? false : true,
     })),
@@ -224,6 +226,7 @@ export const CitadelGame = {
     availableRoles: [],
     removedFaceUpRoles: [],
     removedFaceDownRole: null,
+    districtDiscard: [],
     kingId: '0',
     activeRoleId: 0,
     killedRoleId: null,
@@ -549,11 +552,12 @@ export const CitadelGame = {
         if (p.isKilled) return INVALID_MOVE;
         if (!p.hasTakenAction) return INVALID_MOVE; // after takeGold/drawCards in SP flow
         if (!hasUnique(p, 'Smithy')) return INVALID_MOVE;
+        if ((p.usedUniqueThisTurn || {}).smithy) return INVALID_MOVE;
         if (p.gold < 2) return INVALID_MOVE;
         p.gold -= 2;
         const drawn = G.deck.splice(0, 3);
         p.hand.push(...drawn);
-        p.abilityUsed = true;
+        p.usedUniqueThisTurn = { ...(p.usedUniqueThisTurn || {}), smithy: true };
         G.log.push(`${p.name} used Smithy (paid 2 gold, drew ${drawn.length}).`);
     },
 
@@ -563,6 +567,7 @@ export const CitadelGame = {
         if (p.isKilled) return INVALID_MOVE;
         if (!p.hasTakenAction) return INVALID_MOVE;
         if (!hasUnique(p, 'Laboratory')) return INVALID_MOVE;
+        if ((p.usedUniqueThisTurn || {}).lab) return INVALID_MOVE;
         if (p.hand.length === 0) return INVALID_MOVE;
         p.interaction = { type: 'LAB_DISCARD', options: p.hand.map(c => c.id) };
     },
@@ -574,11 +579,12 @@ export const CitadelGame = {
         const idx = p.hand.findIndex(c => c.id === cardId);
         if (idx === -1) return INVALID_MOVE;
         const discarded = p.hand.splice(idx, 1)[0];
-        G.deck.push(discarded);
-        p.gold += 1;
-        p.abilityUsed = true;
+        G.districtDiscard = G.districtDiscard || [];
+        G.districtDiscard.push(discarded);
+        p.gold += 2;
+        p.usedUniqueThisTurn = { ...(p.usedUniqueThisTurn || {}), lab: true };
         p.interaction = null;
-        G.log.push(`${p.name} used Laboratory (discarded ${discarded.name} for 1 gold).`);
+        G.log.push(`${p.name} used Laboratory (discarded ${discarded.name}, +2 gold).`);
         checkAutoEnd(G, playerID, events);
     },
 
