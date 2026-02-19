@@ -749,6 +749,11 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             <div className="fixed bottom-4 left-4 max-w-sm w-full z-[950] pointer-events-auto">
                 <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col">
                     <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Hotkeys (H)">H</button>
+                        <button onClick={() => setTutorialEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Tutorial (T)">T</button>
+                        <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Sound (M)">M</button>
+                      </div>
                       <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronicles & Chat</h3>
                       <button
                         onClick={() => setLogCollapsed((v) => !v)}

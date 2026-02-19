@@ -17,20 +17,19 @@ function seatTransforms(seatCount) {
   return base[seatCount] || base[3];
 }
 
-function StaggeredBacks({ count }) {
-  const n = Math.min(count ?? 0, 5);
+function HandBack({ count }) {
+  const n = count ?? 0;
   if (n <= 0) return null;
   return (
-    <div className="relative h-10 w-12">
-      {Array.from({ length: n }).map((_, i) => (
-        <img
-          key={i}
-          src="/assets/ui/building_back.jpg"
-          alt=""
-          className="absolute top-0 w-8 aspect-[2/3] object-cover rounded border border-black/40 shadow-lg"
-          style={{ left: `${i * 6}px`, zIndex: i }}
-        />
-      ))}
+    <div className="relative h-12 w-10">
+      <img
+        src="/assets/ui/building_back.jpg"
+        alt=""
+        className="absolute inset-0 w-10 aspect-[2/3] object-cover rounded border border-black/40 shadow-xl"
+      />
+      <div className="absolute -top-2 -right-2 bg-black/75 border border-amber-600/40 text-amber-200 font-mono font-black text-[10px] px-1.5 py-0.5 rounded">
+        {n}
+      </div>
     </div>
   );
 }
@@ -86,7 +85,7 @@ function PlayerZone({ player, isActive }) {
            {isActive && <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-ping"></div>}
         </div>
         <div className="flex-1 flex gap-2 items-center">
-            <StaggeredBacks count={handCount} />
+            <HandBack count={handCount} />
             <CityFan cards={player.city} />
         </div>
       </div>
