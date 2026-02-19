@@ -772,10 +772,45 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                     {!logCollapsed && (
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setDevCheatsOpen((v) => !v)} className="w-8 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Dev cheats (`)">DEV</button>
-                          <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Hotkeys (H)">H</button>
-                          <button onClick={() => setTutorialEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Tutorial (T)">T</button>
-                          <button onClick={() => setSoundEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Sound (M)">{soundEnabled ? 'M' : 'M'}</button>
+                          <button
+                            onClick={() => setDevCheatsOpen((v) => !v)}
+                            className={
+                              "w-8 h-6 rounded border text-[10px] font-black " +
+                              (devCheatsOpen ? "bg-emerald-900/60 border-emerald-400/40 text-emerald-200" : "bg-black/40 border-slate-800 text-slate-300")
+                            }
+                            title="Dev cheats (`)"
+                          >
+                            DEV
+                          </button>
+                          <button
+                            className={
+                              "w-6 h-6 rounded border text-[10px] font-black " +
+                              (false ? "bg-emerald-900/60 border-emerald-400/40 text-emerald-200" : "bg-black/40 border-slate-800 text-slate-300")
+                            }
+                            title="Hotkeys (H)"
+                          >
+                            H
+                          </button>
+                          <button
+                            onClick={() => setTutorialEnabled((v) => !v)}
+                            className={
+                              "w-6 h-6 rounded border text-[10px] font-black " +
+                              (tutorialEnabled ? "bg-emerald-900/60 border-emerald-400/40 text-emerald-200" : "bg-black/40 border-slate-800 text-slate-300")
+                            }
+                            title="Tutorial (T)"
+                          >
+                            T
+                          </button>
+                          <button
+                            onClick={() => setSoundEnabled((v) => !v)}
+                            className={
+                              "w-6 h-6 rounded border text-[10px] font-black " +
+                              (soundEnabled ? "bg-emerald-900/60 border-emerald-400/40 text-emerald-200" : "bg-black/40 border-slate-800 text-slate-300")
+                            }
+                            title="Sound (M)"
+                          >
+                            M
+                          </button>
                         </div>
                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronicles & Chat</h3>
                         <button
