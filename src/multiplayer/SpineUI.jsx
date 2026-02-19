@@ -714,13 +714,15 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                           key={rid}
                           onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: boardState.interaction.type, target: rid } })}
                           onMouseEnter={() => setHoverTargetIndex(i)}
-                          className="absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 border-black/40 shadow-2xl transition-transform duration-200"
+                          className="absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-visible border-2 border-black/40 shadow-2xl transition-transform duration-200"
                           style={{ left: `${x}px`, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                         >
                           <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                             <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">({rid})</div>
                           </div>
-                          <img src={ROLE_IMG_BY_ID[rid]} alt={String(rid)} className="w-full h-full object-cover" />
+                          <div className="w-full h-full overflow-hidden rounded-2xl">
+                            <img src={ROLE_IMG_BY_ID[rid]} alt={String(rid)} className="w-full h-full object-cover" />
+                          </div>
                         </button>
                       );
                     })}
@@ -923,7 +925,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             }}
                             aria-disabled={isRole ? !canUseRoleAbility : !canBuild}
                             className={
-                              'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
+                              'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-visible border-2 transition-all duration-200 ease-out shadow-xl ' +
                               (isRole
                                 ? (canUseRoleAbility ? 'cursor-pointer border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.55)]' : 'cursor-default border-black/40')
                                 : (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed'))
@@ -938,16 +940,16 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                           >
                             {!isRole && canBuild && (idx < 9) && (
                               <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-                                <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">
-                                  ({idx + 1})
-                                </div>
+                                <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">({idx + 1})</div>
                               </div>
                             )}
-                            <img
-                              src={isRole ? (((me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg')) : card.img}
-                              alt={isRole ? 'Role' : card.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <div className="w-full h-full overflow-hidden rounded-2xl">
+                              <img
+                                src={isRole ? (((me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg')) : card.img}
+                                alt={isRole ? 'Role' : card.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                           </button>
                         );
                       })}
