@@ -822,8 +822,9 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               const cityWidth = Math.max(160, (cityN - 1) * cityStep + 160);
 
               const handStep = 34;
-              const handN = Math.max(1, hand.length);
-              const handWidth = (handN - 1) * handStep + 144;
+              const cards = [...hand, ...(me?.role ? [{ __role: true }] : [])];
+              const fanN = Math.max(1, cards.length);
+              const handWidth = (fanN - 1) * handStep + 144;
               const canUseRoleAbility = isMyTurn && !me?.abilityUsed && !me?.isKilled && (me?.role?.id != null) && [1,2,3,8].includes(me.role.id);
 
               return (
@@ -883,22 +884,17 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   <div className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[100px] z-[999] pointer-events-auto">
                     <div
                       className="relative h-56 overflow-visible"
-                      style={{ width: `${handWidth + 180}px` }}
+                      style={{ width: `${handWidth}px` }}
                       onMouseMove={(e) => {
-                        if (!hand.length) return;
+                        if (!cards.length) return;
                         const rect = e.currentTarget.getBoundingClientRect();
                         const x = e.clientX - rect.left;
-                        const idx = Math.max(0, Math.min(hand.length - 1, Math.round(x / handStep)));
+                        const idx = Math.max(0, Math.min(cards.length - 1, Math.round(x / handStep)));
                         setHoverActionHandIndex(idx);
                       }}
                       onMouseLeave={() => setHoverActionHandIndex(null)}
                     >
-                      {(() => {
-                        const cards = [...hand];
-                        if (me?.role) cards.push({ __role: true });
-                        return cards;
-                      })().map((card, idx, arr) => {
-                        const fanN = Math.max(1, arr.length);
+                      {cards.map((card, idx) => {
                         const t = fanN <= 1 ? 0.5 : idx / (fanN - 1);
                         const rot = (t - 0.5) * 18;
                         const left = idx * handStep;
