@@ -354,6 +354,34 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     logEndRef.current?.scrollIntoView({ block: 'end' });
   }, [G?.log?.length, G?.chat?.length]);
 
+  // Hotkeys (match desktop SP)
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      const isTyping = tag === 'input' || tag === 'textarea' || e.target?.isContentEditable;
+      if (isTyping) return;
+
+      const k = (e.key || '').toLowerCase();
+
+      if (k === 'escape') {
+        if (boardState.interaction) {
+          e.preventDefault();
+          dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } });
+        }
+        return;
+      }
+
+      if (k === 'g' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'TAKE_GOLD' }); }
+      if (k === 'c' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'DRAW_CARDS_START' }); }
+      if (k === 'a' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'ACTIVATE_ABILITY' }); }
+      if (k === 'e' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'END_TURN' }); }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [ctx.phase, boardState.interaction, playerID]);
+
   // Removed spammy decree auto-print
 
   useEffect(() => {

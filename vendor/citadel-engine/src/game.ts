@@ -480,6 +480,11 @@ export const CitadelGame = {
     resolveInteraction: ({ G, playerID, ctx, events }, payload) => {
         if (playerID !== ctx.currentPlayer) return INVALID_MOVE;
         const p = G.players[playerID];
+
+        if (payload.type === 'CANCEL') {
+            G.players[playerID].interaction = null;
+            return;
+        }
         
         if (payload.type === 'ASSASSINATE') {
             G.killedRoleId = payload.target;
