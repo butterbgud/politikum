@@ -679,7 +679,8 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             )}
 
             {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (() => {
-              const buttonsDisabled = !isMyTurn || !!me?.hasTakenAction;
+              const acting = G?.players?.[ctx.currentPlayer];
+              const buttonsDisabled = !isMyTurn || !!acting?.hasTakenAction || !!acting?.isKilled;
               const baseBtn = "fixed pointer-events-auto select-none outline-none focus:outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]";
               const disabled = "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100";
 
