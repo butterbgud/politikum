@@ -652,7 +652,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 <>
                   {/* Built districts */}
                   <div
-                    className="fixed bottom-[56px] left-1/2 -translate-x-1/2 translate-x-[-260px] z-[999] pointer-events-auto"
+                    className="fixed bottom-[156px] left-1/2 -translate-x-1/2 translate-x-[-260px] z-[999] pointer-events-auto"
                   >
                     <div
                       className="relative h-24"
