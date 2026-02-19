@@ -1,0 +1,564 @@
+import { useEffect, useState } from 'react'
+import { GameProvider, useGame } from './GameContext'
+
+function GameUI() {
+  const { state, dispatch } = useGame();
+  const [playerName, setPlayerName] = useState("");
+  const isInGame = !['lobby', 'draft'].includes(state.phase);
+
+
+  // Bot player automation (simple)
+  useEffect(() => {
+    const current = state.players.find(p => p.id === state.currentPlayerId);
+    if (!current?.isBot) return;
+
+    const t = setTimeout(() => {
+      // If bot is drawing, pick the first available drawn card.
+      if (state.isDrawing && state.drawnCards?.length) {
+        dispatch({ type: 'KEEP_CARD', payload: { cardId: state.drawnCards[0].id } });
+        return;
+      }
+
+      if (state.phase === 'draft') {
+        const roles = state.availableRoles || [];
+        if (!roles.length) return;
+        const role = roles[Math.floor(Math.random() * roles.length)];
+        dispatch({ type: 'PICK_ROLE', payload: { playerId: state.currentPlayerId, roleId: role.id } });
+        return;
+      }
+
+      if (state.phase === 'action') {
+        const me = state.players.find(p => p.id === state.currentPlayerId);
+        if (!me) return;
+
+        // Take action if not taken yet
+        if (!me.hasTakenAction) {
+          if (me.gold < 2) {
+            dispatch({ type: 'TAKE_GOLD' });
+          } else {
+            // 50/50 gold vs draw
+            if (Math.random() < 0.5) dispatch({ type: 'TAKE_GOLD' });
+            else dispatch({ type: 'DRAW_CARDS_START' });
+          }
+          return;
+        }
+
+        // Build once if possible
+        const buildLimit = me.buildLimit ?? 1;
+        const builtThisTurn = me.builtThisTurn ?? 0;
+        if (builtThisTurn < buildLimit && me.hand?.length) {
+          const affordable = me.hand
+            .filter(c => (me.gold ?? 0) >= (c.cost ?? 0))
+            .sort((a,b) => (a.cost ?? 0) - (b.cost ?? 0));
+          if (affordable.length) {
+            dispatch({ type: 'BUILD_DISTRICT', payload: { cardId: affordable[0].id } });
+            return;
+          }
+        }
+
+        // Otherwise end turn
+        dispatch({ type: 'END_TURN' });
+      }
+    }, 350);
+
+    return () => clearTimeout(t);
+  }, [state.phase, state.currentPlayerId, state.isDrawing, state.drawnCards, state.availableRoles, state.players, dispatch]);
+
+
+  return (
+    <div className="min-h-screen text-slate-100 p-8 font-sans">
+      <div className={isInGame ? "bg-black/25" : "bg-black/55 backdrop-blur-sm"} style={{ minHeight: "calc(100vh - 4rem)", borderRadius: "1.25rem" }}>
+        <div className="max-w-2xl mx-auto">
+        <h1 className="text-4xl font-bold mb-4 text-amber-500">Citadel</h1>
+        
+        {/* Status Bar */}
+        <div className="flex justify-between items-center bg-slate-900/70 backdrop-blur-sm p-4 rounded-lg mb-6 border border-slate-700">
+          <div>
+            <span className="text-slate-400 text-sm uppercase tracking-wider">Phase</span>
+            <div className="text-xl font-bold text-blue-400 capitalize">{state.phase}</div>
+          </div>
+          <div>
+            <span className="text-slate-400 text-sm uppercase tracking-wider">Players</span>
+            <div className="text-xl font-bold text-white">{state.players.length}</div>
+          </div>
+        </div>
+
+        {/* Lobby View */}
+        {state.phase === 'lobby' && (
+          <div className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-lg shadow-xl border border-slate-700">
+            <h2 className="text-xl font-semibold mb-4 text-slate-300">New Game Lobby</h2>
+            
+            <div className="flex gap-2 mb-6">
+              <input 
+                type="text" 
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter player name"
+                className="flex-1 bg-slate-900 border border-slate-600 rounded px-4 py-2 text-white focus:outline-none focus:border-amber-500"
+                onKeyDown={(e) => e.key === 'Enter' && playerName && (dispatch({type: 'ADD_PLAYER', payload: playerName}), setPlayerName(''))}
+              />
+              <button 
+                onClick={() => {
+                  if (playerName) {
+                    dispatch({type: 'ADD_PLAYER', payload: playerName});
+                    setPlayerName('');
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded font-semibold transition-colors"
+              >
+                Add Player
+              </button>
+
+              <button
+                onClick={() => dispatch({type: 'ADD_BOT'})}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded font-semibold transition-colors"
+              >
+                Add Bot
+              </button>
+            </div>
+
+            <div className="space-y-2 mb-6">
+              {state.players.map(p => (
+                <div key={p.id} className="flex justify-between items-center bg-slate-700/50 p-3 rounded border border-slate-700">
+                  <span className="font-medium text-slate-200">{p.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-sm">2 Gold</span>
+                  </div>
+                </div>
+              ))}
+              {state.players.length === 0 && (
+                <div className="text-slate-500 text-center py-4 italic">No players yet. Add someone!</div>
+              )}
+            </div>
+
+            {state.players.length >= 2 && (
+              <button 
+                onClick={() => dispatch({type: 'START_GAME'})}
+                className="w-full py-3 bg-amber-600 hover:bg-amber-500 rounded font-bold text-slate-900 transition-colors"
+              >
+                Start Game
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Draft View */}
+        {state.phase === 'draft' && (
+          <div className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-lg border border-slate-700">
+            <h2 className="text-2xl text-amber-500 mb-4 text-center">Draft Phase</h2>
+            
+            <div className="text-center mb-6">
+              <p className="text-slate-300 text-lg">
+                Current Turn: <span className="font-bold text-white">{state.players.find(p => p.id === state.currentPlayerId)?.name}</span>
+              </p>
+              <p className="text-slate-500 text-sm mt-1">Please pick a role silently.</p>
+            {/* Removed Characters (this round) */}
+            <div className="mt-6 mb-6 bg-slate-900/60 backdrop-blur-sm p-4 rounded-lg border border-slate-700">
+              <div className="text-sm uppercase tracking-wider text-slate-400 mb-3">Not in play this round</div>
+              <div className="flex flex-wrap gap-4 items-start">
+                {/* Facedown removed */}
+                {state.removedFaceDownRole && (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-24 aspect-[2/3] rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+                      <img src="/assets/ui/character_back.jpg" alt="Removed facedown" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="text-xs text-slate-500">Facedown</div>
+                  </div>
+                )}
+
+                {/* Faceup removed */}
+                {state.removedFaceUpRoles && state.removedFaceUpRoles.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
+                    {state.removedFaceUpRoles.map(r => (
+                      <div key={r.id} className="flex flex-col items-center gap-2">
+                        <div className="w-24 aspect-[2/3] rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+                          <img src={r.img} alt={r.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="text-xs text-slate-300">{r.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(!state.removedFaceDownRole && (!state.removedFaceUpRoles || state.removedFaceUpRoles.length === 0)) && (
+                  <div className="text-slate-500 italic">(Nothing removed)</div>
+                )}
+              </div>
+            </div>
+
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {state.availableRoles && state.availableRoles.map(role => (
+                <button
+                  key={role.id}
+                  onClick={() => dispatch({ type: 'PICK_ROLE', payload: { playerId: state.currentPlayerId, roleId: role.id } })}
+                  className="bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-amber-500 p-2 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-hidden"
+                >
+                  <div className="w-full aspect-[2/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-800 relative">
+                    <img 
+                        src={role.img} 
+                        alt={role.name}
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                        onError={(e) => {e.target.style.display='none'}}
+                    />
+                    <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center text-white font-bold border border-white/20">
+                        {role.id}
+                    </div>
+                  </div>
+                  <span className="font-semibold text-slate-200 group-hover:text-white">{role.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action Phase View */}
+        {state.phase === 'action' && (
+          <div className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-lg border border-slate-700 text-center">
+             <h2 className="text-2xl text-emerald-500 mb-2">Action Phase</h2>
+             
+             {/* Active Role Card Display */}
+             <div className="mb-6 flex flex-col items-center">
+                <div className="relative group w-48 aspect-[2/3] bg-slate-900 rounded-xl overflow-hidden border-2 border-emerald-500/50 shadow-2xl mb-4">
+                    {state.roles.find(r => r.id === state.currentRoleId)?.img && (
+                        <img 
+                            src={state.roles.find(r => r.id === state.currentRoleId).img} 
+                            alt="Active Role"
+                            className="w-full h-full object-cover"
+                        />
+                    )}
+                    <div className="absolute bottom-0 w-full bg-black/80 py-2 text-white font-bold text-lg">
+                        {state.roles.find(r => r.id === state.currentRoleId)?.name || "Unknown"}
+                    </div>
+                </div>
+                
+                <div className="text-slate-400">
+                    Played by: <span className="text-amber-400 font-bold text-xl ml-2">{state.players.find(p => p.id === state.currentPlayerId)?.name}</span>
+                </div>
+             </div>
+
+             <div className="flex gap-4 justify-center mb-8">
+                <button 
+                    onClick={() => dispatch({type: 'TAKE_GOLD'})}
+                    disabled={state.players.find(p => p.id === state.currentPlayerId)?.hasTakenAction}
+                    className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2"
+                >
+                    <span>💰</span> Take 2 Gold
+                </button>
+                <button 
+                    onClick={() => dispatch({type: 'DRAW_CARDS_START'})}
+                    disabled={state.players.find(p => p.id === state.currentPlayerId)?.hasTakenAction}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2"
+                >
+                    <span>🃏</span> Draw Cards
+                </button>
+                
+                {/* Character Ability Button */}
+                {[1, 2, 3, 8].includes(state.currentRoleId) && !state.interaction && (
+                    <button 
+                        onClick={() => dispatch({type: 'ACTIVATE_ABILITY'})}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2"
+                    >
+                        <span>✨</span> Ability
+                    </button>
+                )}
+             </div>
+
+             {/* Interaction Modal (Assassin/Thief) */}
+             {state.interaction && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 max-w-lg w-full">
+                        <h3 className="text-2xl text-white font-bold mb-6 text-center">
+                            {state.interaction.type === 'ASSASSINATE' ? 'Choose a Character to Assassinate' : 
+                             state.interaction.type === 'STEAL' ? 'Choose a Character to Rob' : state.interaction.type === 'DESTROY' ? 'Choose a District to Destroy' : 'Select Action'}
+                        </h3>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {state.interaction.options && state.interaction.options.map((opt) => {
+                                if (state.interaction.type === 'DESTROY') {
+                                    const targetPlayer = state.players.find(p => p.id === opt.playerId);
+                                    const card = targetPlayer?.city?.find(c => c.id === opt.cardId);
+                                    if (!targetPlayer || !card) return null;
+                                    const cost = Math.max(0, (card.cost || 0) - 1);
+                                    return (
+                                        <button
+                                            key={opt.playerId + '-' + opt.cardId}
+                                            onClick={() => dispatch({type: 'RESOLVE_INTERACTION', payload: { type: 'DESTROY', playerId: opt.playerId, cardId: opt.cardId }})}
+                                            className="bg-slate-700 hover:bg-red-600 hover:text-white p-3 rounded-lg border border-slate-600 flex flex-col items-center gap-1 transition-colors"
+                                        >
+                                            <span className="text-sm font-bold">{targetPlayer.name}</span>
+                                            <span className="text-lg font-bold">{card.name}</span>
+                                            <span className="text-xs text-slate-300">Cost: {cost}</span>
+                                        </button>
+                                    );
+                                }
+
+                                const targetId = opt;
+                                const role = state.roles.find(r => r.id === targetId);
+                                if (!role) return null;
+                                return (
+                                    <button
+                                        key={targetId}
+                                        onClick={() => dispatch({type: 'RESOLVE_INTERACTION', payload: { type: state.interaction.type, target: targetId }})}
+                                        className="bg-slate-700 hover:bg-red-600 hover:text-white p-3 rounded-lg border border-slate-600 flex flex-col items-center gap-2 transition-colors"
+                                    >
+                                        <span className="text-2xl font-bold">{role.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button 
+                            onClick={() => dispatch({type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' }})} // Need to handle cancel if desired
+                            className="mt-6 text-slate-400 hover:text-white w-full py-2"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+             )}
+
+             {/* Draw Modal Overlay */}
+             {state.isDrawing && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 max-w-2xl w-full">
+                        <h3 className="text-2xl text-white font-bold mb-4 text-center">Choose 1 Card to Keep</h3>
+                        <div className="flex gap-4 justify-center mb-6">
+                            {state.drawnCards.map(card => (
+                                <button 
+                                    key={card.id}
+                                    onClick={() => dispatch({type: 'KEEP_CARD', payload: { cardId: card.id }})}
+                                    className="group relative w-40 aspect-[2/3] rounded-lg overflow-hidden border-2 border-slate-600 hover:border-blue-500 hover:scale-105 transition-all"
+                                >
+                                    <img src={card.img} alt={card.name} className="w-full h-full object-cover" />
+                                    <div className="absolute bottom-0 w-full bg-black/80 text-white py-1 font-bold">
+                                        {card.name} ({card.cost})
+                                    </div>
+                                    <div className={`absolute top-2 right-2 w-4 h-4 rounded-full ${
+                                        card.color === 'noble' ? 'bg-yellow-500' :
+                                        card.color === 'trade' ? 'bg-green-500' :
+                                        card.color === 'religious' ? 'bg-blue-500' :
+                                        card.color === 'military' ? 'bg-red-500' : 'bg-purple-500'
+                                    }`}></div>
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-slate-400 text-center text-sm">The other card will be placed at the bottom of the deck.</p>
+                    </div>
+                </div>
+             )}
+
+             <button 
+                onClick={() => dispatch({type: 'END_TURN'})}
+                className="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 py-3 rounded-lg border border-slate-600 font-semibold"
+             >
+                End Turn
+             </button>
+
+             <div className="mt-8 flex justify-center gap-2 flex-wrap">
+                {state.players.map(p => (
+                    <div key={p.id} className={`p-3 rounded border w-28 ${p.id === state.currentPlayerId ? 'bg-emerald-900/50 border-emerald-500 shadow-emerald-500/20 shadow-lg' : 'bg-slate-900 border-slate-700 opacity-60'}`}>
+                        <div className="font-bold text-white text-sm truncate">{p.name}</div>
+                        <div className="flex justify-between mt-2 text-xs">
+                            <span className="text-amber-400">💰 {p.gold}</span>
+                            <span className="text-blue-400">🃏 {p.hand?.length || 0}</span>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">🏰 {p.city?.length || 0}</div>
+                    </div>
+                ))}
+             </div>
+
+             {/* Player Hand & City (Current Player Only) */}
+             <div className="mt-8 border-t border-slate-700 pt-6 text-left">
+                <h3 className="text-xl text-slate-300 mb-4">Your City <span className="text-sm text-slate-500">({state.players.find(p => p.id === state.currentPlayerId)?.city?.length || 0} districts)</span></h3>
+                <div className="flex gap-4 overflow-x-auto pb-4 min-h-[120px]">
+                    {state.players.find(p => p.id === state.currentPlayerId)?.city?.map(card => (
+                        <div key={card.id} className="relative w-32 aspect-[2/3] rounded border border-slate-600 overflow-hidden flex-shrink-0 grayscale-[0.3]">
+                            <img src={card.img} alt={card.name} className="w-full h-full object-cover" />
+                            <div className="absolute bottom-0 w-full bg-black/70 text-white text-xs py-1 text-center font-bold">
+                                {card.name}
+                            </div>
+                        </div>
+                    ))}
+                    {(!state.players.find(p => p.id === state.currentPlayerId)?.city?.length) && <div className="text-slate-600 italic py-8 px-4">No districts built yet.</div>}
+                </div>
+
+                <h3 className="text-xl text-slate-300 mb-4 mt-6">Your Hand</h3>
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                    {state.players.find(p => p.id === state.currentPlayerId)?.hand?.map(card => {
+                        const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
+                        const buildLimit = currentPlayer?.buildLimit ?? 1;
+                        const builtThisTurn = currentPlayer?.builtThisTurn ?? 0;
+                        const canBuild = (currentPlayer?.gold >= card.cost) && (builtThisTurn < buildLimit); 
+                                         // Limit 1 build per turn (standard rule, Architect overrides later)
+                        
+                        return (
+                            <button 
+                                key={card.id}
+                                onClick={() => canBuild && dispatch({type: 'BUILD_DISTRICT', payload: { cardId: card.id }})}
+                                disabled={!canBuild}
+                                className={`group relative w-32 aspect-[2/3] rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${canBuild ? 'border-amber-500/50 hover:border-amber-400 hover:-translate-y-2 cursor-pointer' : 'border-slate-700 opacity-60 cursor-not-allowed'}`}
+                            >
+                                <img src={card.img} alt={card.name} className="w-full h-full object-cover" />
+                                <div className="absolute top-1 right-1 w-6 h-6 rounded-full bg-amber-500 text-black font-bold flex items-center justify-center text-xs shadow-md">
+                                    {card.cost}
+                                </div>
+                                <div className="absolute bottom-0 w-full bg-black/90 text-white text-xs py-1 font-bold">
+                                    {card.name}
+                                </div>
+                                {canBuild && (
+                                    <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <span className="bg-black/80 text-amber-400 px-2 py-1 rounded text-xs font-bold">Build</span>
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
+                    {(!state.players.find(p => p.id === state.currentPlayerId)?.hand?.length) && <div className="text-slate-600 italic py-8 px-4">Hand is empty. Draw cards!</div>}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* Game Over View */}
+        {state.phase === 'game_over' && (
+          <div className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-lg border border-slate-700 text-center">
+            <h2 className="text-3xl text-amber-500 mb-6 font-bold">🏆 Game Over 🏆</h2>
+            
+            <div className="space-y-4">
+                {state.players.map((p, i) => (
+                    <div key={p.id} className={`flex items-center justify-between p-4 rounded-lg border ${i===0 ? 'bg-amber-900/40 border-amber-500' : 'bg-slate-900 border-slate-700'}`}>
+                        <div className="flex items-center gap-4">
+                            <span className={`text-2xl font-bold w-8 ${i===0 ? 'text-amber-400' : 'text-slate-500'}`}>#{i+1}</span>
+                            <div className="text-left">
+                                <div className="font-bold text-white text-lg">{p.name}</div>
+                                <div className="text-xs text-slate-400">
+                                    Districts: {p.districtScore} | Colors: {p.hasAllColors ? '+3' : '0'} | First: {p.firstBuilderBonus ? '+4/+2' : '0'}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-emerald-400">{p.score}</div>
+                    </div>
+                ))}
+            </div>
+
+            <button 
+                onClick={() => window.location.reload()}
+                className="mt-8 bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg font-bold transition-colors"
+            >
+                Play Again
+            </button>
+          </div>
+        )}
+
+        {/* Round End Check (Auto-transition) */}
+        {state.phase === 'round_end_check' && (
+            <div className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-lg border border-slate-700 text-center">
+                <h2 className="text-xl text-white mb-4">Game End Triggered!</h2>
+                <p className="text-slate-400 mb-6">Calculating final scores...</p>
+                <button 
+                    onClick={() => dispatch({type: 'END_GAME_SCORING'})}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded font-bold"
+                >
+                    Show Results
+                </button>
+            </div>
+        )}
+
+        {/* Game Log */}
+        <div className="mt-8">
+          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-2">Game Log</h3>
+          <div className="bg-slate-950 p-4 rounded text-sm font-mono text-slate-400 h-32 overflow-y-auto border border-slate-800">
+            {state.log.map((entry, i) => (
+              <div key={i} className="mb-1">
+                <span className="text-slate-600 mr-2">[{i+1}]</span>
+                {entry}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Round End / Game Over Handlers */}
+        {state.phase === 'round_end_check' && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-50">
+                <div className="bg-slate-800 p-8 rounded-xl text-center border-2 border-amber-500">
+                    <h2 className="text-3xl text-amber-500 font-bold mb-4">Game End Triggered!</h2>
+                    <p className="text-slate-300 mb-6">Someone completed their city. Calculating final scores...</p>
+                    <button 
+                        onClick={() => dispatch({type: 'END_GAME_SCORING'})}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-lg font-bold text-xl animate-pulse"
+                    >
+                        Show Scores
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {state.phase === 'end_round' && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
+                <div className="bg-slate-800 p-8 rounded-xl text-center border border-slate-600">
+                    <h2 className="text-2xl text-white font-bold mb-4">End of Round</h2>
+                    <p className="text-slate-400 mb-6">All characters have taken their turn.</p>
+                    <button 
+                        onClick={() => dispatch({type: 'START_NEW_ROUND'})} // Re-use start game logic to restart draft? 
+                        // Actually START_NEW_ROUND resets everything. We need a 'START_NEW_ROUND' action.
+                        // For now, let's just hack it to START_NEW_ROUND but we need to preserve gold/cities.
+                        // I'll add START_NEW_ROUND to reducer in next edit if needed, but for now 
+                        // let's assume the user wants to play again or we loop manually.
+                        // Let's make a dedicated loop action.
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-bold"
+                    >
+                        Start Next Round
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {state.phase === 'game_over' && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/95 z-50">
+                <div className="bg-slate-900 p-8 rounded-xl text-center border-2 border-amber-500 max-w-2xl w-full">
+                    <h1 className="text-5xl text-amber-500 font-bold mb-2">🏆 Victory! 🏆</h1>
+                    <div className="text-2xl text-white mb-8">Winner: {state.players[0].name}</div>
+                    
+                    <div className="space-y-4">
+                        {state.players.map((p, i) => (
+                            <div key={p.id} className="flex justify-between items-center bg-slate-800 p-4 rounded border border-slate-700">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-2xl font-bold text-slate-500">#{i+1}</span>
+                                    <div className="text-left">
+                                        <div className="text-xl font-bold text-white">{p.name}</div>
+                                        <div className="text-xs text-slate-400">
+                                            Districts: {p.districtScore} | Colors: {p.hasAllColors ? '+3' : '0'} | First: {p.firstBuilderBonus ? '+4' : '0'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-amber-400">{p.score} pts</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="mt-8 text-slate-500 hover:text-white underline"
+                    >
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <GameProvider>
+      <GameUI />
+    </GameProvider>
+  )
+}
+
+export default App

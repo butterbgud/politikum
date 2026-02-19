@@ -1,0 +1,20 @@
+
+V0.85: The Vercel Valentine
+- Pushed to Vercel (2026-02-14)
+- Test update successful!
+
+V0.8: But wait!There is more!
+- Sweet sounds of success.
+- Hotkeys.
+
+V0.7: Goodness gracious Rachel, get the Bible!
+- Some jaw dropping card scrolling animation.
+- Major Ui rework.
+
+V0.6: Unique Districts Awaken
+- All 13 unique (purple) districts implemented (standard rules).
+- Keep, Great Wall, Magic School, Graveyard recovery, and endgame scoring now work.
+
+V0.4: Strategic Awakening
+- The Bots have learned strategy! They now weigh color synergy and hunt the leading city.
+- Assassin, Thief, and Warlord abilities are now operational for AI opponents.
