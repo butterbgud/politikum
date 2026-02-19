@@ -764,7 +764,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             })()}
             <div
               className={
-                "fixed bottom-4 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+                "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
                 (logCollapsed ? "translate-x-[-360px]" : "translate-x-0")
               }
             >
