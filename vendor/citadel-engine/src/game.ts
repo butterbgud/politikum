@@ -123,6 +123,9 @@ function advanceRole(G, events) {
                 // Clear robbedRoleId so it doesn't fire again if multiple players have same role id (shouldn't happen but safe)
                 G.robbedRoleId = null;
             }
+            // Reveal role when called
+            nextP.roleRevealed = true;
+
             // Start-of-role reset (per-turn flags)
             nextP.hasTakenAction = false;
             nextP.builtThisTurn = 0;
@@ -151,7 +154,7 @@ function advanceRole(G, events) {
             });
             events.setPhase('results');
         } else {
-            G.players.forEach(pl => { pl.role = null; pl.isKilled = false; });
+            G.players.forEach(pl => { pl.role = null; pl.roleRevealed = false; pl.isKilled = false; });
             G.activeRoleId = 0;
             G.killedRoleId = null;
             G.robbedRoleId = null;
@@ -206,6 +209,7 @@ export const CitadelGame = {
       hand: [],
       city: [],
       role: null,
+      roleRevealed: false,
       tempChoices: [],
       hasTakenAction: false,
       builtThisTurn: 0,
@@ -406,6 +410,7 @@ export const CitadelGame = {
       const role = G.availableRoles.find(r => r.id === roleId);
       if (!role) return INVALID_MOVE;
       G.players[playerID].role = role;
+      G.players[playerID].roleRevealed = false;
       G.availableRoles = G.availableRoles.filter(r => r.id !== roleId);
       G.log.push(`A role has been claimed in secret.`);
       events.endTurn();

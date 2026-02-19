@@ -59,35 +59,28 @@ function CityFan({ cards }) {
 
 function PlayerZone({ player, isActive }) {
   const handCount = (player.hand || []).length;
-  const score = (player.city || []).reduce((acc, c) => acc + (c.cost || 0), 0);
-  const roleImg = player.role?.img || "/assets/ui/character_back.jpg";
+  const points = (player.city || []).reduce((acc, c) => acc + (c.cost || 0), 0);
+  const roleImg = (player.role && player.roleRevealed) ? (player.role.img) : "/assets/ui/character_back.jpg";
 
   return (
-    <div className={`bg-black/60 backdrop-blur-md rounded-2xl border transition-all duration-500 p-3 min-w-[200px] shadow-2xl flex flex-col gap-2 ${isActive ? 'border-amber-400 scale-110' : 'border-amber-900/30'}`}>
-      <div className="flex items-center justify-between border-b border-amber-900/20 pb-1">
-        <div className="font-serif font-black text-amber-200 uppercase tracking-widest text-[9px] flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-amber-950 flex items-center justify-center text-amber-600 text-[8px] border border-amber-900/50">
-            {player.name[0].toUpperCase()}
-          </div>
-          <span className="truncate w-20">{player.name}</span>
-        </div>
-        <div className="text-[9px] font-mono text-amber-500 bg-black/40 px-2 py-0.5 rounded border border-amber-900/10">
-          {player.gold}g | {score}p
-        </div>
+    <div className={`min-w-[200px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
+      <div className="text-[10px] font-mono font-black text-amber-200/90">
+        {player.name} · {player.gold}g · {points}p · {handCount}c
       </div>
-      <div className="flex gap-4 items-center">
-        <div className="relative group">
-           <img 
-             src={roleImg} 
-             alt="Role" 
-             className={`w-10 aspect-[2/3] object-cover rounded border-2 transition-all ${isActive ? 'border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.5)]' : 'border-black/40 opacity-50'}`} 
-           />
-           {isActive && <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-ping"></div>}
+      <div className="mt-2 flex gap-3 items-center">
+        <div className="relative">
+          <HandBack count={handCount} />
+          {/* role card, offset to the side of the hand */}
+          {player.role && (
+            <img
+              src={roleImg}
+              alt="Role"
+              className={`absolute -right-8 top-1 w-10 aspect-[2/3] object-cover rounded border border-black/40 shadow-xl ${player.roleRevealed ? '' : 'opacity-90'}`}
+              title={player.role?.name}
+            />
+          )}
         </div>
-        <div className="flex-1 flex gap-2 items-center">
-            <HandBack count={handCount} />
-            <CityFan cards={player.city} />
-        </div>
+        <CityFan cards={player.city} />
       </div>
     </div>
   );
