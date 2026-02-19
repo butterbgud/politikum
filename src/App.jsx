@@ -97,7 +97,7 @@ function GameUI() {
   return (
     <div 
       className={`h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-col ${state.phase === 'lobby' ? 'justify-center' : ''}`} 
-      style={{ backgroundImage: `url(${state.phase === 'lobby' ? '/assets/ui/logo_olde_hansa.png' : '/assets/bg/table.jpg'})` }}
+      style={{ backgroundImage: `url(${state.phase === 'lobby' ? '/assets/ui/logo_olde_hansa.webp' : '/assets/bg/table.jpg'})` }}
     >
       <div className={isInGame ? "bg-black/25 flex-1 overflow-y-auto p-8" : "bg-transparent p-8 flex items-center justify-center"} style={{ borderRadius: "1.25rem" }}>
       {/* DEBUG_PHASE_BADGE */}
@@ -112,7 +112,7 @@ function GameUI() {
             
             {/* Left Panel: Changelog (Scroll Style) */}
             <div className="flex-1 h-full min-h-[400px] relative group flex justify-center items-center">
-                <div className="absolute inset-0 bg-contain bg-center bg-no-repeat drop-shadow-xl" style={{ backgroundImage: "url('/assets/ui/scroll_v2.png')" }}></div>
+                <div className="absolute inset-0 bg-contain bg-center bg-no-repeat drop-shadow-xl" style={{ backgroundImage: "url('/assets/ui/scroll_v2.webp')" }}></div>
                 <div className="relative z-10 p-16 sm:p-24 h-[75%] w-[85%] overflow-y-auto custom-scrollbar text-center">
                     <h2 className="text-3xl font-serif text-amber-950 font-bold mb-6 border-b border-amber-950/20 pb-2 uppercase tracking-widest">The Royal Decree</h2>
                     <div className="space-y-6 text-amber-950 font-serif text-lg leading-relaxed">
