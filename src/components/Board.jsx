@@ -110,11 +110,10 @@ export default function Board({ state, viewerId }) {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100]">
-      {/* Viewer HUD */}
-      <div className="absolute top-3 left-3 pointer-events-auto z-[200]">
-        <div className="bg-black/70 backdrop-blur-md rounded-xl border border-amber-900/30 px-3 py-2 shadow-2xl text-amber-100 font-mono text-xs">
-          <div className="font-black tracking-widest text-[10px] uppercase text-amber-400">You</div>
-          <div className="mt-0.5">Gold: <b className="text-amber-300">{me?.gold ?? 0}</b>g</div>
+      {/* Viewer HUD (near purse) */}
+      <div className="absolute bottom-4 left-56 pointer-events-none z-[200]">
+        <div className="text-amber-100 font-serif font-black text-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+          {(me?.gold ?? 0)}g <span className="opacity-70 px-2">•</span> {((me?.city || []).reduce((acc, c) => acc + (c.cost || 0), 0))}p
         </div>
       </div>
 
