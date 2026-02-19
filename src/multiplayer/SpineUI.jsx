@@ -762,7 +762,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               );
             })()}
             <div className="fixed bottom-4 left-4 max-w-sm w-full z-[950] pointer-events-auto">
-                <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col">
+                <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col h-72">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <button onClick={() => setDevCheatsOpen((v) => !v)} className="w-8 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Dev cheats (`)">DEV</button>
@@ -782,7 +782,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
                     {!logCollapsed && (
                       <>
-                        <div className="flex-1 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[11px] font-mono h-72">
+                        <div className="flex-1 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[11px] font-mono">
                             {G?.log?.map((entry, i) => (<div key={`log-${i}`} className="leading-tight border-l border-slate-900 pl-2 text-slate-400">{entry}</div>))}
                             {G?.chat?.map((msg, i) => (<div key={`chat-${i}`} className="leading-tight border-l border-amber-900/40 pl-2"><span className="text-amber-600 font-bold mr-2">{msg.sender}:</span><span className="text-amber-100">{msg.text}</span></div>))}
                             <div ref={logEndRef} />
