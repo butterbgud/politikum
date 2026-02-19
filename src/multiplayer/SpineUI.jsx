@@ -397,6 +397,17 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
         return;
       }
 
+      // Draft hotkeys: press role id 1..8 to pick that role when it's your pick
+      if (ctx.phase === 'draft' && isMyTurn && /^[1-8]$/.test(k)) {
+        const roleId = Number(k);
+        const ok = (G?.availableRoles || []).some(r => Number(r.id) === roleId);
+        if (ok) {
+          e.preventDefault();
+          dispatch({ type: 'PICK_ROLE', payload: { roleId } });
+          return;
+        }
+      }
+
       if (k === 'g' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'TAKE_GOLD' }); }
       if (k === 'c' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'DRAW_CARDS_START' }); }
       if (k === 'a' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'ACTIVATE_ABILITY' }); }
