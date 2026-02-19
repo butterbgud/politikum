@@ -819,9 +819,9 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             title={card.name}
                           >
                             {canBuild && (idx < 9) && (
-                              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
-                                <div className="bg-black/70 border border-amber-500/40 text-amber-200 font-mono font-black text-[10px] px-2 py-0.5 rounded">
-                                  {idx + 1}
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                                <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">
+                                  ({idx + 1})
                                 </div>
                               </div>
                             )}
