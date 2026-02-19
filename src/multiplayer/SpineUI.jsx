@@ -508,6 +508,29 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             <Board state={boardState} viewerId={playerID} dispatch={dispatch} />
             {ctx.phase === 'draft' && (
               <div className="fixed inset-0 z-[500] bg-black/25 flex flex-col items-center justify-center p-8 backdrop-blur-md">
+                {/* Draft: removed roles stack (rejects) */}
+                <div className="hidden lg:block fixed right-4 top-1/2 -translate-y-1/2 z-[600] pointer-events-none">
+                  <div className="relative w-36" style={{ height: '520px' }}>
+                    {/* facedown bottom layer */}
+                    {G?.removedFaceDownRole && (
+                      <div className="absolute left-0 bottom-0 w-36 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl opacity-90" style={{ zIndex: 10 }}>
+                        <img src="/assets/ui/character_back.jpg" alt="Removed facedown" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+
+                    {/* face-up rejects stacked upward */}
+                    {(G?.removedFaceUpRoles || []).slice().reverse().map((r, idx) => (
+                      <div
+                        key={r.id}
+                        className="absolute left-0 w-36 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl"
+                        style={{ bottom: `${(idx + 1) * 50}px`, opacity: 0.95, zIndex: 20 + idx }}
+                      >
+                        <img src={ROLE_IMG_BY_ID[r.id] || r.img} alt={r.name} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <h2 className="text-4xl text-amber-500 font-serif font-black uppercase tracking-[0.2em] mb-12">Role Draft</h2>
                 {isMyTurn ? (
                   <div className="flex gap-4 justify-center items-end -space-x-12">
