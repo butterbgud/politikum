@@ -322,6 +322,15 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     playerName: G?.players?.[playerID]?.name
   };
 
+  const [tutorialEnabled, setTutorialEnabled] = useState(() => {
+    const v = window.localStorage.getItem('citadel.tutorialEnabled');
+    return v == null ? true : v === '1' || v === 'true';
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('citadel.tutorialEnabled', tutorialEnabled ? '1' : '0');
+  }, [tutorialEnabled]);
+
   const dispatch = (action) => {
     // PROXY: If Host (0) is running a bot turn, route via submitBotAction
     if (playerID === '0' && ctx.currentPlayer !== '0' && G?.players?.[ctx.currentPlayer]?.isBot) {
@@ -376,11 +385,13 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
       if (k === 'c' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'DRAW_CARDS_START' }); }
       if (k === 'a' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'ACTIVATE_ABILITY' }); }
       if (k === 'e' && ctx.phase === 'action') { e.preventDefault(); dispatch({ type: 'END_TURN' }); }
+
+      if (k === 't') { e.preventDefault(); setTutorialEnabled((v) => !v); }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [ctx.phase, boardState.interaction, playerID]);
+  }, [ctx.phase, boardState.interaction, playerID, tutorialEnabled]);
 
   // Removed spammy decree auto-print
 
@@ -508,6 +519,14 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             <Board state={boardState} viewerId={playerID} dispatch={dispatch} />
             {ctx.phase === 'draft' && (
               <div className="fixed inset-0 z-[500] bg-black/25 flex flex-col items-center justify-center p-8 backdrop-blur-md">
+                {/* Tutorial: draft hint */}
+                {tutorialEnabled && isMyTurn && (
+                  <div className="fixed z-[650] pointer-events-none left-1/2 -translate-x-1/2 bottom-[260px]">
+                    <div className="bg-black/75 text-amber-100 border border-amber-700/40 shadow-[0_0_30px_rgba(251,191,36,0.18)] rounded-xl px-4 py-2 text-[12px] font-serif max-w-[280px] text-center">
+                      Pick a <b>character</b> card to start the round.
+                    </div>
+                  </div>
+                )}
                 {/* Draft: removed roles stack (rejects) */}
                 <div className="hidden lg:block fixed right-4 top-1/2 -translate-y-1/2 z-[600] pointer-events-none">
                   <div className="relative w-36" style={{ height: '520px' }}>
@@ -543,6 +562,14 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 )}
               </div>
             )}
+            {ctx.phase === 'action' && tutorialEnabled && isMyTurn && !boardState.interaction && (!me?.hasTakenAction) && (
+              <div className="fixed bottom-[290px] left-6 z-[1200] pointer-events-none select-none">
+                <div className="bg-black/70 backdrop-blur-md rounded-xl border border-amber-900/30 px-3 py-2 shadow-2xl text-amber-100 font-serif text-[12px]">
+                  Tip: press <b>G</b> for gold or <b>C</b> to draw cards.
+                </div>
+              </div>
+            )}
+
             {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (
               <div className="fixed bottom-6 left-6 z-[1000] pointer-events-auto select-none">
                 <div className="relative w-56 h-56">
