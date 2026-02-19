@@ -670,16 +670,61 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               </div>
             )}
 
-            {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (
-              <div className="fixed bottom-6 left-6 z-[1000] pointer-events-auto select-none">
-                <div className="relative w-56 h-56">
-                  <img src="/assets/ui/touch_actions.png" alt="Actions" className="absolute inset-0 w-full h-full object-contain opacity-95" />
-                  <button onClick={() => { playSfx('coin', { volume: 0.75 }); dispatch({ type: 'TAKE_GOLD' }); }} className="absolute left-0 top-0 h-full w-1/3 bg-transparent" title="Take Gold" />
-                  <button onClick={() => { playSfx('switch_005', { volume: 0.35 }); dispatch({ type: 'DRAW_CARDS_START' }); }} className="absolute left-1/3 top-0 h-full w-1/3 bg-transparent" title="Draw Cards" />
-                  <button onClick={() => { playSfx('drop_002', { volume: 0.75 }); dispatch({ type: 'END_TURN' }); }} className="absolute right-0 top-0 h-full w-1/3 bg-transparent" title="End Turn" />
-                </div>
-              </div>
-            )}
+            {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (() => {
+              const buttonsDisabled = !isMyTurn || !!me?.hasTakenAction;
+              const baseBtn = "fixed pointer-events-auto select-none outline-none focus:outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]";
+              const disabled = "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100";
+
+              return (
+                <>
+                  {/* Gold purse (G) */}
+                  <button
+                    type="button"
+                    onClick={() => { if (buttonsDisabled) return; playSfx('coin', { volume: 0.75 }); dispatch({ type: 'TAKE_GOLD' }); }}
+                    className={baseBtn + " z-[1100] " + (buttonsDisabled ? disabled : "cursor-pointer")}
+                    style={{ left: 'calc(2% + 183px)', bottom: '0.1%', width: '181px' }}
+                    title="Take gold (G)"
+                    aria-disabled={buttonsDisabled}
+                  >
+                    <div className="relative w-full h-auto">
+                      {!buttonsDisabled && (
+                        <img src="/assets/ui/touch_gold_purse_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
+                      )}
+                      <img src="/assets/ui/touch_gold_purse.png" alt="Gold" className="w-full h-auto" draggable={false} />
+                    </div>
+                  </button>
+
+                  {/* Deck (C) */}
+                  <button
+                    type="button"
+                    onClick={() => { if (buttonsDisabled) return; playSfx('switch_005', { volume: 0.35 }); dispatch({ type: 'DRAW_CARDS_START' }); }}
+                    className={baseBtn + " z-[1100] " + (buttonsDisabled ? disabled : "cursor-pointer")}
+                    style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
+                    title="Draw cards (C)"
+                    aria-disabled={buttonsDisabled}
+                  >
+                    <div className="relative w-full h-auto">
+                      {!buttonsDisabled && (
+                        <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
+                      )}
+                      <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
+                    </div>
+                  </button>
+
+                  {/* Cookies (E) */}
+                  <button
+                    type="button"
+                    onClick={() => { if (!isMyTurn) return; playSfx('drop_002', { volume: 0.75 }); dispatch({ type: 'END_TURN' }); }}
+                    className={baseBtn + " z-[1100] " + (!isMyTurn ? disabled : "cursor-pointer")}
+                    style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
+                    title="End turn (E)"
+                    aria-disabled={!isMyTurn}
+                  >
+                    <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
+                  </button>
+                </>
+              );
+            })()}
 
             {/* Draw keep modal (when drawCards produced tempChoices) */}
             {ctx.phase === 'action' && isMyTurn && (me?.tempChoices?.length > 0) && (
