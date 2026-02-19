@@ -17,7 +17,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sharp": "^0.34.5",
-    "citadel-engine": "git+https://github.com/butterbgud/citadel-engine.git#98395e9"
+    "citadel-engine": "file:../citadel-engine"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -733,7 +733,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             );
             })()}
 
-            {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (() => {
+            {ctx.phase === 'action' && isMyTurn && !boardState.interaction && (() => {
               const acting = G?.players?.[ctx.currentPlayer];
               const buttonsDisabled = !isMyTurn || !!acting?.hasTakenAction || !!acting?.isKilled;
               const baseBtn = "fixed pointer-events-auto select-none outline-none focus:outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]";
