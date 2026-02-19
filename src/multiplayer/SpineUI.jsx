@@ -447,7 +447,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   return (
     <div className={`h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-col ${ctx.phase === 'lobby' ? 'justify-center' : ''}`} style={{ backgroundImage: `url(${BG})` }}>
       <DevCheats moves={moves} />
-      <div className={isInGame ? "bg-black/25 flex-1 overflow-y-auto p-8 select-none" : "bg-transparent p-8 flex items-center justify-center h-full w-full"}>
+      <div className={isInGame ? "bg-transparent flex-1 overflow-y-auto p-8 select-none" : "bg-transparent p-8 flex items-center justify-center h-full w-full"}>
         <div className="fixed top-2 left-2 z-[9999] text-[10px] font-mono font-black text-amber-200 bg-black/70 px-2 py-1 rounded border border-amber-900/30">
             {__GIT_BRANCH__}:{__GIT_SHA__} | PHASE={ctx.phase} PLAYER={playerID} ACTIVE={ctx.currentPlayer}
         </div>
@@ -521,7 +521,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
           <div className="w-full relative h-full">
             <Board state={boardState} viewerId={playerID} dispatch={dispatch} />
             {ctx.phase === 'draft' && (
-              <div className="fixed inset-0 z-[500] bg-black/25 flex flex-col items-center justify-center p-8 backdrop-blur-md">
+              <div className="fixed inset-0 z-[500] bg-transparent flex flex-col items-center justify-center p-8">
                 {/* Tutorial: draft hint */}
                 {tutorialEnabled && isMyTurn && (
                   <div className="fixed z-[650] pointer-events-none left-1/2 -translate-x-1/2 bottom-[260px]">
