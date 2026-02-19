@@ -387,6 +387,15 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     logEndRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [G?.log?.length, G?.chat?.length]);
 
+  // SFX_EVENT_EFFECT (SP-style)
+  useEffect(() => {
+    try {
+      if (!G?.sfx || !G.sfx.name) return;
+      playSfx(G.sfx.name);
+      moves.clearSfx?.();
+    } catch {}
+  }, [G?.sfx]);
+
   // Hotkeys (match desktop SP)
   useEffect(() => {
     const onKeyDown = (e) => {

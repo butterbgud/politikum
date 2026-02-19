@@ -236,6 +236,7 @@ export const CitadelGame = {
     firstToFinishId: null,
     log: ['Multiplayer Citadel Initialized'],
     chat: [],
+    sfx: null,
   }),
 
   moves: {
@@ -244,6 +245,10 @@ export const CitadelGame = {
             G.players[playerID].name = name;
             G.players[playerID].isBot = false;
         }
+    },
+
+    clearSfx: ({ G }) => {
+        G.sfx = null;
     },
 
     // DEV CHEATS (temporary): grant/build uniques without RNG for testing.
@@ -426,6 +431,7 @@ export const CitadelGame = {
         p.gold += 2;
         p.hasTakenAction = true;
         G.log.push(`${p.name} took 2 gold.`);
+        G.sfx = { name: 'coin', at: Date.now() };
         checkAutoEnd(G, playerID, events);
     },
 
@@ -478,6 +484,7 @@ export const CitadelGame = {
         p.city.push(built);
         p.builtThisTurn += 1;
         G.log.push(`${p.name} constructed ${built.name}.`);
+        G.sfx = { name: 'drop_002', at: Date.now() };
         if (p.city.length >= 8 && !G.firstToFinishId) {
             G.firstToFinishId = playerID;
             G.log.push(`${p.name} has completed their city!`);
@@ -499,6 +506,7 @@ export const CitadelGame = {
             p.abilityUsed = true;
             const targetName = ROLES.find(r => r.id === payload.target).name;
             G.log.push(`${p.name} has marked the ${targetName} for death.`);
+            G.sfx = { name: 'assassin', at: Date.now() };
         }
         else if (payload.type === 'STEAL') {
             G.robbedRoleId = payload.target;
@@ -556,6 +564,7 @@ export const CitadelGame = {
                 p.gold -= cost;
                 p.abilityUsed = true;
                 G.log.push(`${p.name} razed ${card.name} from ${targetP.name}'s city.`);
+                G.sfx = { name: 'warlord', at: Date.now() };
             }
         }
         
@@ -611,6 +620,7 @@ export const CitadelGame = {
         p.hand.push(...drawn);
         p.usedUniqueThisTurn = { ...(p.usedUniqueThisTurn || {}), smithy: true };
         G.log.push(`${p.name} used Smithy (paid 2 gold, drew ${drawn.length}).`);
+        G.sfx = { name: 'card-fan-1', at: Date.now() };
     },
 
     labStart: ({ G, playerID, ctx }) => {
@@ -637,6 +647,7 @@ export const CitadelGame = {
         p.usedUniqueThisTurn = { ...(p.usedUniqueThisTurn || {}), lab: true };
         p.interaction = null;
         G.log.push(`${p.name} used Laboratory (discarded ${discarded.name}, +2 gold).`);
+        G.sfx = { name: 'handleCoins2', at: Date.now() };
         checkAutoEnd(G, playerID, events);
     },
 
