@@ -569,10 +569,18 @@ export const CitadelGame = {
         if (p.abilityUsed || !p.hasTakenAction) return INVALID_MOVE;
 
         if (p.role.id === 1) { // Assassin
-            p.interaction = { type: 'ASSASSINATE', options: [2,3,4,5,6,7,8].filter(id => id !== G.killedRoleId) };
+            const removed = new Set((G.removedFaceUpRoles || []).map(r => r.id));
+            p.interaction = {
+                type: 'ASSASSINATE',
+                options: [2,3,4,5,6,7,8].filter(id => id !== G.killedRoleId && !removed.has(id)),
+            };
         }
         else if (p.role.id === 2) { // Thief
-            p.interaction = { type: 'STEAL', options: [3,4,5,6,7,8].filter(id => id !== G.killedRoleId) };
+            const removed = new Set((G.removedFaceUpRoles || []).map(r => r.id));
+            p.interaction = {
+                type: 'STEAL',
+                options: [3,4,5,6,7,8].filter(id => id !== G.killedRoleId && !removed.has(id)),
+            };
         }
         else if (p.role.id === 3) { // Magician
             p.interaction = { type: 'MAGIC', options: ['SWAP_PLAYER', 'SWAP_DECK'] };

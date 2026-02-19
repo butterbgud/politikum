@@ -645,6 +645,31 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               </div>
             )}
 
+            {/* Assassin / Thief target pickers */}
+            {ctx.phase === 'action' && isMyTurn && (boardState.interaction?.type === 'ASSASSINATE' || boardState.interaction?.type === 'STEAL') && (
+              <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 pointer-events-auto">
+                <div className="bg-black/70 border border-amber-900/30 rounded-3xl p-6 shadow-2xl max-w-4xl w-full">
+                  <div className="text-amber-400 font-black uppercase tracking-widest text-xs mb-4">
+                    {boardState.interaction.type === 'ASSASSINATE' ? 'Assassin: choose a target role' : 'Thief: choose a target role'}
+                  </div>
+                  <div className="flex flex-wrap gap-4 justify-center items-end">
+                    {(boardState.interaction.options || []).map((rid) => (
+                      <button
+                        key={rid}
+                        onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: boardState.interaction.type, target: rid } })}
+                        className="p-0 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-visible w-32 hover:-translate-y-2"
+                      >
+                        <div className="w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-amber-900/30 shadow-2xl group-hover:border-amber-400">
+                          <img src={ROLE_IMG_BY_ID[rid]} alt={String(rid)} className="w-full h-full object-cover" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-6 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest">Cancel (ESC)</button>
+                </div>
+              </div>
+            )}
+
             {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (
               <div className="fixed bottom-6 left-6 z-[1000] pointer-events-auto select-none">
                 <div className="relative w-56 h-56">
