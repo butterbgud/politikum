@@ -718,26 +718,14 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               const handStep = 34;
               const handN = Math.max(1, hand.length);
               const handWidth = (handN - 1) * handStep + 144;
+              const canUseRoleAbility = isMyTurn && me?.hasTakenAction && !me?.abilityUsed && [1,2,3,8].includes(me?.role?.id);
 
               return (
                 <>
-                  {/* Built districts + viewer role card */}
+                  {/* Built districts */}
                   <div
                     className="fixed bottom-[156px] left-1/2 -translate-x-1/2 translate-x-[-260px] z-[999] pointer-events-auto"
                   >
-                    {me?.role && (
-                      <div className="absolute -left-44 bottom-0">
-                        <img
-                          src={(me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg'}
-                          alt="Role"
-                          className={
-                            "w-36 aspect-[2/3] object-cover rounded-xl border shadow-2xl " +
-                            ((isMyTurn && me?.hasTakenAction && !me?.abilityUsed) ? "border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.55)]" : "border-black/40")
-                          }
-                          title={(me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)'}
-                        />
-                      </div>
-                    )}
                     <div
                       className="relative h-24"
                       style={{ width: `${cityWidth}px` }}
@@ -789,7 +777,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   <div className="fixed bottom-6 left-1/2 -translate-x-1/2 translate-x-[100px] z-[999] pointer-events-auto">
                     <div
                       className="relative h-56 overflow-visible"
-                      style={{ width: `${handWidth}px` }}
+                      style={{ width: `${handWidth + 180}px` }}
                       onMouseMove={(e) => {
                         if (!hand.length) return;
                         const rect = e.currentTarget.getBoundingClientRect();
@@ -841,6 +829,36 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                           </button>
                         );
                       })}
+
+                      {/* Role card at rightmost of hand */}
+                      {me?.role && (
+                        <button
+                          onClick={() => {
+                            if (!canUseRoleAbility) return;
+                            playSfx('switch_005', { volume: 0.35 });
+                            dispatch({ type: 'ACTIVATE_ABILITY' });
+                          }}
+                          className={
+                            'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-2xl ' +
+                            (canUseRoleAbility
+                              ? 'cursor-pointer border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.55)]'
+                              : 'cursor-default border-black/40')
+                          }
+                          style={{
+                            left: `${handN * handStep + 20}px`,
+                            zIndex: 2000,
+                            transform: `rotate(${10}deg)`,
+                            transformOrigin: 'bottom center',
+                          }}
+                          title={(me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)'}
+                        >
+                          <img
+                            src={(me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg'}
+                            alt="Role"
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </>
