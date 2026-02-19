@@ -710,7 +710,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             aria-disabled={!canBuild}
                             className={
                               'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
-                              (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 opacity-60 cursor-not-allowed')
+                              (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer shadow-[0_0_18px_rgba(251,191,36,0.25)] animate-pulse' : 'border-slate-900 opacity-60 cursor-not-allowed')
                             }
                             style={{
                               right: `${right}px`,
