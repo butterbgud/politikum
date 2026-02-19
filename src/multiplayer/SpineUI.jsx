@@ -686,7 +686,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   </div>
 
                   {/* Hand fan */}
-                  <div className="fixed bottom-6 right-6 z-[999] pointer-events-auto">
+                  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] pointer-events-auto">
                     <div
                       className="relative h-56 overflow-visible"
                       style={{ width: `${handWidth}px` }}
@@ -702,7 +702,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                       {hand.map((card, idx) => {
                         const t = handN <= 1 ? 0.5 : idx / (handN - 1);
                         const rot = (t - 0.5) * 18;
-                        const right = (handN - 1 - idx) * handStep;
+                        const left = idx * handStep;
                         const canBuild = isMyTurn && (me.gold >= card.cost) && (me.builtThisTurn < me.buildLimit) && !(me.city || []).some(b => b.name === card.name);
 
                         const dist = (hoverActionHandIndex == null) ? 99 : Math.abs(idx - hoverActionHandIndex);
@@ -723,7 +723,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                               (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
                             }
                             style={{
-                              right: `${right}px`,
+                              left: `${left}px`,
                               zIndex: z,
                               transform: `rotate(${rot}deg) scale(${scale})`,
                               transformOrigin: 'bottom center',
