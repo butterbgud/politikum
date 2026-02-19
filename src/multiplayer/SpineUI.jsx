@@ -604,7 +604,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   <div className="flex gap-4 justify-center items-end -space-x-12">
                     {(G?.availableRoles || []).map(role => (
                       <button key={role.id} onClick={() => dispatch({ type: 'PICK_ROLE', payload: { roleId: role.id } })} className="p-0 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-visible w-36 pt-3 hover:-translate-y-6 hover:z-10">
-                        <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-amber-900/30 shadow-2xl transition-transform hover:border-amber-400">
+                        <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-amber-900/30 shadow-2xl transition-transform hover:border-amber-400" style={{ zIndex: 1000 - role.id }}>
                           {hotkeysEnabled && (
                             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                               <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">[{role.id}]</div>
