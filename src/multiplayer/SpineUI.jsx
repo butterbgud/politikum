@@ -763,7 +763,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               const handStep = 34;
               const handN = Math.max(1, hand.length);
               const handWidth = (handN - 1) * handStep + 144;
-              const canUseRoleAbility = isMyTurn && me?.hasTakenAction && !me?.abilityUsed && [1,2,3,8].includes(me?.role?.id);
+              const canUseRoleAbility = isMyTurn && !me?.abilityUsed && !me?.isKilled && [1,2,3,8].includes(me?.role?.id);
 
               return (
                 <>
@@ -832,11 +832,17 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                       }}
                       onMouseLeave={() => setHoverActionHandIndex(null)}
                     >
-                      {hand.map((card, idx) => {
-                        const t = handN <= 1 ? 0.5 : idx / (handN - 1);
+                      {(() => {
+                        const cards = [...hand];
+                        if (me?.role) cards.push({ __role: true });
+                        return cards;
+                      })().map((card, idx, arr) => {
+                        const fanN = Math.max(1, arr.length);
+                        const t = fanN <= 1 ? 0.5 : idx / (fanN - 1);
                         const rot = (t - 0.5) * 18;
                         const left = idx * handStep;
-                        const canBuild = isMyTurn && (me.gold >= card.cost) && (me.builtThisTurn < me.buildLimit) && !(me.city || []).some(b => b.name === card.name);
+                        const isRole = !!card.__role;
+                        const canBuild = !isRole && isMyTurn && (me.gold >= card.cost) && (me.builtThisTurn < me.buildLimit) && !(me.city || []).some(b => b.name === card.name);
 
                         const dist = (hoverActionHandIndex == null) ? 99 : Math.abs(idx - hoverActionHandIndex);
                         const scale = (hoverActionHandIndex == null) ? 1 : scaleByDist(dist);
@@ -844,66 +850,48 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
                         return (
                           <button
-                            key={card.id || idx}
+                            key={isRole ? '__role' : (card.id || idx)}
                             onClick={() => {
+                              if (isRole) {
+                                if (!canUseRoleAbility) return;
+                                playSfx('switch_005', { volume: 0.35 });
+                                dispatch({ type: 'ACTIVATE_ABILITY' });
+                                return;
+                              }
                               if (!canBuild) return;
                               playSfx('drop_002', { volume: 0.75 });
                               dispatch({ type: 'BUILD_DISTRICT', payload: { cardId: card.id } });
                             }}
-                            aria-disabled={!canBuild}
+                            aria-disabled={isRole ? !canUseRoleAbility : !canBuild}
                             className={
                               'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
-                              (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
+                              (isRole
+                                ? (canUseRoleAbility ? 'cursor-pointer border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.55)]' : 'cursor-default border-black/40')
+                                : (canBuild ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed'))
                             }
                             style={{
                               left: `${left}px`,
-                              zIndex: z,
+                              zIndex: isRole ? 2000 : z,
                               transform: `rotate(${rot}deg) scale(${scale})`,
                               transformOrigin: 'bottom center',
                             }}
-                            title={card.name}
+                            title={isRole ? ((me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)') : card.name}
                           >
-                            {canBuild && (idx < 9) && (
+                            {!isRole && canBuild && (idx < 9) && (
                               <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                                 <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">
                                   ({idx + 1})
                                 </div>
                               </div>
                             )}
-                            <img src={card.img} alt={card.name} className="w-full h-full object-cover" />
+                            <img
+                              src={isRole ? (((me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg')) : card.img}
+                              alt={isRole ? 'Role' : card.name}
+                              className="w-full h-full object-cover"
+                            />
                           </button>
                         );
                       })}
-
-                      {/* Role card at rightmost of hand (fan style) */}
-                      {me?.role && (
-                        <button
-                          onClick={() => {
-                            if (!canUseRoleAbility) return;
-                            playSfx('switch_005', { volume: 0.35 });
-                            dispatch({ type: 'ACTIVATE_ABILITY' });
-                          }}
-                          className={
-                            'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-2xl ' +
-                            (canUseRoleAbility
-                              ? 'cursor-pointer border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.55)]'
-                              : 'cursor-default border-black/40')
-                          }
-                          style={{
-                            left: `${handN * handStep}px`,
-                            zIndex: 2000,
-                            transform: `rotate(${10}deg) scale(${(hoverActionHandIndex == null) ? 1 : scaleByDist(Math.abs(handN - hoverActionHandIndex))})`,
-                            transformOrigin: 'bottom center',
-                          }}
-                          title={(me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)'}
-                        >
-                          <img
-                            src={(me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg'}
-                            alt="Role"
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      )}
                     </div>
                   </div>
                 </>

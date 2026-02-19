@@ -566,7 +566,8 @@ export const CitadelGame = {
     activateAbility: ({ G, playerID, ctx }) => {
         if (playerID !== ctx.currentPlayer) return INVALID_MOVE;
         const p = G.players[playerID];
-        if (p.abilityUsed || !p.hasTakenAction) return INVALID_MOVE;
+        // Allow character ability from start of turn (before takeGold/drawCards)
+        if (p.abilityUsed) return INVALID_MOVE;
 
         if (p.role.id === 1) { // Assassin
             const removed = new Set((G.removedFaceUpRoles || []).map(r => r.id));
