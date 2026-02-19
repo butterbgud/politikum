@@ -761,24 +761,43 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 </>
               );
             })()}
-            <div className="fixed bottom-4 left-4 max-w-sm w-full z-[950] pointer-events-auto">
-                <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col h-72">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setDevCheatsOpen((v) => !v)} className="w-8 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Dev cheats (`)">DEV</button>
-                        <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Hotkeys (H)">H</button>
-                        <button onClick={() => setTutorialEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Tutorial (T)">T</button>
-                        <button onClick={() => setSoundEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Sound (M)">{soundEnabled ? 'M' : 'M'}</button>
+            <div
+              className={
+                "fixed bottom-4 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+                (logCollapsed ? "translate-x-[-360px]" : "translate-x-0")
+              }
+            >
+                <div className="relative w-96 bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800/50 shadow-2xl flex flex-col h-72">
+                    {!logCollapsed && (
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setDevCheatsOpen((v) => !v)} className="w-8 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Dev cheats (`)">DEV</button>
+                          <button className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Hotkeys (H)">H</button>
+                          <button onClick={() => setTutorialEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Tutorial (T)">T</button>
+                          <button onClick={() => setSoundEnabled((v) => !v)} className="w-6 h-6 rounded bg-black/40 border border-slate-800 text-slate-300 text-[10px] font-black" title="Sound (M)">{soundEnabled ? 'M' : 'M'}</button>
+                        </div>
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronicles & Chat</h3>
+                        <button
+                          onClick={() => setLogCollapsed((v) => !v)}
+                          className="text-[12px] font-black tracking-widest text-amber-500/90 hover:text-amber-400"
+                          title="Toggle log (L)"
+                        >
+                          {'<'}
+                        </button>
                       </div>
-                      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronicles & Chat</h3>
-                      <button
-                        onClick={() => setLogCollapsed((v) => !v)}
-                        className="text-[9px] font-black uppercase tracking-widest text-amber-500/80 hover:text-amber-400"
-                        title="Toggle log (L)"
-                      >
-                        {logCollapsed ? 'Expand' : 'Collapse'}
-                      </button>
-                    </div>
+                    )}
+
+                    {logCollapsed && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <button
+                          onClick={() => setLogCollapsed(false)}
+                          className="w-8 h-10 rounded-xl bg-black/40 border border-slate-800 text-amber-500 font-black"
+                          title="Expand log (L)"
+                        >
+                          {'>'}
+                        </button>
+                      </div>
+                    )}
 
                     {!logCollapsed && (
                       <>
