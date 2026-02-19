@@ -67,7 +67,14 @@ function PlayerZone({ player, isActive }) {
   return (
     <div className={`min-w-[200px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
       <div className="text-[10px] font-mono font-black text-amber-200/90">
-        {player.name} · {player.gold}g · {points}p · {handCount}c
+        {player.name}
+        <span className="inline-flex items-center gap-1 bg-black/55 rounded-full px-2 py-0.5 border border-black/40 ml-2">
+          <span>{player.gold}g</span>
+          <span className="opacity-70 px-1">•</span>
+          <span>{points}p</span>
+          <span className="opacity-70 px-1">•</span>
+          <span>{handCount}c</span>
+        </span>
       </div>
       <div className="mt-2 flex gap-3 items-center">
         <div className="relative">
@@ -112,8 +119,10 @@ export default function Board({ state, viewerId }) {
     <div className="fixed inset-0 pointer-events-none z-[100]">
       {/* Viewer HUD (near purse) */}
       <div className="absolute bottom-4 left-56 pointer-events-none z-[200]">
-        <div className="text-amber-100 font-serif font-black text-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-          {(me?.gold ?? 0)}g <span className="opacity-70 px-2">•</span> {((me?.city || []).reduce((acc, c) => acc + (c.cost || 0), 0))}p
+        <div className="inline-flex items-center gap-2 bg-black/55 rounded-full px-4 py-2 border border-black/40 shadow-2xl">
+          <div className="text-amber-100 font-serif font-black text-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            {(me?.gold ?? 0)}g <span className="opacity-70 px-2">•</span> {((me?.city || []).reduce((acc, c) => acc + (c.cost || 0), 0))}p
+          </div>
         </div>
       </div>
 
