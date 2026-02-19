@@ -375,7 +375,8 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   };
 
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ block: 'end' });
+    // Always snap to newest log/chat entry
+    logEndRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [G?.log?.length, G?.chat?.length]);
 
   // Hotkeys (match desktop SP)
