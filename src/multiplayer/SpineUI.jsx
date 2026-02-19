@@ -645,27 +645,35 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               </div>
             )}
 
-            {/* Assassin / Thief target pickers */}
+            {/* Assassin / Thief target fan (no splash) */}
             {ctx.phase === 'action' && isMyTurn && (boardState.interaction?.type === 'ASSASSINATE' || boardState.interaction?.type === 'STEAL') && (
-              <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 pointer-events-auto">
-                <div className="bg-black/70 border border-amber-900/30 rounded-3xl p-6 shadow-2xl max-w-4xl w-full">
-                  <div className="text-amber-400 font-black uppercase tracking-widest text-xs mb-4">
+              <div className="fixed inset-0 z-[1200] pointer-events-none">
+                <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1200] pointer-events-auto">
+                  <div className="text-amber-300/90 font-black uppercase tracking-widest text-[11px] mb-3">
                     {boardState.interaction.type === 'ASSASSINATE' ? 'Assassin: choose a target role' : 'Thief: choose a target role'}
                   </div>
-                  <div className="flex flex-wrap gap-4 justify-center items-end">
-                    {(boardState.interaction.options || []).map((rid) => (
-                      <button
-                        key={rid}
-                        onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: boardState.interaction.type, target: rid } })}
-                        className="p-0 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-visible w-32 hover:-translate-y-2"
-                      >
-                        <div className="w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-amber-900/30 shadow-2xl group-hover:border-amber-400">
+                  <div className="relative h-[320px]">
+                    {(boardState.interaction.options || []).map((rid, i, arr) => {
+                      const n = Math.max(1, arr.length);
+                      const t = n <= 1 ? 0.5 : i / (n - 1);
+                      const rot = (t - 0.5) * 22;
+                      const x = (t - 0.5) * 520;
+                      return (
+                        <button
+                          key={rid}
+                          onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: boardState.interaction.type, target: rid } })}
+                          className="absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 border-black/40 shadow-2xl transition-transform hover:scale-[1.05]"
+                          style={{ left: `calc(50% + ${x}px)`, transform: `translateX(-50%) rotate(${rot}deg)`, transformOrigin: 'bottom center' }}
+                        >
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                            <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">({rid})</div>
+                          </div>
                           <img src={ROLE_IMG_BY_ID[rid]} alt={String(rid)} className="w-full h-full object-cover" />
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-6 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest">Cancel (ESC)</button>
+                  <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-4 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest pointer-events-auto">Cancel (ESC)</button>
                 </div>
               </div>
             )}
