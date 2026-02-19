@@ -675,7 +675,15 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
             )}
 
             {/* Assassin / Thief target fan (no splash) */}
-            {ctx.phase === 'action' && isMyTurn && (boardState.interaction?.type === 'ASSASSINATE' || boardState.interaction?.type === 'STEAL') && (
+            {ctx.phase === 'action' && isMyTurn && (boardState.interaction?.type === 'ASSASSINATE' || boardState.interaction?.type === 'STEAL') && (() => {
+              const scaleByDist = (dist) => {
+                if (dist === 0) return 2;
+                if (dist === 1) return 1.35;
+                if (dist === 2) return 1.15;
+                return 1;
+              };
+
+              return (
               <div className="fixed inset-0 z-[1200] pointer-events-none">
                 <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1200] pointer-events-auto">
                   <div className="text-amber-300/90 font-black uppercase tracking-widest text-[11px] mb-3">
@@ -710,7 +718,8 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-4 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest pointer-events-auto">Cancel (ESC)</button>
                 </div>
               </div>
-            )}
+            );
+            })()}
 
             {ctx.phase === 'action' && (isMyTurn || canHostDriveBot) && !boardState.interaction && (() => {
               const acting = G?.players?.[ctx.currentPlayer];
