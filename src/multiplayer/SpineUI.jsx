@@ -303,6 +303,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   const logEndRef = useRef(null);
   const [hoverActionHandIndex, setHoverActionHandIndex] = useState(null);
   const [hoverActionCityIndex, setHoverActionCityIndex] = useState(null);
+  const [hoverTargetIndex, setHoverTargetIndex] = useState(null);
   const isInGame = ctx.phase !== 'lobby' && ctx.phase !== 'results';
   const [chatInput, setChatInput] = useState("");
   const decreePrintedRef = useRef(false);
@@ -704,15 +705,15 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                       const t = n <= 1 ? 0.5 : i / (n - 1);
                       const rot = (t - 0.5) * 18;
                       const x = i * 34; // tight overlap like hand fan
-                      const dist = (hoverActionHandIndex == null) ? 99 : Math.abs(i - hoverActionHandIndex);
-                      const scale = (hoverActionHandIndex == null) ? 1 : scaleByDist(dist);
-                      const z = (hoverActionHandIndex == null) ? i : (1000 - dist);
+                      const dist = (hoverTargetIndex == null) ? 99 : Math.abs(i - hoverTargetIndex);
+                      const scale = (hoverTargetIndex == null) ? 1 : scaleByDist(dist);
+                      const z = (hoverTargetIndex == null) ? i : (1000 - dist);
 
                       return (
                         <button
                           key={rid}
                           onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: boardState.interaction.type, target: rid } })}
-                          onMouseEnter={() => setHoverActionHandIndex(i)}
+                          onMouseEnter={() => setHoverTargetIndex(i)}
                           className="absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 border-black/40 shadow-2xl transition-transform duration-200"
                           style={{ left: `${x}px`, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                         >
@@ -886,6 +887,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                       className="relative h-56 overflow-visible"
                       style={{ width: `${handWidth}px` }}
                       onMouseMove={(e) => {
+                        if (boardState.interaction) return; // don't zoom hand while targeting
                         if (!cards.length) return;
                         const rect = e.currentTarget.getBoundingClientRect();
                         const x = e.clientX - rect.left;
