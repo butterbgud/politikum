@@ -61,8 +61,8 @@ function CityFan({ cards }) {
 function PlayerZone({ player, isActive }) {
   const handCount = (player.hand || []).length;
   const points = (player.city || []).reduce((acc, c) => acc + (c.cost || 0), 0);
-  const roleImg = (player.role && player.roleRevealed) ? (player.role.img) : "/assets/ui/character_back.jpg";
-  const showRoleCard = !!player.role && (player.roleRevealed || isActive);
+  const roleImg = (player.role && (player.roleRevealed || isActive)) ? (player.role.img) : "/assets/ui/character_back.jpg";
+  const showRoleCard = !!player.role;
 
   return (
     <div className={`min-w-[200px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
@@ -86,7 +86,7 @@ function PlayerZone({ player, isActive }) {
               src={roleImg}
               alt="Role"
               className={`absolute -right-20 top-2 w-24 aspect-[2/3] object-cover rounded border border-black/40 shadow-2xl ${player.roleRevealed ? '' : 'opacity-90'}`}
-              title={player.role?.name}
+              title={(player.roleRevealed || isActive) ? player.role?.name : 'Role (hidden)'}
             />
           )}
         </div>

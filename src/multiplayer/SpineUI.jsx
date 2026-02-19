@@ -650,10 +650,20 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
               return (
                 <>
-                  {/* Built districts */}
+                  {/* Built districts + viewer role card */}
                   <div
                     className="fixed bottom-[156px] left-1/2 -translate-x-1/2 translate-x-[-260px] z-[999] pointer-events-auto"
                   >
+                    {me?.role && (
+                      <div className="absolute -left-44 bottom-0">
+                        <img
+                          src={(me?.roleRevealed || isMyTurn) ? (me.role.img) : '/assets/ui/character_back.jpg'}
+                          alt="Role"
+                          className="w-36 aspect-[2/3] object-cover rounded-xl border border-black/40 shadow-2xl"
+                          title={(me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)'}
+                        />
+                      </div>
+                    )}
                     <div
                       className="relative h-24"
                       style={{ width: `${cityWidth}px` }}
