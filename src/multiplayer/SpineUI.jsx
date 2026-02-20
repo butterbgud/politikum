@@ -142,7 +142,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[700] flex gap-10 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -408,7 +408,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1500] pointer-events-auto" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[5000] pointer-events-auto" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
         {(() => {
           const coal = (me?.coalition || []);
           const n = Math.max(1, coal.length);
