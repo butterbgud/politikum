@@ -129,7 +129,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
+      <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -141,8 +141,9 @@ function Board({ G, ctx, moves, playerID }) {
 
           // Single opponent fan: coalition face-up + hand face-down in one stack
           const oppFanCards = [
-            ...coal.map((c) => ({ kind: 'face', card: c })),
+            // backs first so face-up (played) ends up on the RIGHT side of the fan
             ...Array.from({ length: nHand }, () => ({ kind: 'back' })),
+            ...coal.map((c) => ({ kind: 'face', card: c })),
           ];
 
           const show = Math.min(10, oppFanCards.length);
