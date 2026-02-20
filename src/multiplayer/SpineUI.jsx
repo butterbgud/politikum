@@ -35,6 +35,7 @@ function Board({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
   const [showEventSplash, setShowEventSplash] = useState(false);
+  const [showActionSplash, setShowActionSplash] = useState(false);
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -110,6 +111,14 @@ function Board({ G, ctx, moves, playerID }) {
     const t = setTimeout(() => setShowEventSplash(false), 2000);
     return () => clearTimeout(t);
   }, [G.lastEvent?.id]);
+
+  useEffect(() => {
+    const id = G.lastAction?.id;
+    if (!id) return;
+    setShowActionSplash(true);
+    const t = setTimeout(() => setShowActionSplash(false), 2000);
+    return () => clearTimeout(t);
+  }, [G.lastAction?.id]);
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
@@ -322,6 +331,22 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {/* Action splash (auto-hide) */}
+      {showActionSplash && !!G.lastAction && (
+        <div className="fixed inset-0 z-[2600] pointer-events-none">
+          <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
+            <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
+              <img src={G.lastAction.img} alt={G.lastAction.id} className="w-full h-full object-cover" draggable={false} />
+            </div>
+            <div className="max-w-[360px]">
+              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action</div>
+              <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.lastAction.id}</div>
+              <div className="mt-2 text-amber-100/70 text-sm">(MVP) Actions discard on play; effects later.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Log (collapsible) */}
       <div className={
         "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
@@ -417,18 +442,21 @@ function Board({ G, ctx, moves, playerID }) {
             const z = hoverHandIndex == null ? idx : (1000 - dist);
 
             const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
+            const canPlayAction = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+            const canClick = canPlayPersona || canPlayAction;
 
             return (
               <button
                 key={card.id}
                 onClick={() => {
-                  if (!canPlayPersona) return;
-                  moves.playPersona(card.id);
+                  if (!canClick) return;
+                  if (canPlayPersona) moves.playPersona(card.id);
+                  else if (canPlayAction) moves.playAction(card.id);
                 }}
-                aria-disabled={!canPlayPersona}
+                aria-disabled={!canClick}
                 className={
                   'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
-                  (canPlayPersona ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
+                  (canClick ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
                 }
                 style={{
                   left: `${left}px`,
