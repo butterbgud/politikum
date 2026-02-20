@@ -34,9 +34,7 @@ function Board({ G, ctx, moves, playerID }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
-  const currentPlayerObj = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
-  const currentIsBot = String(currentPlayerObj?.name || '').startsWith('[B]');
-  const canAckEvent = !!G.pendingEvent && (isMyTurn || currentIsBot);
+  const canAckEvent = !!G.pendingEvent;
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -114,26 +112,44 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-8 pointer-events-none">
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const cAll = (hand0 || []).length;
 
           const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
-          const stack = (n, label) => (
-            <div className="relative w-16 aspect-[2/3]" title={label}>
-              <img src="/assets/backing.jpg" className="absolute inset-0 w-full h-full object-cover rounded-lg border border-black/40 shadow-2xl" alt="back" />
-              {n > 0 && (
-                <div className="absolute -top-2 -right-2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[11px] px-1.5 py-0.5 rounded-full">{n}</div>
-              )}
-            </div>
-          );
+          const handFan = (n, label) => {
+            const show = Math.min(8, n);
+            const step = 18;
+            const width = 56 + Math.max(0, show - 1) * step;
+            return (
+              <div className="relative" style={{ width, height: 84 }} title={label}>
+                {Array.from({ length: show }, (_, i) => {
+                  const t = show <= 1 ? 0.5 : i / (show - 1);
+                  const rot = (t - 0.5) * 14;
+                  const left = i * step;
+                  return (
+                    <div
+                      key={i}
+                      className="absolute bottom-0 w-28 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl"
+                      style={{ left, transform: `rotate(${rot}deg)`, transformOrigin: 'bottom center' }}
+                    >
+                      <img src="/assets/backing.jpg" className="w-full h-full object-cover" alt="back" draggable={false} />
+                    </div>
+                  );
+                })}
+                {n > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{n}</div>
+                )}
+              </div>
+            );
+          };
 
           const coal = (p.coalition || []);
           const n = Math.max(1, coal.length);
-          const step = Math.min(34, Math.max(16, 180 / Math.max(1, n - 1)));
-          const width = 64 + (n - 1) * step;
+          const step = Math.min(54, Math.max(26, 280 / Math.max(1, n - 1)));
+          const width = 120 + (n - 1) * step;
           const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
 
           const scaleByDist2 = (dist) => {
@@ -151,15 +167,15 @@ function Board({ G, ctx, moves, playerID }) {
                 <span className="text-amber-200/80">{pts}p</span>
               </div>
 
-              {/* facedown stash (all unplayed cards) */}
-              <div className="flex gap-2">
-                {stack(cAll, 'Hand')}
+              {/* facedown hand fan (all unplayed cards) */}
+              <div className="pointer-events-auto">
+                {handFan(cAll, 'Hand')}
               </div>
 
               {/* coalition fan */}
               <div
-                className="relative h-24"
-                style={{ width, pointerEvents: 'auto' }}
+                className="relative h-44"
+                style={{ width: Math.max(width, 260), pointerEvents: 'auto' }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
@@ -179,7 +195,7 @@ function Board({ G, ctx, moves, playerID }) {
                   return (
                     <div
                       key={c.id}
-                      className="absolute bottom-0 w-16 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl"
+                      className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                       title={c.id}
                     >
@@ -350,15 +366,33 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       </div>
 
-      {/* My coalition (built row) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[800] pointer-events-none" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
-        <div className="flex gap-2 justify-center">
-          {(me?.coalition || []).slice(-10).map((c) => (
-            <div key={c.id} className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl">
-              <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+      {/* My coalition (built row fan) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[800] pointer-events-auto" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
+        {(() => {
+          const coal = (me?.coalition || []);
+          const n = Math.max(1, coal.length);
+          const step = Math.min(78, Math.max(34, 420 / Math.max(1, n - 1)));
+          const width = 160 + (n - 1) * step;
+          return (
+            <div className="relative h-64" style={{ width }}>
+              {coal.map((c, i) => {
+                const t = n <= 1 ? 0.5 : i / (n - 1);
+                const rot = (t - 0.5) * 12;
+                const left = i * step;
+                return (
+                  <div
+                    key={c.id}
+                    className="absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                    style={{ left, transform: `rotate(${rot}deg)`, transformOrigin: 'bottom center' }}
+                    title={c.id}
+                  >
+                    <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          );
+        })()}
       </div>
 
       {/* Hand fan */}
