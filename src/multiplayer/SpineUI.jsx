@@ -402,50 +402,71 @@ function Board({ G, ctx, moves, playerID }) {
             <div className="mt-2 text-amber-100 font-serif text-2xl font-bold">
               Winner: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
             </div>
-            <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
-              {(G.players || []).map((p) => {
-                const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
-                return `${p.name}: ${pts} vp (coalition ${(p.coalition || []).length})`;
-              }).join('\n')}
-            </div>
-
-            {/* Score history chart (turn vs VP) */}
             {Array.isArray(G.history) && G.history.length >= 2 && (() => {
               const hist = G.history;
               const playerIds = (G.players || []).map((p) => String(p.id));
               const colors = ['#f59e0b', '#22c55e', '#60a5fa', '#f472b6', '#a78bfa'];
 
-              const turns = hist.map((h) => Number(h.turn || 0));
-              const minT = Math.min(...turns);
-              const maxT = Math.max(...turns);
-
-              const allScores = hist.flatMap((h) => playerIds.map((pid) => Number(h.scores?.[pid] ?? 0)));
-              const minY = Math.min(0, ...allScores);
-              const maxY = Math.max(1, ...allScores);
-
-              const W = 460, H = 160, pad = 18;
-              const sx = (t) => pad + ((t - minT) / Math.max(1, (maxT - minT))) * (W - pad * 2);
-              const sy = (v) => (H - pad) - ((v - minY) / Math.max(1, (maxY - minY))) * (H - pad * 2);
-
-              const pathFor = (pid) => {
-                const pts = hist.map((h) => ({ x: sx(Number(h.turn || 0)), y: sy(Number(h.scores?.[pid] ?? 0)) }));
-                return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-              };
-
               return (
-                <div className="mt-4">
-                  <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Progress (turn → VP)</div>
-                  <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
-                    {/* axes */}
-                    <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
-                    <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
-                    {playerIds.map((pid, i) => (
-                      <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
-                    ))}
-                  </svg>
-                </div>
+                <>
+                  <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
+                    {(G.players || []).map((p, i) => {
+                      const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+                      const col = colors[i % colors.length];
+                      return (
+                        <div key={p.id} style={{ color: col }}>
+                          {p.name}: {pts} vp (coalition {(p.coalition || []).length})
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Score history chart (turn vs VP) */}
+                  {(() => {
+                    const turns = hist.map((h) => Number(h.turn || 0));
+                    const minT = Math.min(...turns);
+                    const maxT = Math.max(...turns);
+
+                    const allScores = hist.flatMap((h) => playerIds.map((pid) => Number(h.scores?.[pid] ?? 0)));
+                    const minY = Math.min(0, ...allScores);
+                    const maxY = Math.max(1, ...allScores);
+
+                    const W = 460, H = 160, pad = 18;
+                    const sx = (t) => pad + ((t - minT) / Math.max(1, (maxT - minT))) * (W - pad * 2);
+                    const sy = (v) => (H - pad) - ((v - minY) / Math.max(1, (maxY - minY))) * (H - pad * 2);
+
+                    const pathFor = (pid) => {
+                      const pts = hist.map((h) => ({ x: sx(Number(h.turn || 0)), y: sy(Number(h.scores?.[pid] ?? 0)) }));
+                      return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+                    };
+
+                    return (
+                      <div className="mt-4">
+                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Progress (turn → VP)</div>
+                        <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
+                          {/* axes */}
+                          <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+                          <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+                          {playerIds.map((pid, i) => (
+                            <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
+                          ))}
+                        </svg>
+                      </div>
+                    );
+                  })()}
+                </>
               );
             })()}
+
+            {/* fallback if no history */}
+            {(!Array.isArray(G.history) || G.history.length < 2) && (
+              <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
+                {(G.players || []).map((p) => {
+                  const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+                  return `${p.name}: ${pts} vp (coalition ${(p.coalition || []).length})`;
+                }).join('\n')}
+              </div>
+            )}
 
             <div className="mt-4 text-amber-200/60 text-xs">(Refresh to start a new match for now.)</div>
           </div>
