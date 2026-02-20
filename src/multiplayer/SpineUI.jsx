@@ -77,9 +77,7 @@ function Board({ G, ctx, moves, playerID }) {
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-8 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
-          const cPersona = hand0.filter((c) => c.type === 'persona').length;
-          const cAction = hand0.filter((c) => c.type === 'action').length;
-          const cEvent = hand0.filter((c) => c.type === 'event').length;
+          const cAll = (hand0 || []).length;
 
           const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
@@ -113,11 +111,9 @@ function Board({ G, ctx, moves, playerID }) {
                 <span className="text-amber-200/80">{pts}p</span>
               </div>
 
-              {/* grouped facedown hand */}
+              {/* facedown stash (all unplayed cards) */}
               <div className="flex gap-2">
-                {stack(cPersona, 'Persona')}
-                {stack(cAction, 'Action')}
-                {stack(cEvent, 'Event')}
+                {stack(cAll, 'Hand')}
               </div>
 
               {/* coalition fan */}
@@ -309,7 +305,7 @@ function Board({ G, ctx, moves, playerID }) {
                 aria-disabled={!canPlayPersona}
                 className={
                   'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
-                  (canPlayPersona ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 opacity-60 cursor-not-allowed')
+                  (canPlayPersona ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
                 }
                 style={{
                   left: `${left}px`,
