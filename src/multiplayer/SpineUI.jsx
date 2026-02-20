@@ -33,13 +33,34 @@ function Board({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID);
 
-  const groupedHand = useMemo(() => {
-    const hand = me?.hand || [];
-    const personas = hand.filter((c) => c.type === 'persona');
-    const actions = hand.filter((c) => c.type === 'action');
-    const events = hand.filter((c) => c.type === 'event');
-    return { personas, actions, events };
-  }, [me]);
+  const [logCollapsed, setLogCollapsed] = useState(false);
+  const [hoverHandIndex, setHoverHandIndex] = useState(null);
+
+  const hand = me?.hand || [];
+
+  const grouped = useMemo(() => {
+    const by = { persona: [], action: [], event: [] };
+    for (const c of hand) (by[c.type] ||= []).push(c);
+    return by;
+  }, [hand]);
+
+  const opponents = useMemo(() => {
+    return (G.players || []).filter((p) => String(p.id) !== String(playerID));
+  }, [G.players, playerID]);
+
+  // Hand fan geometry (ported from Citadel MP)
+  const cards = hand;
+  const fanN = Math.max(1, cards.length);
+  const cardW = 144; // ~ w-36
+  const handStep = Math.min(90, Math.max(42, 520 / Math.max(1, fanN - 1)));
+  const handWidth = cardW + (fanN - 1) * handStep;
+
+  const scaleByDist = (dist) => {
+    if (dist == 0) return 2;
+    if (dist == 1) return 1.35;
+    if (dist == 2) return 1.15;
+    return 1;
+  };
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
@@ -48,85 +69,152 @@ function Board({ G, ctx, moves, playerID }) {
           {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit'}
         </div>
       </div>
-      <div className="max-w-6xl mx-auto px-6 py-6">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-amber-200/60">Politikum</div>
-            <div className="font-black tracking-widest">Action phase</div>
-          </div>
-          <div className="flex gap-3">
+
+      {/* Opponents */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-6 pointer-events-none">
+        {opponents.map((p) => {
+          const hand0 = p.hand || [];
+          const cPersona = hand0.filter((c) => c.type === 'persona').length;
+          const cAction = hand0.filter((c) => c.type === 'action').length;
+          const cEvent = hand0.filter((c) => c.type === 'event').length;
+
+          const stack = (n) => (
+            <div className="relative w-16 aspect-[2/3]">
+              <img src="/assets/backing.jpg" className="absolute inset-0 w-full h-full object-cover rounded-lg border border-black/40 shadow-2xl" alt="back" />
+              {n > 0 && (
+                <div className="absolute -top-2 -right-2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[11px] px-1.5 py-0.5 rounded-full">{n}</div>
+              )}
+            </div>
+          );
+
+          return (
+            <div key={p.id} className="flex flex-col items-center gap-1">
+              <div className="bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90">{p.name}</div>
+              <div className="flex gap-2">
+                {stack(cPersona)}
+                {stack(cAction)}
+                {stack(cEvent)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Controls */}
+      <div className="fixed top-4 right-4 z-[950] flex gap-3 pointer-events-auto">
+        <button
+          onClick={() => moves.drawCard()}
+          disabled={!isMyTurn || G.hasDrawn}
+          className="px-4 py-2 rounded-xl bg-amber-900/40 border border-amber-500/20 disabled:opacity-40"
+        >
+          Draw
+        </button>
+        <button
+          onClick={() => moves.endTurn()}
+          disabled={!isMyTurn}
+          className="px-4 py-2 rounded-xl bg-black/40 border border-amber-500/20 disabled:opacity-40"
+        >
+          End Turn
+        </button>
+      </div>
+
+      {/* Log (collapsible) */}
+      <div className={
+        "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+        (logCollapsed ? "translate-x-[-360px]" : "translate-x-0")
+      }>
+        <div className="w-[340px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
+            <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
             <button
-              onClick={() => moves.drawCard()}
-              disabled={!isMyTurn || G.hasDrawn}
-              className="px-4 py-2 rounded-xl bg-amber-900/40 border border-amber-500/20 disabled:opacity-40"
+              type="button"
+              onClick={() => setLogCollapsed((v) => !v)}
+              className="ml-auto text-amber-200/60 hover:text-amber-200 text-[12px] font-black"
+              title="Toggle log"
             >
-              Draw
-            </button>
-            <button
-              onClick={() => moves.endTurn()}
-              disabled={!isMyTurn}
-              className="px-4 py-2 rounded-xl bg-black/40 border border-amber-500/20 disabled:opacity-40"
-            >
-              End Turn
+              {logCollapsed ? ">" : "<"}
             </button>
           </div>
-        </div>
-
-        <div className="mt-8">
-          <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2">My Coalition</div>
-          <div className="flex flex-wrap gap-3">
-            {(me?.coalition || []).map((c) => (
-              <Card key={c.id} card={c} disabled />
-            ))}
-            {(!me?.coalition || me.coalition.length === 0) && <div className="text-amber-200/40 italic">(empty)</div>}
+          <div className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[420px] overflow-y-auto">
+            {(G.log || []).slice(-40).join("\n")}
           </div>
         </div>
+      </div>
 
-        <div className="mt-10">
-          <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2">Hand (grouped)</div>
-
-          <div className="space-y-6">
-            <div>
-              <div className="text-amber-200/70 font-black tracking-widest text-xs mb-2">PERSONAS</div>
-              <div className="flex flex-wrap gap-3">
-                {groupedHand.personas.map((c) => (
-                  <Card key={c.id} card={c} disabled={!isMyTurn || G.hasPlayed} onClick={() => moves.playPersona(c.id)} />
-                ))}
-              </div>
+      {/* My coalition */}
+      <div className="fixed left-1/2 -translate-x-1/2 top-[140px] z-[800] pointer-events-none">
+        <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2 text-center">My Coalition</div>
+        <div className="flex gap-2 justify-center">
+          {(me?.coalition || []).slice(-10).map((c) => (
+            <div key={c.id} className="w-20 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl">
+              <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
             </div>
-
-            <div>
-              <div className="text-amber-200/70 font-black tracking-widest text-xs mb-2">ACTIONS (MVP: later)</div>
-              <div className="flex flex-wrap gap-3">
-                {groupedHand.actions.map((c) => (
-                  <Card key={c.id} card={c} disabled />
-                ))}
-                {groupedHand.actions.length === 0 && <div className="text-amber-200/30 italic">(coming)</div>}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-amber-200/70 font-black tracking-widest text-xs mb-2">EVENTS (never stay in hand)</div>
-              <div className="flex flex-wrap gap-3">
-                {groupedHand.events.map((c) => (
-                  <Card key={c.id} card={c} disabled />
-                ))}
-                {groupedHand.events.length === 0 && <div className="text-amber-200/30 italic">(none)</div>}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
+      </div>
 
-        <div className="mt-10 bg-black/50 border border-amber-900/20 rounded-2xl p-4">
-          <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2">Log</div>
-          <div className="font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-48 overflow-y-auto">
-            {(G.log || []).slice(-30).join('\n')}
-          </div>
+      {/* Hand fan */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] pointer-events-auto">
+        <div
+          className="relative h-56 overflow-visible"
+          style={{ width: `${handWidth}px` }}
+          onMouseMove={(e) => {
+            if (!cards.length) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const idx = Math.max(0, Math.min(cards.length - 1, Math.round(x / handStep)));
+            setHoverHandIndex(idx);
+          }}
+          onMouseLeave={() => setHoverHandIndex(null)}
+        >
+          {cards.map((card, idx) => {
+            const t = fanN <= 1 ? 0.5 : idx / (fanN - 1);
+            const rot = (t - 0.5) * 18;
+            const left = idx * handStep;
+
+            const dist = hoverHandIndex == null ? 99 : Math.abs(idx - hoverHandIndex);
+            const scale = hoverHandIndex == null ? 1 : scaleByDist(dist);
+            const z = hoverHandIndex == null ? idx : (1000 - dist);
+
+            const canPlayPersona = isMyTurn && !G.hasPlayed && card.type === 'persona';
+
+            return (
+              <button
+                key={card.id}
+                onClick={() => {
+                  if (!canPlayPersona) return;
+                  moves.playPersona(card.id);
+                }}
+                aria-disabled={!canPlayPersona}
+                className={
+                  'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
+                  (canPlayPersona ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 opacity-60 cursor-not-allowed')
+                }
+                style={{
+                  left: `${left}px`,
+                  zIndex: z,
+                  transform: `rotate(${rot}deg) scale(${scale})`,
+                  transformOrigin: 'bottom center',
+                }}
+                title={card.id}
+              >
+                <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tiny debug: grouped counts */}
+      <div className="fixed bottom-4 left-4 z-[900] pointer-events-none select-none">
+        <div className="bg-black/45 border border-amber-900/20 rounded-xl px-3 py-2 text-[10px] font-mono text-amber-200/70">
+          hand: P{grouped.persona.length} A{grouped.action.length} E{grouped.event.length}
         </div>
       </div>
     </div>
   );
 }
+
 
 const GameClient = Client({
   game: PolitikumGame,
