@@ -40,6 +40,7 @@ function Board({ G, ctx, moves, playerID }) {
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
+  const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
   const [hoverOppCoalition, setHoverOppCoalition] = useState({}); // { [playerId]: idx }
 
   const hand = me?.hand || [];
@@ -407,23 +408,47 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[800] pointer-events-auto" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1500] pointer-events-auto" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
         {(() => {
           const coal = (me?.coalition || []);
           const n = Math.max(1, coal.length);
           const step = Math.min(44, Math.max(18, 240 / Math.max(1, n - 1)));
           const width = 160 + (n - 1) * step;
+
+          const scaleByDist3 = (dist) => {
+            if (dist === 0) return 2.0;
+            if (dist === 1) return 1.35;
+            if (dist === 2) return 1.15;
+            return 1;
+          };
+
           return (
-            <div className="relative h-64" style={{ width }}>
+            <div
+              className="relative h-64 overflow-visible"
+              style={{ width }}
+              onMouseMove={(e) => {
+                if (!coal.length) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const idx = Math.max(0, Math.min(coal.length - 1, Math.round(x / step)));
+                setHoverMyCoalition(idx);
+              }}
+              onMouseLeave={() => setHoverMyCoalition(null)}
+            >
               {coal.map((c, i) => {
                 const t = n <= 1 ? 0.5 : i / (n - 1);
                 const rot = (t - 0.5) * 12;
                 const left = i * step;
+
+                const dist = hoverMyCoalition == null ? 99 : Math.abs(i - hoverMyCoalition);
+                const scale = hoverMyCoalition == null ? 1 : scaleByDist3(dist);
+                const z = hoverMyCoalition == null ? i : (1000 - dist);
+
                 return (
                   <div
                     key={c.id}
                     className="absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
-                    style={{ left, transform: `rotate(${rot}deg)`, transformOrigin: 'bottom center' }}
+                    style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
                   >
                     <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
