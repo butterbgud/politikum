@@ -336,7 +336,7 @@ function Board({ G, ctx, moves, playerID }) {
         "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-x-[-360px]" : "translate-x-0")
       }>
-        <div className="w-[340px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="w-[420px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
 
@@ -367,7 +367,7 @@ function Board({ G, ctx, moves, playerID }) {
               </button>
             </div>
           </div>
-          <div className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[420px] overflow-y-auto">
+          <div className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[70vh] overflow-y-auto">
             {(G.log || []).slice(-40).join("\n")}
           </div>
         </div>
