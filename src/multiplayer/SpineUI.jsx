@@ -55,7 +55,7 @@ function Board({ G, ctx, moves, playerID }) {
   const cards = hand;
   const fanN = Math.max(1, cards.length);
   const cardW = 144; // ~ w-36
-  const handStep = Math.min(72, Math.max(34, 420 / Math.max(1, fanN - 1)));
+  const handStep = Math.min(60, Math.max(28, 360 / Math.max(1, fanN - 1)));
   const handWidth = cardW + (fanN - 1) * handStep;
 
   const scaleByDist = (dist) => {
@@ -259,10 +259,10 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* My coalition (built row) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[800] pointer-events-none">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[800] pointer-events-none" style={{ transform: 'translateX(calc(-50% - 300px))' }}>
         <div className="flex gap-2 justify-center">
           {(me?.coalition || []).slice(-10).map((c) => (
-            <div key={c.id} className="w-20 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl">
+            <div key={c.id} className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl">
               <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
             </div>
           ))}
