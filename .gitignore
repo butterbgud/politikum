@@ -3,3 +3,5 @@ dist/
 .vite/
 *.log
 vendor/citadel-engine/
+dist/
+node_modules/
