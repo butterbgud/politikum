@@ -34,7 +34,7 @@ function Board({ G, ctx, moves, playerID }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
-  const canAckEvent = !!G.pendingEvent;
+  const [showEventSplash, setShowEventSplash] = useState(false);
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -88,12 +88,12 @@ function Board({ G, ctx, moves, playerID }) {
         return;
       }
       if (key === 'c') {
-        if (!isMyTurn || G.hasDrawn || G.pendingEvent) return;
+        if (!isMyTurn || G.hasDrawn) return;
         moves.drawCard();
         return;
       }
       if (key === 'e') {
-        if (!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent) return;
+        if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return;
         moves.endTurn();
         return;
       }
@@ -101,7 +101,15 @@ function Board({ G, ctx, moves, playerID }) {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isMyTurn, G.hasDrawn, G.hasPlayed, G.pendingEvent, moves]);
+  }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves]);
+
+  useEffect(() => {
+    const id = G.lastEvent?.id;
+    if (!id) return;
+    setShowEventSplash(true);
+    const t = setTimeout(() => setShowEventSplash(false), 2000);
+    return () => clearTimeout(t);
+  }, [G.lastEvent?.id]);
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
@@ -214,14 +222,14 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Deck (Draw) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || G.hasDrawn || G.pendingEvent) return; moves.drawCard(); }}
+          onClick={() => { if (!isMyTurn || G.hasDrawn) return; moves.drawCard(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || G.hasDrawn || G.pendingEvent) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+            ((!isMyTurn || G.hasDrawn) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
           }
           style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
-          title={G.pendingEvent ? "Resolve event first" : (G.hasDrawn ? "Already drew" : "Draw card")}
-          aria-disabled={!isMyTurn || G.hasDrawn || G.pendingEvent}
+          title={(G.hasDrawn ? "Already drew" : "Draw card")}
+          aria-disabled={!isMyTurn || G.hasDrawn}
         >
           <div className="relative w-full h-auto">
             {(isMyTurn && !G.hasDrawn) && (
@@ -234,14 +242,14 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Cookies (End Turn) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent) return; moves.endTurn(); }}
+          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; moves.endTurn(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+            ((!isMyTurn || !G.hasDrawn || !G.hasPlayed) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
           }
           style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
-          title={G.pendingEvent ? "Resolve event first" : (!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
-          aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent}
+          title={(!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
+          aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed}
         >
           <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
         </button>
@@ -272,7 +280,7 @@ function Board({ G, ctx, moves, playerID }) {
                 <div className="mt-1">1) Draw (C)</div>
                 <div>2) Play 1 persona (click card)</div>
                 <div>3) End turn (E)</div>
-                <div className="mt-3 text-amber-200/60 text-xs">Events will pause the turn until you click OK.</div>
+                <div className="mt-3 text-amber-200/60 text-xs">Events auto-resolve for now (they just show briefly).</div>
               </div>
             )}
           </div>
@@ -298,27 +306,17 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Event prompt */}
-      {!!G.pendingEvent && (
+      {/* Event splash (auto-hide) */}
+      {showEventSplash && !!G.lastEvent && (
         <div className="fixed inset-0 z-[2500] pointer-events-none">
-          {/* event card appears on table (no dark modal) */}
-          <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6 pointer-events-auto">
+          <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
             <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
-              <img src={G.pendingEvent.img} alt={G.pendingEvent.id} className="w-full h-full object-cover" draggable={false} />
+              <img src={G.lastEvent.img} alt={G.lastEvent.id} className="w-full h-full object-cover" draggable={false} />
             </div>
             <div className="max-w-[360px]">
               <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
-              <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.pendingEvent.id}</div>
-              <div className="mt-2 text-amber-100/70 text-sm">
-                Event effects not implemented yet.
-              </div>
-              <button
-                type="button"
-                onClick={() => { if (!canAckEvent) return; moves.acknowledgeEvent(); }}
-                className="mt-3 text-amber-300 hover:text-amber-200 font-black uppercase tracking-widest text-sm"
-              >
-                OK
-              </button>
+              <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.lastEvent.id}</div>
+              <div className="mt-2 text-amber-100/70 text-sm">Event effects not implemented yet.</div>
             </div>
           </div>
         </div>
@@ -418,7 +416,7 @@ function Board({ G, ctx, moves, playerID }) {
             const scale = hoverHandIndex == null ? 1 : scaleByDist(dist);
             const z = hoverHandIndex == null ? idx : (1000 - dist);
 
-            const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && !G.pendingEvent && card.type === 'persona';
+            const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
 
             return (
               <button
@@ -451,7 +449,7 @@ function Board({ G, ctx, moves, playerID }) {
       <div className="fixed bottom-4 left-4 z-[900] pointer-events-none select-none">
         <div className="bg-black/45 border border-amber-900/20 rounded-xl px-3 py-2 text-[10px] font-mono text-amber-200/70 whitespace-pre">
           hand: P{grouped.persona.length} A{grouped.action.length} E{grouped.event.length}{"\n"}
-          turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.pendingEvent)}
+          turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}
         </div>
       </div>
     </div>
