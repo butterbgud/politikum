@@ -40,6 +40,7 @@ function Board({ G, ctx, moves, playerID }) {
   const responseKind = response?.kind || null;
   const responseExpiresAt = Number(response?.expiresAtMs || 0);
   const responseSecondsLeft = Math.max(0, Math.ceil((responseExpiresAt - Date.now()) / 1000));
+  const responseActive = !!responseKind && responseSecondsLeft > 0;
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
 
@@ -287,7 +288,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Response window banner */}
-      {!!responseKind && responseSecondsLeft > 0 && (
+      {responseActive && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {responseKind === 'cancel_action' ? 'Action played — respond with Action 6 to cancel' : 'Persona played — respond with Action 8 to cancel'}
@@ -595,8 +596,8 @@ function Board({ G, ctx, moves, playerID }) {
 
             const baseId = String(card.id).split('#')[0];
 
-            const canPlayPersona = isMyTurn && !responseKind && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
-            const canPlayAction = isMyTurn && !responseKind && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+            const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
+            const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
 
             // out-of-turn cancels
             const canCancelAction = !isMyTurn && responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID) && responseSecondsLeft > 0;
