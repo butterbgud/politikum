@@ -30,6 +30,8 @@ function Card({ card, onClick, disabled }) {
 }
 
 function Board({ G, ctx, moves, playerID }) {
+  const [showHotkeys, setShowHotkeys] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
 
@@ -64,6 +66,41 @@ function Board({ G, ctx, moves, playerID }) {
     if (dist == 2) return 1.15;
     return 1;
   };
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      // ignore typing
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.isComposing) return;
+
+      const key = String(e.key || '').toLowerCase();
+      if (key === 'l') {
+        setLogCollapsed((v) => !v);
+        return;
+      }
+      if (key === 'h') {
+        setShowHotkeys((v) => !v);
+        return;
+      }
+      if (key === 't') {
+        setShowTutorial((v) => !v);
+        return;
+      }
+      if (key === 'c') {
+        if (!isMyTurn || G.hasDrawn || G.pendingEvent) return;
+        moves.drawCard();
+        return;
+      }
+      if (key === 'e') {
+        if (!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent) return;
+        moves.endTurn();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isMyTurn, G.hasDrawn, G.hasPlayed, G.pendingEvent, moves]);
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
@@ -190,6 +227,38 @@ function Board({ G, ctx, moves, playerID }) {
           <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
         </button>
       </div>
+
+      {/* Hotkeys / Tutorial overlay */}
+      {(showHotkeys || showTutorial) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto" onClick={() => { setShowHotkeys(false); setShowTutorial(false); }}>
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[560px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center">
+              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">{showTutorial ? 'Tutorial' : 'Hotkeys'}</div>
+              <button className="ml-auto text-amber-200/60 hover:text-amber-200 font-black" onClick={() => { setShowHotkeys(false); setShowTutorial(false); }}>x</button>
+            </div>
+
+            {showHotkeys && (
+              <div className="mt-4 font-mono text-sm text-amber-100/80 whitespace-pre">
+                L  toggle logs\n
+                C  draw card\n
+                E  end turn\n
+                H  hotkeys\n
+                T  tutorial
+              </div>
+            )}
+
+            {showTutorial && (
+              <div className="mt-4 text-amber-100/80 text-sm">
+                <div className="font-black uppercase tracking-widest text-[11px] text-amber-200/70">Turn</div>
+                <div className="mt-1">1) Draw (C)</div>
+                <div>2) Play 1 persona (click card)</div>
+                <div>3) End turn (E)</div>
+                <div className="mt-3 text-amber-200/60 text-xs">Events will pause the turn until you click OK.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Game over overlay */}
       {G.gameOver && (
