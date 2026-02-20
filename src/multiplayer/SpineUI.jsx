@@ -411,7 +411,7 @@ function Board({ G, ctx, moves, playerID }) {
         {(() => {
           const coal = (me?.coalition || []);
           const n = Math.max(1, coal.length);
-          const step = Math.min(56, Math.max(24, 320 / Math.max(1, n - 1)));
+          const step = Math.min(44, Math.max(18, 240 / Math.max(1, n - 1)));
           const width = 160 + (n - 1) * step;
           return (
             <div className="relative h-64" style={{ width }}>
