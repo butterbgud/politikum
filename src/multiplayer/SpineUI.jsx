@@ -151,16 +151,25 @@ function Board({ G, ctx, moves, playerID }) {
 
           const pts = (coal || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
-          // Single opponent fan: coalition face-up + hand face-down in one stack
-          const oppFanCards = [
-            // backs first so face-up (played) ends up on the RIGHT side of the fan
-            ...Array.from({ length: nHand }, () => ({ kind: 'back' })),
-            ...coal.map((c) => ({ kind: 'face', card: c })),
-          ];
+          // Single opponent fan: coal face-up + hand face-down in one stack
+          // We want: backs VERY tight, faces less tight.
+          const backs = Array.from({ length: nHand }, () => ({ kind: 'back' }));
+          const faces = coal.map((c) => ({ kind: 'face', card: c }));
+          const oppFanCards = [...backs, ...faces];
 
-          const show = Math.min(10, oppFanCards.length);
-          const step = 14; // tight
-          const width = 120 + Math.max(0, show - 1) * step;
+          const show = Math.min(12, oppFanCards.length);
+          const stepBack = 6;  // 2x tighter
+          const stepFace = 18; // less tight
+
+          const calcWidth = () => {
+            const shown = oppFanCards.slice(0, show);
+            let w = 140;
+            for (let i = 1; i < shown.length; i++) {
+              w += shown[i].kind === 'back' ? stepBack : stepFace;
+            }
+            return w;
+          };
+          const width = calcWidth();
           const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
 
           const scaleByDist2 = (dist) => {
@@ -199,7 +208,14 @@ function Board({ G, ctx, moves, playerID }) {
                 {oppFanCards.slice(0, show).map((it, i) => {
                   const t = show <= 1 ? 0.5 : i / (show - 1);
                   const rot = (t - 0.5) * 12;
-                  const left = i * step;
+
+                  // variable spacing: backs tighter, faces looser
+                  const shown = oppFanCards.slice(0, show);
+                  let left = 0;
+                  for (let k = 0; k < i; k++) {
+                    left += (shown[k + 1]?.kind === 'back') ? stepBack : stepFace;
+                  }
+
                   const dist = (hoverIdx == null) ? 99 : Math.abs(i - hoverIdx);
                   const scale = (hoverIdx == null) ? 1 : scaleByDist2(dist);
                   const z = (hoverIdx == null) ? i : (1000 - dist);
