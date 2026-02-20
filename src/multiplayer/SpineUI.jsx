@@ -35,6 +35,7 @@ function Board({ G, ctx, moves, playerID }) {
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
+  const [hoverOppCoalition, setHoverOppCoalition] = useState({}); // { [playerId]: idx }
 
   const hand = me?.hand || [];
 
@@ -47,6 +48,8 @@ function Board({ G, ctx, moves, playerID }) {
   const opponents = useMemo(() => {
     return (G.players || []).filter((p) => String(p.id) !== String(playerID));
   }, [G.players, playerID]);
+
+  const myCoalitionPoints = (me?.coalition || []).length; // MVP scoring
 
   // Hand fan geometry (ported from Citadel MP)
   const cards = hand;
@@ -71,15 +74,17 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-6 pointer-events-none">
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-8 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const cPersona = hand0.filter((c) => c.type === 'persona').length;
           const cAction = hand0.filter((c) => c.type === 'action').length;
           const cEvent = hand0.filter((c) => c.type === 'event').length;
 
-          const stack = (n) => (
-            <div className="relative w-16 aspect-[2/3]">
+          const pts = (p.coalition || []).length; // MVP points
+
+          const stack = (n, label) => (
+            <div className="relative w-16 aspect-[2/3]" title={label}>
               <img src="/assets/backing.jpg" className="absolute inset-0 w-full h-full object-cover rounded-lg border border-black/40 shadow-2xl" alt="back" />
               {n > 0 && (
                 <div className="absolute -top-2 -right-2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[11px] px-1.5 py-0.5 rounded-full">{n}</div>
@@ -87,13 +92,65 @@ function Board({ G, ctx, moves, playerID }) {
             </div>
           );
 
+          const coal = (p.coalition || []);
+          const n = Math.max(1, coal.length);
+          const step = Math.min(34, Math.max(16, 180 / Math.max(1, n - 1)));
+          const width = 64 + (n - 1) * step;
+          const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
+
+          const scaleByDist2 = (dist) => {
+            if (dist === 0) return 1.9;
+            if (dist === 1) return 1.25;
+            if (dist === 2) return 1.1;
+            return 1;
+          };
+
           return (
-            <div key={p.id} className="flex flex-col items-center gap-1">
-              <div className="bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90">{p.name}</div>
+            <div key={p.id} className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90">
+                <span>{p.name}</span>
+                <span className="text-amber-200/50">•</span>
+                <span className="text-amber-200/80">{pts}p</span>
+              </div>
+
+              {/* grouped facedown hand */}
               <div className="flex gap-2">
-                {stack(cPersona)}
-                {stack(cAction)}
-                {stack(cEvent)}
+                {stack(cPersona, 'Persona')}
+                {stack(cAction, 'Action')}
+                {stack(cEvent, 'Event')}
+              </div>
+
+              {/* coalition fan */}
+              <div
+                className="relative h-24"
+                style={{ width, pointerEvents: 'auto' }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const idx = Math.max(0, Math.min(coal.length - 1, Math.round(x / step)));
+                  setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
+                }}
+                onMouseLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
+              >
+                {coal.map((c, i) => {
+                  const t = n <= 1 ? 0.5 : i / (n - 1);
+                  const rot = (t - 0.5) * 10;
+                  const left = i * step;
+                  const dist = (hoverIdx == null) ? 99 : Math.abs(i - hoverIdx);
+                  const scale = (hoverIdx == null) ? 1 : scaleByDist2(dist);
+                  const z = (hoverIdx == null) ? i : (1000 - dist);
+
+                  return (
+                    <div
+                      key={c.id}
+                      className="absolute bottom-0 w-16 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl"
+                      style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
+                      title={c.id}
+                    >
+                      <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -163,7 +220,7 @@ function Board({ G, ctx, moves, playerID }) {
 
       {/* My coalition */}
       <div className="fixed left-1/2 -translate-x-1/2 top-[140px] z-[800] pointer-events-none">
-        <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2 text-center">My Coalition</div>
+        <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2 text-center">My Coalition <span className="text-amber-200/80 font-black">({myCoalitionPoints}p)</span></div>
         <div className="flex gap-2 justify-center">
           {(me?.coalition || []).slice(-10).map((c) => (
             <div key={c.id} className="w-20 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl">
