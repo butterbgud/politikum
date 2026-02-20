@@ -31,7 +31,7 @@ function Card({ card, onClick, disabled }) {
 
 function Board({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
-  const isMyTurn = String(ctx.currentPlayer) === String(playerID);
+  const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -162,14 +162,14 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Deck (Draw) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || G.hasDrawn) return; moves.drawCard(); }}
+          onClick={() => { if (!isMyTurn || G.hasDrawn || G.pendingEvent) return; moves.drawCard(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || G.hasDrawn) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+            ((!isMyTurn || G.hasDrawn || G.pendingEvent) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
           }
           style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
-          title="Draw card"
-          aria-disabled={!isMyTurn || G.hasDrawn}
+          title={G.pendingEvent ? "Resolve event first" : (G.hasDrawn ? "Already drew" : "Draw card")}
+          aria-disabled={!isMyTurn || G.hasDrawn || G.pendingEvent}
         >
           <div className="relative w-full h-auto">
             {(isMyTurn && !G.hasDrawn) && (
@@ -182,18 +182,62 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Cookies (End Turn) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn) return; moves.endTurn(); }}
+          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent) return; moves.endTurn(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            (!isMyTurn ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+            ((!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
           }
           style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
-          title="End turn"
-          aria-disabled={!isMyTurn}
+          title={G.pendingEvent ? "Resolve event first" : (!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
+          aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed || G.pendingEvent}
         >
           <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
         </button>
       </div>
+
+      {/* Game over overlay */}
+      {G.gameOver && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[520px] max-w-[92vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Game over</div>
+            <div className="mt-2 text-amber-100 font-serif text-2xl font-bold">
+              Winner: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
+            </div>
+            <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
+              {(G.players || []).map((p) => {
+                const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+                return `${p.name}: ${pts} vp (coalition ${(p.coalition || []).length})`;
+              }).join('\n')}
+            </div>
+            <div className="mt-4 text-amber-200/60 text-xs">(Refresh to start a new match for now.)</div>
+          </div>
+        </div>
+      )}
+
+      {/* Event prompt */}
+      {!!G.pendingEvent && (
+        <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[520px] max-w-[92vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
+            <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.pendingEvent.id}</div>
+            <div className="mt-3 flex gap-4 items-center">
+              <img src={G.pendingEvent.img} alt={G.pendingEvent.id} className="w-40 aspect-[2/3] object-cover rounded-2xl border border-amber-700/30 shadow-xl" draggable={false} />
+              <div className="flex-1 text-amber-100/70 text-sm">
+                (MVP) Event effects not implemented yet.
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => { if (!isMyTurn) return; moves.acknowledgeEvent(); }}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black uppercase tracking-widest"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Log (collapsible) */}
       <div className={
@@ -253,7 +297,7 @@ function Board({ G, ctx, moves, playerID }) {
             const scale = hoverHandIndex == null ? 1 : scaleByDist(dist);
             const z = hoverHandIndex == null ? idx : (1000 - dist);
 
-            const canPlayPersona = isMyTurn && !G.hasPlayed && card.type === 'persona';
+            const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && !G.pendingEvent && card.type === 'persona';
 
             return (
               <button
