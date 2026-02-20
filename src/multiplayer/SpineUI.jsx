@@ -258,9 +258,8 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       </div>
 
-      {/* My coalition */}
-      <div className="fixed left-1/2 -translate-x-1/2 top-[140px] z-[800] pointer-events-none">
-        <div className="text-[10px] uppercase tracking-widest text-amber-200/60 mb-2 text-center">My Coalition <span className="text-amber-200/80 font-black">({myCoalitionPoints}p)</span></div>
+      {/* My coalition (built row) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[800] pointer-events-none">
         <div className="flex gap-2 justify-center">
           {(me?.coalition || []).slice(-10).map((c) => (
             <div key={c.id} className="w-20 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl">
@@ -271,10 +270,10 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Hand fan */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] pointer-events-auto">
+      <div className="fixed bottom-6 right-6 z-[999] pointer-events-auto">
         <div
           className="relative h-56 overflow-visible"
-          style={{ width: `${handWidth}px` }}
+          style={{ width: `${handWidth}px`, marginLeft: 'auto' }}
           onMouseMove={(e) => {
             if (!cards.length) return;
             const rect = e.currentTarget.getBoundingClientRect();
