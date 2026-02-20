@@ -137,14 +137,14 @@ function Board({ G, ctx, moves, playerID }) {
           const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
           const handFan = (n, label) => {
-            const show = Math.min(8, n);
-            const step = 18;
+            const show = Math.min(9, n);
+            const step = 10; // tighter
             const width = 56 + Math.max(0, show - 1) * step;
             return (
-              <div className="relative" style={{ width, height: 84 }} title={label}>
+              <div className="relative" style={{ width, height: 92 }} title={label}>
                 {Array.from({ length: show }, (_, i) => {
                   const t = show <= 1 ? 0.5 : i / (show - 1);
-                  const rot = (t - 0.5) * 14;
+                  const rot = (t - 0.5) * 10;
                   const left = i * step;
                   return (
                     <div
@@ -157,7 +157,7 @@ function Board({ G, ctx, moves, playerID }) {
                   );
                 })}
                 {n > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{n}</div>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{n}</div>
                 )}
               </div>
             );
@@ -165,7 +165,7 @@ function Board({ G, ctx, moves, playerID }) {
 
           const coal = (p.coalition || []);
           const n = Math.max(1, coal.length);
-          const step = Math.min(54, Math.max(26, 280 / Math.max(1, n - 1)));
+          const step = Math.min(52, Math.max(18, 220 / Math.max(1, n - 1)));
           const width = 120 + (n - 1) * step;
           const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
 
@@ -184,13 +184,12 @@ function Board({ G, ctx, moves, playerID }) {
                 <span className="text-amber-200/80">{pts}p</span>
               </div>
 
-              {/* facedown hand fan (all unplayed cards) */}
-              <div className="pointer-events-auto">
+              {/* hand + coalition */}
+              <div className="pointer-events-auto flex flex-col items-center gap-1">
                 {handFan(cAll, 'Hand')}
-              </div>
 
-              {/* coalition fan */}
-              <div
+                {/* coalition fan */}
+                <div
                 className="relative h-44"
                 style={{ width: Math.max(width, 260), pointerEvents: 'auto' }}
                 onMouseMove={(e) => {
@@ -220,6 +219,7 @@ function Board({ G, ctx, moves, playerID }) {
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           );
@@ -394,7 +394,7 @@ function Board({ G, ctx, moves, playerID }) {
         {(() => {
           const coal = (me?.coalition || []);
           const n = Math.max(1, coal.length);
-          const step = Math.min(78, Math.max(34, 420 / Math.max(1, n - 1)));
+          const step = Math.min(56, Math.max(24, 320 / Math.max(1, n - 1)));
           const width = 160 + (n - 1) * step;
           return (
             <div className="relative h-64" style={{ width }}>
