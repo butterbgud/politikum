@@ -1,13 +1,14 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
-import { CitadelGame, CitadelLobby } from './Game.js';
+import { CitadelGame } from './Game.js';
 
 const server = Server({
-  games: [CitadelGame, CitadelLobby],
+  games: [CitadelGame],
   origins: [
     Origins.LOCALHOST_IN_DEVELOPMENT,
     // Current LAN (router reshuffle)
+    "http://192.168.8.14:5177",
     "http://192.168.8.14:5176",
-    "http://192.168.8.14:5174",
+    "http://192.168.8.14:5174", 
 
     // Old LAN / fallback
     "http://192.168.0.11:5173",
@@ -20,7 +21,7 @@ const server = Server({
   ],
 });
 
-const PORT = 8000;
+const PORT = 8001;
 server.run({ port: PORT, host: '0.0.0.0' }, () => {
     console.log(`READY_ON_${PORT}`);
 });

@@ -1,1 +1,2 @@
-export { CitadelGame, CitadelLobby } from 'citadel-engine';
+export { PolitikumGame as CitadelGame, CitadelLobby } from 'citadel-engine';
+
