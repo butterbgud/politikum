@@ -49,7 +49,7 @@ function Board({ G, ctx, moves, playerID }) {
     return (G.players || []).filter((p) => String(p.id) !== String(playerID));
   }, [G.players, playerID]);
 
-  const myCoalitionPoints = (me?.coalition || []).length; // MVP scoring
+  const myCoalitionPoints = (me?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP scoring
 
   // Hand fan geometry (ported from Citadel MP)
   const cards = hand;
@@ -81,7 +81,7 @@ function Board({ G, ctx, moves, playerID }) {
           const cAction = hand0.filter((c) => c.type === 'action').length;
           const cEvent = hand0.filter((c) => c.type === 'event').length;
 
-          const pts = (p.coalition || []).length; // MVP points
+          const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
           const stack = (n, label) => (
             <div className="relative w-16 aspect-[2/3]" title={label}>
