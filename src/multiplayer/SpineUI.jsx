@@ -57,7 +57,7 @@ function Board({ G, ctx, moves, playerID }) {
   const cards = hand;
   const fanN = Math.max(1, cards.length);
   const cardW = 144; // ~ w-36
-  const handStep = Math.min(60, Math.max(28, 360 / Math.max(1, fanN - 1)));
+  const handStep = Math.min(52, Math.max(24, 320 / Math.max(1, fanN - 1)));
   const handWidth = cardW + (fanN - 1) * handStep;
 
   const scaleByDist = (dist) => {
@@ -339,7 +339,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Hand fan */}
-      <div className="fixed bottom-6 right-[210px] z-[999] pointer-events-auto">
+      <div className="fixed bottom-6 right-[310px] z-[999] pointer-events-auto">
         <div
           className="relative h-56 overflow-visible"
           style={{ width: `${handWidth}px`, marginLeft: 'auto' }}
