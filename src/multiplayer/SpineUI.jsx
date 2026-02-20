@@ -36,6 +36,8 @@ function Board({ G, ctx, moves, playerID }) {
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
+  const current = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
+  const currentIsBot = String(current?.name || '').startsWith('[B]');
   const response = G.response || null;
   const responseKind = response?.kind || null;
   const responseExpiresAt = Number(response?.expiresAtMs || 0);
@@ -125,6 +127,15 @@ function Board({ G, ctx, moves, playerID }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves, responseKind, responseSecondsLeft, response?.playedBy, playerID, me?.hand]);
+
+  // Drive bot turns (pacing): tick every 500ms when it's a bot's turn.
+  useEffect(() => {
+    if (!currentIsBot) return;
+    const t = setInterval(() => {
+      try { moves.tickBot(); } catch {}
+    }, 500);
+    return () => clearInterval(t);
+  }, [currentIsBot, moves]);
 
   useEffect(() => {
     const id = G.lastEvent?.id;
