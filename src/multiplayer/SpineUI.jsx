@@ -281,21 +281,22 @@ function Board({ G, ctx, moves, playerID }) {
 
       {/* Event prompt */}
       {!!G.pendingEvent && (
-        <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[520px] max-w-[92vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
-            <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.pendingEvent.id}</div>
-            <div className="mt-3 flex gap-4 items-center">
-              <img src={G.pendingEvent.img} alt={G.pendingEvent.id} className="w-40 aspect-[2/3] object-cover rounded-2xl border border-amber-700/30 shadow-xl" draggable={false} />
-              <div className="flex-1 text-amber-100/70 text-sm">
-                (MVP) Event effects not implemented yet.
-              </div>
+        <div className="fixed inset-0 z-[2500] pointer-events-none">
+          {/* event card appears on table (no dark modal) */}
+          <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6 pointer-events-auto">
+            <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
+              <img src={G.pendingEvent.img} alt={G.pendingEvent.id} className="w-full h-full object-cover" draggable={false} />
             </div>
-            <div className="mt-4 flex justify-end">
+            <div className="max-w-[360px]">
+              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
+              <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.pendingEvent.id}</div>
+              <div className="mt-2 text-amber-100/70 text-sm">
+                Event effects not implemented yet.
+              </div>
               <button
                 type="button"
                 onClick={() => { if (!isMyTurn) return; moves.acknowledgeEvent(); }}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black uppercase tracking-widest"
+                className="mt-3 text-amber-300 hover:text-amber-200 font-black uppercase tracking-widest text-sm"
               >
                 OK
               </button>
