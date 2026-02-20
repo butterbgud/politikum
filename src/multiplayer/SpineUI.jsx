@@ -32,6 +32,7 @@ function Card({ card, onClick, disabled }) {
 function Board({ G, ctx, moves, playerID }) {
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
   const [showEventSplash, setShowEventSplash] = useState(false);
@@ -111,6 +112,17 @@ function Board({ G, ctx, moves, playerID }) {
     const t = setTimeout(() => setShowEventSplash(false), 2000);
     return () => clearTimeout(t);
   }, [G.lastEvent?.id]);
+
+  // Autoscroll log to bottom on new lines
+  useEffect(() => {
+    const el = logRef.current;
+    if (!el) return;
+    // next tick so layout updates first
+    const t = setTimeout(() => {
+      el.scrollTop = el.scrollHeight;
+    }, 0);
+    return () => clearTimeout(t);
+  }, [(G.log || []).length]);
 
   useEffect(() => {
     const id = G.lastAction?.id;
@@ -368,7 +380,7 @@ function Board({ G, ctx, moves, playerID }) {
               </button>
             </div>
           </div>
-          <div className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[168px] overflow-y-auto custom-scrollbar">
+          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[168px] overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
           </div>
         </div>
