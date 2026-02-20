@@ -43,6 +43,8 @@ function Board({ G, ctx, moves, playerID }) {
   const responseExpiresAt = Number(response?.expiresAtMs || 0);
   const responseSecondsLeft = Math.max(0, Math.ceil((responseExpiresAt - Date.now()) / 1000));
   const responseActive = !!responseKind && responseSecondsLeft > 0;
+  const haveAction6 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
+  const haveAction8 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
 
@@ -314,7 +316,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Response window banner */}
-      {responseActive && (
+      {responseActive && ((responseKind === 'cancel_action' && haveAction6) || (responseKind === 'cancel_persona' && haveAction8)) && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {responseKind === 'cancel_action' ? 'Action played — respond with Action 6 to cancel' : 'Persona played — respond with Action 8 to cancel'}
