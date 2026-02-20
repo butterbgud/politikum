@@ -110,12 +110,12 @@ function Board({ G, ctx, moves, playerID }) {
       // Fast cancels during response windows
       if (key === '1') {
         // action_6 cancels actions
-        if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID) && responseSecondsLeft > 0) {
+        if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID) && responseActive) {
           const c6 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
           if (c6) moves.playAction(c6.id);
         }
         // action_8 cancels persona plays
-        if (responseKind === 'cancel_persona' && String(response?.playedBy) !== String(playerID) && responseSecondsLeft > 0) {
+        if (responseKind === 'cancel_persona' && String(response?.playedBy) !== String(playerID) && responseActive) {
           const c8 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
           if (c8) moves.playAction(c8.id);
         }
@@ -638,8 +638,8 @@ function Board({ G, ctx, moves, playerID }) {
             const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
 
             // out-of-turn cancels
-            const canCancelAction = !isMyTurn && responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID) && responseSecondsLeft > 0;
-            const canCancelPersona = !isMyTurn && responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID) && responseSecondsLeft > 0;
+            const canCancelAction = responseActive && responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
+            const canCancelPersona = responseActive && responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID);
 
             const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona;
 
