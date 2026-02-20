@@ -182,7 +182,7 @@ function Board({ G, ctx, moves, playerID }) {
 
           return (
             <div key={p.id} className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 -mt-10">
+              <div className="flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 -mt-16">
                 <span>{p.name}</span>
                 <span className="text-amber-200/50">•</span>
                 <span className="text-amber-200/80">{pts}p</span>
