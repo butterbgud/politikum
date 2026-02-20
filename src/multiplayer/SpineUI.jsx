@@ -129,7 +129,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
