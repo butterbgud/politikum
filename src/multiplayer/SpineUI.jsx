@@ -43,6 +43,11 @@ function Board({ G, ctx, moves, playerID }) {
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
+      <div className="fixed top-3 left-3 z-[2000] pointer-events-none select-none">
+        <div className="bg-black/60 border border-amber-900/20 rounded-lg px-2 py-1 text-[10px] font-mono font-black tracking-widest text-amber-200/80">
+          {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit'}
+        </div>
+      </div>
       <div className="max-w-6xl mx-auto px-6 py-6">
         <div className="flex items-start justify-between gap-6">
           <div>
