@@ -34,6 +34,9 @@ function Board({ G, ctx, moves, playerID }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
+  const currentPlayerObj = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
+  const currentIsBot = String(currentPlayerObj?.name || '').startsWith('[B]');
+  const canAckEvent = !!G.pendingEvent && (isMyTurn || currentIsBot);
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -295,7 +298,7 @@ function Board({ G, ctx, moves, playerID }) {
               </div>
               <button
                 type="button"
-                onClick={() => { if (!isMyTurn) return; moves.acknowledgeEvent(); }}
+                onClick={() => { if (!canAckEvent) return; moves.acknowledgeEvent(); }}
                 className="mt-3 text-amber-300 hover:text-amber-200 font-black uppercase tracking-widest text-sm"
               >
                 OK
