@@ -32,6 +32,7 @@ function Card({ card, onClick, disabled }) {
 function Board({ G, ctx, moves, playerID }) {
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId }
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
@@ -310,6 +311,56 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {/* Action_4 target picker */}
+      {!!pickTargetForAction4 && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto" onClick={() => setPickTargetForAction4(null)}>
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[520px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Choose target</div>
+            <div className="mt-2 text-amber-100 font-serif text-xl font-bold">Action 4</div>
+            <div className="mt-3 text-amber-100/70 text-sm">Pick an opponent. They will discard 1 coalition card of their choice.</div>
+            <div className="mt-4 flex flex-col gap-2">
+              {opponents.map((p) => (
+                <button
+                  key={p.id}
+                  className="px-4 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/20 text-left"
+                  onClick={() => {
+                    moves.playAction(pickTargetForAction4.cardId, String(p.id));
+                    setPickTargetForAction4(null);
+                  }}
+                >
+                  <div className="text-amber-100 font-black">{p.name}</div>
+                  <div className="text-amber-200/60 text-xs">Coalition: {(p.coalition || []).length}</div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button className="text-amber-200/70 hover:text-amber-200 font-black" onClick={() => setPickTargetForAction4(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action_4 discard prompt (target chooses) */}
+      {G.pending?.kind === 'action_4_discard' && String(playerID) === String(G.pending.targetId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from coalition</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose 1 card from your coalition to discard.</div>
+            <div className="mt-4 flex gap-3 flex-wrap">
+              {(me?.coalition || []).map((c) => (
+                <button
+                  key={c.id}
+                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  onClick={() => moves.discardFromCoalition(c.id)}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Game over overlay */}
       {G.gameOver && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto">
@@ -532,7 +583,13 @@ function Board({ G, ctx, moves, playerID }) {
                 onClick={() => {
                   if (!canClick) return;
                   if (canPlayPersona) moves.playPersona(card.id);
-                  else if (canPlayAction) moves.playAction(card.id);
+                  else if (canPlayAction) {
+                    if (String(card.id).split('#')[0] === 'action_4') {
+                      setPickTargetForAction4({ cardId: card.id });
+                      return;
+                    }
+                    moves.playAction(card.id);
+                  }
                 }}
                 aria-disabled={!canClick}
                 className={
