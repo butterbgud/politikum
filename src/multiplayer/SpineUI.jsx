@@ -187,8 +187,9 @@ function Board({ G, ctx, moves, playerID }) {
           };
 
           return (
-            <div key={p.id} className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 -mt-24">
+            <div key={p.id} className="flex flex-col items-center gap-2 relative">
+              {/* name/points as absolute overlay above cards */}
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-3 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000]">
                 <span>{p.name}</span>
                 <span className="text-amber-200/50">•</span>
                 <span className="text-amber-200/80">{pts}p</span>
@@ -196,7 +197,7 @@ function Board({ G, ctx, moves, playerID }) {
 
               {/* single opponent fan (coalition + hand) */}
               <div
-                className="relative h-44 pointer-events-auto"
+                className="relative h-44 pointer-events-auto mt-6"
                 style={{ width: Math.max(width, 260) }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
