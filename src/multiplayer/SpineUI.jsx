@@ -132,47 +132,28 @@ function Board({ G, ctx, moves, playerID }) {
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[900] flex gap-10 pointer-events-none">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
-          const cAll = (hand0 || []).length;
-
-          const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
-
-          const handFan = (n, label) => {
-            const show = Math.min(9, n);
-            const step = 10; // tighter
-            const width = 56 + Math.max(0, show - 1) * step;
-            return (
-              <div className="relative" style={{ width, height: 92 }} title={label}>
-                {Array.from({ length: show }, (_, i) => {
-                  const t = show <= 1 ? 0.5 : i / (show - 1);
-                  const rot = (t - 0.5) * 10;
-                  const left = i * step;
-                  return (
-                    <div
-                      key={i}
-                      className="absolute bottom-0 w-28 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow-2xl"
-                      style={{ left, transform: `rotate(${rot}deg)`, transformOrigin: 'bottom center' }}
-                    >
-                      <img src="/assets/backing.jpg" className="w-full h-full object-cover" alt="back" draggable={false} />
-                    </div>
-                  );
-                })}
-                {n > 0 && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{n}</div>
-                )}
-              </div>
-            );
-          };
-
           const coal = (p.coalition || []);
-          const n = Math.max(1, coal.length);
-          const step = Math.min(52, Math.max(18, 220 / Math.max(1, n - 1)));
-          const width = 120 + (n - 1) * step;
+          const nHand = (hand0 || []).length;
+          const nCoal = (coal || []).length;
+          const nTotal = nHand + nCoal;
+
+          const pts = (coal || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
+
+          // Single opponent fan: coalition face-up + hand face-down in one stack
+          const oppFanCards = [
+            ...coal.map((c) => ({ kind: 'face', card: c })),
+            ...Array.from({ length: nHand }, () => ({ kind: 'back' })),
+          ];
+
+          const show = Math.min(10, oppFanCards.length);
+          const step = 14; // tight
+          const width = 120 + Math.max(0, show - 1) * step;
           const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
 
           const scaleByDist2 = (dist) => {
-            if (dist === 0) return 1.9;
-            if (dist === 1) return 1.25;
-            if (dist === 2) return 1.1;
+            if (dist === 0) return 1.7;
+            if (dist === 1) return 1.2;
+            if (dist === 2) return 1.08;
             return 1;
           };
 
@@ -184,42 +165,45 @@ function Board({ G, ctx, moves, playerID }) {
                 <span className="text-amber-200/80">{pts}p</span>
               </div>
 
-              {/* hand + coalition */}
-              <div className="pointer-events-auto flex flex-col items-center gap-1">
-                {handFan(cAll, 'Hand')}
-
-                {/* coalition fan */}
-                <div
-                className="relative h-44"
-                style={{ width: Math.max(width, 260), pointerEvents: 'auto' }}
+              {/* single opponent fan (coalition + hand) */}
+              <div
+                className="relative h-44 pointer-events-auto"
+                style={{ width: Math.max(width, 260) }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
-                  const idx = Math.max(0, Math.min(coal.length - 1, Math.round(x / step)));
+                  const idx = Math.max(0, Math.min(show - 1, Math.round(x / step)));
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
                 onMouseLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
+                title={`Total: ${nTotal}`}
               >
-                {coal.map((c, i) => {
-                  const t = n <= 1 ? 0.5 : i / (n - 1);
-                  const rot = (t - 0.5) * 10;
+                {/* count */}
+                {nTotal > 0 && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{nTotal}</div>
+                )}
+
+                {oppFanCards.slice(0, show).map((it, i) => {
+                  const t = show <= 1 ? 0.5 : i / (show - 1);
+                  const rot = (t - 0.5) * 12;
                   const left = i * step;
                   const dist = (hoverIdx == null) ? 99 : Math.abs(i - hoverIdx);
                   const scale = (hoverIdx == null) ? 1 : scaleByDist2(dist);
                   const z = (hoverIdx == null) ? i : (1000 - dist);
 
+                  const img = it.kind === 'back' ? '/assets/backing.jpg' : it.card.img;
+                  const id = it.kind === 'back' ? 'back' : it.card.id;
                   return (
                     <div
-                      key={c.id}
+                      key={`${p.id}-${i}-${id}`}
                       className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
-                      title={c.id}
+                      title={id}
                     >
-                      <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                      <img src={img} alt={id} className="w-full h-full object-cover" draggable={false} />
                     </div>
                   );
                 })}
-                </div>
               </div>
             </div>
           );
