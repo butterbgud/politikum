@@ -312,14 +312,33 @@ function Board({ G, ctx, moves, playerID }) {
         <div className="w-[340px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
-            <button
-              type="button"
-              onClick={() => setLogCollapsed((v) => !v)}
-              className="ml-auto text-amber-200/60 hover:text-amber-200 text-[12px] font-black"
-              title="Toggle log"
-            >
-              {logCollapsed ? ">" : "<"}
-            </button>
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTutorial((v) => !v)}
+                className="text-amber-200/60 hover:text-amber-200 text-[10px] font-black"
+                title="Tutorial (T)"
+              >
+                T
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHotkeys((v) => !v)}
+                className="text-amber-200/60 hover:text-amber-200 text-[10px] font-black"
+                title="Hotkeys (H)"
+              >
+                H
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogCollapsed((v) => !v)}
+                className="text-amber-200/60 hover:text-amber-200 text-[12px] font-black"
+                title="Toggle log (L)"
+              >
+                {logCollapsed ? ">" : "<"}
+              </button>
+            </div>
           </div>
           <div className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[420px] overflow-y-auto">
             {(G.log || []).slice(-40).join("\n")}
