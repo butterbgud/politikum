@@ -106,11 +106,25 @@ function Board({ G, ctx, moves, playerID }) {
         moves.endTurn();
         return;
       }
+
+      // Fast cancels during response windows
+      if (key === '1') {
+        // action_6 cancels actions
+        if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID) && responseSecondsLeft > 0) {
+          const c6 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
+          if (c6) moves.playAction(c6.id);
+        }
+        // action_8 cancels persona plays
+        if (responseKind === 'cancel_persona' && String(response?.playedBy) !== String(playerID) && responseSecondsLeft > 0) {
+          const c8 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
+          if (c8) moves.playAction(c8.id);
+        }
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves]);
+  }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves, responseKind, responseSecondsLeft, response?.playedBy, playerID, me?.hand]);
 
   useEffect(() => {
     const id = G.lastEvent?.id;
