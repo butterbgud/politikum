@@ -202,7 +202,7 @@ function Board({ G, ctx, moves, playerID }) {
               >
                 {/* count */}
                 {nTotal > 0 && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{nTotal}</div>
+                  <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{nTotal}</div>
                 )}
 
                 {oppFanCards.slice(0, show).map((it, i) => {
