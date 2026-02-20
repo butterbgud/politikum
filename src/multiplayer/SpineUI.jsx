@@ -36,6 +36,10 @@ function Board({ G, ctx, moves, playerID }) {
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
+  const response = G.response || null;
+  const responseKind = response?.kind || null;
+  const responseExpiresAt = Number(response?.expiresAtMs || 0);
+  const responseSecondsLeft = Math.max(0, Math.ceil((responseExpiresAt - Date.now()) / 1000));
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
 
@@ -281,6 +285,16 @@ function Board({ G, ctx, moves, playerID }) {
           <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
         </button>
       </div>
+
+      {/* Response window banner */}
+      {!!responseKind && responseSecondsLeft > 0 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {responseKind === 'cancel_action' ? 'Action played — respond with Action 6 to cancel' : 'Persona played — respond with Action 8 to cancel'}
+            <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+          </div>
+        </div>
+      )}
 
       {/* Hotkeys / Tutorial overlay */}
       {(showHotkeys || showTutorial) && (
@@ -579,9 +593,16 @@ function Board({ G, ctx, moves, playerID }) {
             const scale = hoverHandIndex == null ? 1 : scaleByDist(dist);
             const z = hoverHandIndex == null ? idx : (1000 - dist);
 
-            const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
-            const canPlayAction = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'action';
-            const canClick = canPlayPersona || canPlayAction;
+            const baseId = String(card.id).split('#')[0];
+
+            const canPlayPersona = isMyTurn && !responseKind && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
+            const canPlayAction = isMyTurn && !responseKind && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+
+            // out-of-turn cancels
+            const canCancelAction = !isMyTurn && responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID) && responseSecondsLeft > 0;
+            const canCancelPersona = !isMyTurn && responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID) && responseSecondsLeft > 0;
+
+            const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona;
 
             return (
               <button
@@ -590,17 +611,19 @@ function Board({ G, ctx, moves, playerID }) {
                   if (!canClick) return;
                   if (canPlayPersona) moves.playPersona(card.id);
                   else if (canPlayAction) {
-                    if (String(card.id).split('#')[0] === 'action_4') {
+                    if (baseId === 'action_4') {
                       setPickTargetForAction4({ cardId: card.id });
                       return;
                     }
+                    moves.playAction(card.id);
+                  } else if (canCancelAction || canCancelPersona) {
                     moves.playAction(card.id);
                   }
                 }}
                 aria-disabled={!canClick}
                 className={
                   'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out shadow-xl ' +
-                  (canClick ? 'border-amber-700/40 hover:border-amber-400 cursor-pointer' : 'border-slate-900 cursor-not-allowed')
+                  (canClick ? ((canCancelAction || canCancelPersona) ? 'border-emerald-500/50 hover:border-emerald-300 cursor-pointer' : 'border-amber-700/40 hover:border-amber-400 cursor-pointer') : 'border-slate-900 cursor-not-allowed')
                 }
                 style={{
                   left: `${left}px`,
