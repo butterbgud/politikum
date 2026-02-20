@@ -255,14 +255,14 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Deck (Draw) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || G.hasDrawn) return; moves.drawCard(); }}
+          onClick={() => { if (!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; moves.drawCard(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || G.hasDrawn) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+            ((!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
           }
           style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
-          title={(G.hasDrawn ? "Already drew" : "Draw card")}
-          aria-disabled={!isMyTurn || G.hasDrawn}
+          title={((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
+          aria-disabled={!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
         >
           <div className="relative w-full h-auto">
             {(isMyTurn && !G.hasDrawn) && (
