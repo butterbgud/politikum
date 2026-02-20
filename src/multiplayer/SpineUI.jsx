@@ -363,33 +363,37 @@ function Board({ G, ctx, moves, playerID }) {
       {/* Log (collapsible) */}
       <div className={
         "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
-        (logCollapsed ? "translate-x-[-360px]" : "translate-x-0")
+        (logCollapsed ? "translate-x-[-392px]" : "translate-x-0")
       }>
         <div className="w-[420px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
 
             <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowTutorial((v) => !v)}
-                className="text-amber-200/60 hover:text-amber-200 text-[10px] font-black"
-                title="Tutorial (T)"
-              >
-                T
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowHotkeys((v) => !v)}
-                className="text-amber-200/60 hover:text-amber-200 text-[10px] font-black"
-                title="Hotkeys (H)"
-              >
-                H
-              </button>
+              {!logCollapsed && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowTutorial((v) => !v)}
+                    className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showTutorial ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
+                    title="Tutorial (T)"
+                  >
+                    T
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowHotkeys((v) => !v)}
+                    className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showHotkeys ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
+                    title="Hotkeys (H)"
+                  >
+                    H
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setLogCollapsed((v) => !v)}
-                className="text-amber-200/60 hover:text-amber-200 text-[12px] font-black"
+                className="px-2 py-0.5 rounded-md border border-amber-900/20 bg-black/20 text-amber-200/70 hover:text-amber-200 text-[12px] font-black"
                 title="Toggle log (L)"
               >
                 {logCollapsed ? ">" : "<"}
