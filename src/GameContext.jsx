@@ -139,7 +139,9 @@ function gameReducer(state, action) {
         newPlayersGold[pIndex] = { 
             ...newPlayersGold[pIndex], 
             gold: newPlayersGold[pIndex].gold + 2,
-            hasTakenAction: true 
+            hasTakenIncomeThisTurn: true,
+            // Back-compat alias (older UI/bot code used hasTakenAction)
+            hasTakenAction: true,
         };
         return {
             ...state,
@@ -162,6 +164,7 @@ function gameReducer(state, action) {
             newPlayers[pIndex] = {
                 ...me,
                 hand: [...(me.hand || []), ...drawn],
+                hasTakenIncomeThisTurn: true,
                 hasTakenAction: true,
             };
             return {
@@ -177,7 +180,7 @@ function gameReducer(state, action) {
         // If deck is empty, avoid opening an empty modal that can soft-lock the UI
         if (drawn.length === 0) {
             const newPlayers = [...state.players];
-            newPlayers[pIndex] = { ...me, hasTakenAction: true };
+            newPlayers[pIndex] = { ...me, hasTakenIncomeThisTurn: true, hasTakenAction: true };
             return {
                 ...state,
                 players: newPlayers,
@@ -228,7 +231,8 @@ function gameReducer(state, action) {
         playersAfterKeep[pIndexKeep] = {
             ...playersAfterKeep[pIndexKeep],
             hand: [...playersAfterKeep[pIndexKeep].hand, keptCard],
-            hasTakenAction: true
+            hasTakenIncomeThisTurn: true,
+            hasTakenAction: true,
         };
 
         return {
@@ -712,6 +716,7 @@ function gameReducer(state, action) {
       const playersResetForDraft = state.players.map(p => ({
         ...p,
         role: null,
+        hasTakenIncomeThisTurn: false,
         hasTakenAction: false,
         builtThisTurn: 0,
         buildLimit: 1,
@@ -922,6 +927,7 @@ function nextRoleTurn(state, startRoleId) {
             const resetPlayers = [...state.players];
             resetPlayers[playerIndex] = { 
                 ...playerWithRole, 
+                hasTakenIncomeThisTurn: false,
                 hasTakenAction: false,
                 abilityUsed: false,
                 builtThisTurn: 0,

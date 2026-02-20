@@ -211,7 +211,7 @@ export function runBotTurn(state, dispatch) {
 
     // 2. Resource Gathering (Gold vs Cards)
     // Only if hasn't taken action
-    if (!me.hasTakenAction) {
+    if (!me.hasTakenIncomeThisTurn) {
         // If holding drawing state
         if (state.isDrawing && state.drawnCards?.length) {
             // Pick the most expensive card? Or one that matches build capabilities?

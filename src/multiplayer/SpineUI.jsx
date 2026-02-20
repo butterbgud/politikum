@@ -271,7 +271,14 @@ export const CitadelWelcome = ({ onJoin }) => {
                   </div>
                   <div className="overflow-y-auto space-y-2 max-h-64 mb-6 pr-1 custom-scrollbar">
                       <h3 className="text-[10px] uppercase tracking-widest text-amber-900/60 mb-2 border-b border-amber-900/10 pb-1">Available Realms</h3>
-                      {(matches || []).map(match => {
+                      {(matches || []).filter(match => {
+                        // Hide matches that have already started.
+                        // boardgame.io sets match.gameover when finished; for in-progress we rely on unfilled seats as proxy.
+                        if (match.gameover) return false;
+                        const seats = match.players || [];
+                        const hasOpenSeat = seats.some(p => p && p.name == null);
+                        return hasOpenSeat;
+                      }).map(match => {
                           const host = match.setupData?.hostName || "Noble";
                           const displayName = host.endsWith('s') ? `${host}' Realm` : `${host}'s Realm`;
                           return (
@@ -304,12 +311,23 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
   const [hoverActionHandIndex, setHoverActionHandIndex] = useState(null);
   const [hoverActionCityIndex, setHoverActionCityIndex] = useState(null);
   const [hoverTargetIndex, setHoverTargetIndex] = useState(null);
+
+  // Hover SFX (hand fan)
+  const lastHandHoverSfxIdxRef = useRef(null);
+  const lastHandHoverSfxAtRef = useRef(0);
   const isInGame = ctx.phase !== 'lobby' && ctx.phase !== 'results';
   const [chatInput, setChatInput] = useState("");
   const decreePrintedRef = useRef(false);
+  const prevPhaseRef = useRef(ctx.phase);
+  const dealSfxPlayedRef = useRef(false);
 
   const me = G?.players?.[playerID];
-  const isMyTurn = playerID === ctx.currentPlayer;
+  // In some bot-driving flows, ctx.currentPlayer can temporarily stay on the human while bots act.
+  // Treat the "acting" seat as the one whose role is currently active.
+  const activeRoleId = G?.activeRoleId;
+  const actingSeatId = (G?.players || []).find(p => p?.role?.id === activeRoleId)?.id;
+  const effectiveCurrentPlayer = (actingSeatId != null) ? String(actingSeatId) : String(ctx.currentPlayer);
+  const isMyTurn = String(playerID) === effectiveCurrentPlayer;
   const isHost = playerID === '0';
   const isBotTurn = !!G?.players?.[ctx.currentPlayer]?.isBot;
   const canHostDriveBot = isHost && isBotTurn && ctx.currentPlayer !== '0';
@@ -350,6 +368,18 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
     window.localStorage.setItem('citadel.soundEnabled', soundEnabled ? '1' : '0');
     SFX_ENABLED = !!soundEnabled;
   }, [soundEnabled]);
+
+  // SFX: initial deal (lobby -> draft)
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = ctx.phase;
+
+    if (dealSfxPlayedRef.current) return;
+    if (prev === 'lobby' && ctx.phase === 'draft') {
+      dealSfxPlayedRef.current = true;
+      playSfx('card-fan-1', { volume: 0.45 });
+    }
+  }, [ctx.phase]);
 
   useEffect(() => {
     window.localStorage.setItem('citadel.hotkeysEnabled', hotkeysEnabled ? '1' : '0');
@@ -450,7 +480,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [ctx.phase, boardState.interaction, playerID, tutorialEnabled, soundEnabled, devCheatsOpen]);
+  }, [ctx.phase, boardState.interaction, playerID, tutorialEnabled, soundEnabled, devCheatsOpen, hotkeysEnabled, isMyTurn, me]);
 
   // Removed spammy decree auto-print
 
@@ -609,9 +639,9 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   </div>
                 </div>
 
-                <h2 className="text-4xl text-amber-500 font-serif font-black uppercase tracking-[0.2em] mb-12">Role Draft</h2>
+                {/* (Title removed to reduce visual noise) */}
                 {isMyTurn ? (
-                  <div className="flex gap-4 justify-center items-end -space-x-12">
+                  <div className="flex gap-4 justify-center items-end -space-x-12 mt-[-36px]">
                     {(G?.availableRoles || []).map(role => (
                       <button key={role.id} onClick={() => dispatch({ type: 'PICK_ROLE', payload: { roleId: role.id } })} className="p-0 rounded-xl transition-all group flex flex-col items-center gap-2 overflow-visible w-36 pt-3 hover:-translate-y-6 hover:z-10">
                         <div className="relative w-full aspect-[2/3] rounded-lg overflow-visible border-2 border-amber-900/30 shadow-2xl transition-transform hover:border-amber-400" style={{ zIndex: 1000 - role.id }}>
@@ -630,7 +660,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                 )}
               </div>
             )}
-            {ctx.phase === 'action' && tutorialEnabled && isMyTurn && !boardState.interaction && (!me?.hasTakenAction) && (
+            {ctx.phase === 'action' && tutorialEnabled && isMyTurn && !boardState.interaction && (!me?.hasTakenIncomeThisTurn) && (
               <div className="fixed bottom-[290px] left-6 z-[1200] pointer-events-none select-none">
                 <div className="bg-black/70 backdrop-blur-md rounded-xl border border-amber-900/30 px-3 py-2 shadow-2xl text-amber-100 font-serif text-[12px]">
                   Tip: press <b>G</b> for gold or <b>C</b> to draw cards.
@@ -684,6 +714,53 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
               </div>
             )}
 
+            {/* Warlord destroy picker */}
+            {ctx.phase === 'action' && isMyTurn && boardState.interaction?.type === 'DESTROY' && (() => {
+              const options = boardState.interaction.options || [];
+              const detailed = options.map((opt) => {
+                const pl = (G?.players || []).find(pp => String(pp.id) === String(opt.playerId));
+                const card = (pl?.city || []).find(cc => String(cc.id) === String(opt.cardId));
+                if (!pl || !card) return null;
+                return { playerId: String(opt.playerId), cardId: opt.cardId, playerName: pl.name, img: card.img, name: card.name, cost: card.cost };
+              }).filter(Boolean);
+
+              // group by player
+              const groups = new Map();
+              for (const d of detailed) {
+                if (!groups.has(d.playerId)) groups.set(d.playerId, { playerId: d.playerId, playerName: d.playerName, cards: [] });
+                groups.get(d.playerId).cards.push(d);
+              }
+              const grouped = Array.from(groups.values());
+
+              return (
+                <div className="fixed inset-0 z-[1200] bg-black/55 backdrop-blur-sm flex items-center justify-center p-6 pointer-events-auto">
+                  <div className="bg-black/70 border border-red-900/30 rounded-3xl p-6 shadow-2xl max-w-5xl w-full">
+                    <div className="text-red-300/90 font-black uppercase tracking-widest text-[11px] mb-4">Warlord: choose a district to destroy</div>
+                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                      {grouped.map(g => (
+                        <div key={g.playerId}>
+                          <div className="text-amber-200/70 text-[11px] font-black uppercase tracking-widest mb-2">{g.playerName}</div>
+                          <div className="flex flex-wrap gap-3">
+                            {g.cards.map(c => (
+                              <button
+                                key={String(c.cardId)}
+                                onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'DESTROY', playerId: g.playerId, cardId: c.cardId } })}
+                                className="w-28 aspect-[2/3] rounded-2xl overflow-hidden border border-red-900/40 hover:border-red-400/70 shadow-2xl transition-transform hover:scale-[1.02]"
+                                title={`${c.name} (${c.cost})`}
+                              >
+                                <img src={c.img} alt={c.name} className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => dispatch({ type: 'RESOLVE_INTERACTION', payload: { type: 'CANCEL' } })} className="mt-4 w-full text-amber-200/60 hover:text-amber-200 text-[11px] uppercase tracking-widest">Cancel (ESC)</button>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Assassin / Thief target fan (no splash) */}
             {ctx.phase === 'action' && isMyTurn && (boardState.interaction?.type === 'ASSASSINATE' || boardState.interaction?.type === 'STEAL') && (() => {
               const scaleByDist = (dist) => {
@@ -735,7 +812,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
 
             {ctx.phase === 'action' && isMyTurn && !boardState.interaction && (() => {
               const acting = G?.players?.[ctx.currentPlayer];
-              const buttonsDisabled = !isMyTurn || !!acting?.hasTakenAction || !!acting?.isKilled;
+              const buttonsDisabled = !isMyTurn || !!acting?.hasTakenIncomeThisTurn || !!acting?.isKilled;
               const baseBtn = "fixed pointer-events-auto select-none outline-none focus:outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]";
               const disabled = "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100";
 
@@ -744,7 +821,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   {/* Gold purse (G) */}
                   <button
                     type="button"
-                    onClick={() => { if (buttonsDisabled) return; playSfx('coin', { volume: 0.75 }); dispatch({ type: 'TAKE_GOLD' }); }}
+                    onClick={() => { if (buttonsDisabled) return; if (ctx.phase !== 'action') return; playSfx('coin', { volume: 0.75 }); dispatch({ type: 'TAKE_GOLD' }); }}
                     className={baseBtn + " z-[1100] " + (buttonsDisabled ? disabled : "cursor-pointer")}
                     style={{ left: 'calc(2% + 183px)', bottom: '0.1%', width: '181px' }}
                     title="Take gold (G)"
@@ -761,7 +838,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                   {/* Deck (C) */}
                   <button
                     type="button"
-                    onClick={() => { if (buttonsDisabled) return; playSfx('switch_005', { volume: 0.35 }); dispatch({ type: 'DRAW_CARDS_START' }); }}
+                    onClick={() => { if (buttonsDisabled) return; if (ctx.phase !== 'action') return; playSfx('switch_005', { volume: 0.35 }); dispatch({ type: 'DRAW_CARDS_START' }); }}
                     className={baseBtn + " z-[1100] " + (buttonsDisabled ? disabled : "cursor-pointer")}
                     style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
                     title="Draw cards (C)"
@@ -895,6 +972,23 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                         const x = e.clientX - rect.left;
                         const idx = Math.max(0, Math.min(cards.length - 1, Math.round(x / handStep)));
                         setHoverActionHandIndex(idx);
+
+                        // Hover SFX: only when entering a new buildable card
+                        try {
+                          if (idx === lastHandHoverSfxIdxRef.current) return;
+                          lastHandHoverSfxIdxRef.current = idx;
+
+                          const now = Date.now();
+                          if (now - (lastHandHoverSfxAtRef.current || 0) < 80) return;
+
+                          const card = cards[idx];
+                          const isRole = !!card?.__role;
+                          const canBuild = (ctx.phase === 'action') && !isRole && isMyTurn && (me?.gold >= (card?.cost || 0)) && ((me?.builtThisTurn || 0) < (me?.buildLimit || 1)) && !(me?.city || []).some(b => b.name === card?.name);
+                          if (!canBuild) return;
+
+                          lastHandHoverSfxAtRef.current = now;
+                          playSfx('card-slide-7', { volume: 0.12 });
+                        } catch {}
                       }}
                       onMouseLeave={() => setHoverActionHandIndex(null)}
                     >
@@ -903,7 +997,7 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                         const rot = (t - 0.5) * 18;
                         const left = idx * handStep;
                         const isRole = !!card.__role;
-                        const canBuild = !isRole && isMyTurn && (me.gold >= card.cost) && (me.builtThisTurn < me.buildLimit) && !(me.city || []).some(b => b.name === card.name);
+                        const canBuild = (ctx.phase === 'action') && !isRole && isMyTurn && (me.gold >= card.cost) && (me.builtThisTurn < me.buildLimit) && !(me.city || []).some(b => b.name === card.name);
 
                         const dist = (hoverActionHandIndex == null) ? 99 : Math.abs(idx - hoverActionHandIndex);
                         const scale = (hoverActionHandIndex == null) ? 1 : scaleByDist(dist);
@@ -932,14 +1026,14 @@ const MultiplayerSpineUI = ({ G, moves, playerID, ctx }) => {
                             }
                             style={{
                               left: `${left}px`,
-                              zIndex: isRole ? 2000 : z,
+                              zIndex: isRole ? (hoverActionHandIndex == null ? 2000 : 0) : z,
                               transform: `rotate(${rot}deg) scale(${scale})`,
                               transformOrigin: 'bottom center',
                             }}
                             title={isRole ? ((me?.roleRevealed || isMyTurn) ? me.role?.name : 'Role (hidden)') : card.name}
                           >
                             {!isRole && canBuild && (idx < 9) && (
-                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                              <div className="absolute -top-[calc(1rem+15px)] left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                                 <div className="bg-black/65 border border-black/50 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full shadow-xl">({idx + 1})</div>
                               </div>
                             )}

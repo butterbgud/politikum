@@ -340,14 +340,14 @@ function GameUI() {
                  <div className="fixed right-6 bottom-44 z-40 flex flex-col gap-3 items-stretch w-72">
                     <button 
                         onClick={() => dispatch({type: 'TAKE_GOLD'})}
-                        disabled={state.players.find(p => p.id === state.currentPlayerId)?.hasTakenAction}
+                        disabled={state.players.find(p => p.id === state.currentPlayerId)?.hasTakenIncomeThisTurn}
                         className="bg-amber-900/40 hover:bg-amber-800/60 disabled:opacity-30 disabled:cursor-not-allowed text-amber-100 px-6 py-4 rounded-xl font-serif font-bold border border-amber-500/20 transition-all flex items-center gap-3 shadow-lg active:scale-95"
                     >
                         <span className="text-2xl">💰</span> Collect Taxes
                     </button>
                     <button 
                         onClick={() => dispatch({type: 'DRAW_CARDS_START'})}
-                        disabled={state.players.find(p => p.id === state.currentPlayerId)?.hasTakenAction}
+                        disabled={state.players.find(p => p.id === state.currentPlayerId)?.hasTakenIncomeThisTurn}
                         className="bg-slate-800/40 hover:bg-slate-700/60 disabled:opacity-30 disabled:cursor-not-allowed text-slate-100 px-6 py-4 rounded-xl font-serif font-bold border border-slate-500/20 transition-all flex items-center gap-3 shadow-lg active:scale-95"
                     >
                         <span className="text-2xl">🃏</span> Study Blueprints
