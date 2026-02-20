@@ -100,21 +100,41 @@ function Board({ G, ctx, moves, playerID }) {
         })}
       </div>
 
-      {/* Controls */}
-      <div className="fixed top-4 right-4 z-[950] flex gap-3 pointer-events-auto">
+      {/* Controls (Citadel-style touchables) */}
+      <div className="fixed inset-0 z-[1100] pointer-events-none">
+        {/* Deck (Draw) */}
         <button
-          onClick={() => moves.drawCard()}
-          disabled={!isMyTurn || G.hasDrawn}
-          className="px-4 py-2 rounded-xl bg-amber-900/40 border border-amber-500/20 disabled:opacity-40"
+          type="button"
+          onClick={() => { if (!isMyTurn || G.hasDrawn) return; moves.drawCard(); }}
+          className={
+            "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
+            ((!isMyTurn || G.hasDrawn) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+          }
+          style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
+          title="Draw card"
+          aria-disabled={!isMyTurn || G.hasDrawn}
         >
-          Draw
+          <div className="relative w-full h-auto">
+            {(isMyTurn && !G.hasDrawn) && (
+              <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
+            )}
+            <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
+          </div>
         </button>
+
+        {/* Cookies (End Turn) */}
         <button
-          onClick={() => moves.endTurn()}
-          disabled={!isMyTurn}
-          className="px-4 py-2 rounded-xl bg-black/40 border border-amber-500/20 disabled:opacity-40"
+          type="button"
+          onClick={() => { if (!isMyTurn) return; moves.endTurn(); }}
+          className={
+            "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
+            (!isMyTurn ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+          }
+          style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
+          title="End turn"
+          aria-disabled={!isMyTurn}
         >
-          End Turn
+          <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
         </button>
       </div>
 
