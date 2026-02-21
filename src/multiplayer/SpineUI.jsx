@@ -272,21 +272,17 @@ function Board({ G, ctx, moves, playerID }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves, responseKind, responseSecondsLeft, response?.playedBy, playerID, me?.hand]);
 
-  // Drive bot turns (pacing): tick only when needed (prevents invalid stateID spam).
+  // Drive bot turns (pacing): tick only when it's a bot turn.
+  // Calling tickBot during human turns causes invalid stateID spam and can wedge the match.
   useEffect(() => {
-    const pending = G?.pending;
-    const pendingOwnerId = String(pending?.playerId ?? pending?.attackerId ?? '');
-    const pendingOwner = (G.players || []).find((p) => String(p.id) === pendingOwnerId);
-    const pendingIsBot = !!pendingOwner && String(pendingOwner.name || '').startsWith('[B]');
-
-    const shouldTick = currentIsBot || (pending && pendingIsBot);
-    if (!shouldTick) return;
+    if (G?.gameOver) return;
+    if (!currentIsBot) return;
 
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
     }, 900);
     return () => clearInterval(t);
-  }, [moves, currentIsBot, G?.pending, (G.players || []).length]);
+  }, [moves, currentIsBot, G?.gameOver]);
 
   useEffect(() => {
     const id = G.lastEvent?.id;
