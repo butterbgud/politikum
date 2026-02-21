@@ -152,35 +152,91 @@ If you want me to draft real effects, I need at least one of:
   - notes/edge-cases: If the chosen opponent has an empty hand, the effect fizzles (log only).
 
 ### Not implemented (Konsta's shitty brief)
-persona_25 - ✅ implemented (passive): +1 VP for each persona to his left
-persona_27 - ✅ implemented (passive): -1 VP for each non-leftwing persona in your coalition
-persona_29 - ✅ implemented (passive): gets -1 each time action8 is played
-persona_30 - ✅ implemented (on enter): all liberals in your coalition get +1 token
-persona_35 - ✅ implemented: no special abilities
-persona_44 - ✅ implemented (passive): when any persona goes to discard pile, gets +1
 
-persona_21 - pick any person in any coalition, change all his +1/-1 tokens on the opposite (i.e had +7 and -2 tokens total - it becomes +2 and -7 tokens)
-persona_22 - when Liberal enters any coalition gets -1, when Rightwing enters any coalition gets two +1 tokens
-persona_23 - on enter you can put up to three -1 tokens to gain same number of cards (i.e -2 tokens = 2 cards gained from the deck)
-persona_24 - gets +1 for each leftwing in other coalitions, reduces her vp for each Leftwing in your coalition
-persona_25 - gets +1 for each persona to his left
-persona_26 - on enter choose any red nationalist and discard him. this persona gets all his +1 tokens if it had any
-persona_27 - reduces his vp for each persona that is not leftwing in your coalition
-persona_28 - on enter choosy any non fbk persona, this persona takes up to three +1 from him
-persona_29 - gets -1 each time action8 is played
-persona_30 - on enter all liberals in your coalition get +1
+#### ✅ Implemented quick-wins (polished)
+- persona_25 — Left-Stack Scaler ✅
+  - timing: passive (recalc)
+  - effect: gains +1 VP for each persona card to its left within your coalition.
+  - UX: live VP updates as coalition order changes.
+  - notes: only counts personas (not markers); leftmost gets 0.
 
+- persona_27 — Anti-Leftwing Coalition Tax ✅
+  - timing: passive (recalc)
+  - effect: loses 1 VP for each persona in your coalition that is **not** `faction:leftwing`.
+  - UX: live VP updates.
+  - notes: counts all current coalition personas including itself if it’s not leftwing.
+
+- persona_29 — Action8 Punishment ✅
+  - timing: passive (global trigger)
+  - effect: whenever **Action 8** is played (anyone), this persona gains 1 × -1 token.
+  - UX: automatic, log per trigger.
+  - notes: triggers even if Action 8 is cancelled; definition = “card played”, not “effect resolved”.
+
+- persona_30 — Liberal Rally ✅
+  - timing: on_enter
+  - effect: when this persona enters your coalition, each **liberal** persona in your coalition gains 1 × +1 token.
+  - UX: automatic token animations on each affected liberal + log.
+  - notes: includes itself if it is liberal.
+
+- persona_35 — No ability ✅
+  - timing: —
+  - effect: no special abilities.
+  - UX: —
+  - notes: —
+
+- persona_44 — Discard trigger ✅
+  - timing: passive (global trigger)
+  - effect: when **any persona** goes to the common discard pile, this persona gains 1 × +1 token.
+  - UX: automatic, log per trigger.
+  - notes: triggers for any player’s discarded persona.
+
+#### Specs converted (not yet implemented)
+- persona_21 — Token Inverter
+  - timing: on_enter
+  - effect: choose any persona in play; swap its +1 and -1 totals (vpDelta := -vpDelta).
+  - UX: click a target persona card.
+  - notes/edge-cases: can target anyone; blocked/shield doesn’t protect.
+
+- persona_22 — Светов
+  - timing: passive (global trigger)
+  - effect: whenever a **liberal** enters any coalition → it gets -1. whenever a **rightwing** enters any coalition → it gets +2.
+  - UX: automatic, log per trigger.
+  - notes/edge-cases: define “enters” = after placement resolves.
+
+- persona_23 — Self-Inflict Draw
+  - timing: on_enter
+  - effect: you may place up to 3 × -1 tokens on this persona; draw that many cards.
+  - UX: prompt 0..3, then draw.
+  - notes/edge-cases: if deck short, draw as many as possible.
+
+- persona_24 — Dual Leftwing Scaler
+  - timing: passive (recalc)
+  - effect: +1 VP for each leftwing persona in **other** coalitions; -1 VP for each leftwing persona in **your** coalition.
+  - UX: live VP modifier display.
+  - notes/edge-cases: counts current board state, updates on reorder/plays.
+
+- persona_26 — Red Nationalist Purge → Inherit Tokens
+  - timing: on_enter
+  - effect: choose any **red_nationalist** persona in play; discard it. Then this persona gains that discarded persona’s **+1 tokens only** (ignore -1).
+  - UX: click a red_nationalist target persona; animate discard + token transfer.
+  - notes/edge-cases: if target has vpDelta<0, transfer 0. If target shielded/immovable, treat as invalid.
+
+- persona_28 — Steal Up To 3 +1 Tokens
+  - timing: on_enter
+  - effect: choose any **non-FBK** persona in play; move up to 3 × +1 tokens from that target onto this persona.
+  - UX: click a non-FBK target; then choose 0..3 (capped by target’s current +1).
+  - notes/edge-cases: cannot take -1; if target has less than 3 +1, take as many as available.
+
+#### Remaining raw list (to convert)
 persona_32 - you can take persona from your coalition back into your hand
 persona_33 - on enter choose which fraction this persona belongs to, this persona gets +1vp for each persona of that fraction in your coalition including herself. Can not be target of action8
 persona_34 - on enter try to guess next card in the deck, if guess correctly you win the game
-persona_35 - no special abilties
 persona_36 - ignores action7, if is a target of action7 - gets four +1
 persona_37 - choose a persona in your opponent coalition, put two +1 on it, this persona blocks that characters abilities until the end of the game
 persona_38 - everytime event1,2,3,10 is played - takes one of those +1 tokens to himself
 persona_39 - during your turn you can put this persona back into the deck and put two +1 on all your red nationalists
 persona_41 - on enter put +1 on all your fbk fraction personas in your coalition
 persona_43 - on enter takes +1 from each rightwing persona in play, everytime this persona gets any number of +1, reduces the number by one ( ie was supposed to get three +1, gets only 2)
-persona_44 - when any character goes to discard pile - this persona gets +1
 
 ---
 
