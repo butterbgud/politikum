@@ -67,7 +67,7 @@ If you want me to draft real effects, I need at least one of:
 
 ### Not implemented (spec drafted 📝)
 
-- persona_7 (p7) — Каспаров
+- persona_7 (p7) — Каспаров ✅
   - timing: on_enter
   - effect: When you play Каспаров into any coalition, choose any one coalition (yours or an opponent’s). Then choose two personas in that coalition and swap their positions.
   - UX: After placement, prompt current player to select a coalition owner, then highlight personas in that coalition and let them click exactly two to swap. If a coalition has fewer than 2 personas, show it as disabled.
@@ -152,7 +152,6 @@ If you want me to draft real effects, I need at least one of:
   - notes/edge-cases: If the chosen opponent has an empty hand, the effect fizzles (log only).
 
 
-#### ✅ Implemented quick-wins (polished)
 - persona_25 — Left-Stack Scaler ✅
   - timing: passive (recalc)
   - effect: gains +1 VP for each persona card to its left within your coalition.
@@ -226,8 +225,6 @@ If you want me to draft real effects, I need at least one of:
   - UX: click a non-FBK target; then choose 0..3 (capped by target’s current +1).
   - notes/edge-cases: cannot take -1; if target has less than 3 +1, take as many as available.
 
-
-#### Specs converted (not yet implemented) — remaining personas
 - persona_32 — Bounce Persona ✅
   - timing: during_your_turn (activated)
   - effect: choose a persona in your coalition; return it to your hand.
