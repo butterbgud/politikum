@@ -227,16 +227,60 @@ If you want me to draft real effects, I need at least one of:
   - UX: click a non-FBK target; then choose 0..3 (capped by target’s current +1).
   - notes/edge-cases: cannot take -1; if target has less than 3 +1, take as many as available.
 
-#### Remaining raw list (to convert)
-persona_32 - you can take persona from your coalition back into your hand
-persona_33 - on enter choose which fraction this persona belongs to, this persona gets +1vp for each persona of that fraction in your coalition including herself. Can not be target of action8
-persona_34 - on enter try to guess next card in the deck, if guess correctly you win the game
-persona_36 - ignores action7, if is a target of action7 - gets four +1
-persona_37 - choose a persona in your opponent coalition, put two +1 on it, this persona blocks that characters abilities until the end of the game
-persona_38 - everytime event1,2,3,10 is played - takes one of those +1 tokens to himself
-persona_39 - during your turn you can put this persona back into the deck and put two +1 on all your red nationalists
-persona_41 - on enter put +1 on all your fbk fraction personas in your coalition
-persona_43 - on enter takes +1 from each rightwing persona in play, everytime this persona gets any number of +1, reduces the number by one ( ie was supposed to get three +1, gets only 2)
+#### Specs converted (not yet implemented) — remaining personas
+- persona_32 — Bounce Persona
+  - timing: during_your_turn (activated)
+  - effect: choose a persona in your coalition; return it to your hand.
+  - UX: click one of your coalition personas; it animates back to your hand.
+  - notes/edge-cases: cannot target persona_31. If the target is shielded/blocked, still allowed (this is “self move”, not “targeted attack”).
+
+- persona_33 — Choose Faction Scaler (uncancellable)
+  - timing: on_enter
+  - effect: choose a faction tag for this persona (from the game’s known factions). While in your coalition, this persona gains +1 VP for each persona in your coalition with that same faction, including itself.
+  - UX: on enter, prompt faction choice (buttons). Show chosen faction as a small badge on the card. Live VP updates.
+  - notes/edge-cases: cannot be targeted by Action 8 (engine must reject; UI should filter it out).
+
+- persona_34 — Deck Guess Instant Win
+  - timing: on_enter
+  - effect: guess the next card on top of the deck (by id). Reveal the next card: if your guess matches, you immediately win the game.
+  - UX: on enter, show a picker of all possible card ids (or a type filter + search). Confirm guess; reveal top card in log.
+  - notes/edge-cases: if deck is empty, effect fizzles. If you guessed wrong, nothing else happens (game continues).
+
+- persona_36 — Anti-Action7 / Gets Rewarded
+  - timing: passive (triggered)
+  - effect: this persona ignores Action 7 (cannot have abilities blocked and its tokens cannot be cleared by Action 7). If Action 7 is played targeting it, instead it gains 4 × +1 tokens.
+  - UX: Action 7 picker should still allow selecting it, but resolution shows “ignored” + token gain.
+  - notes/edge-cases: Action 7 is considered “played” even if ignored (so other triggers can still see it).
+
+- persona_37 — Bribe & Silence
+  - timing: on_enter
+  - effect: choose a persona in an opponent’s coalition; place 2 × +1 tokens on that target. That target’s abilities are blocked until end of game.
+  - UX: click an opponent persona. Animate +2 tokens on target and a permanent “X”/blocked marker.
+  - notes/edge-cases: cannot target persona_31. If target is shielded, treat as invalid. “Blocked until end of game” persists through round end.
+
+- persona_38 — Token Vacuum (from squabble events)
+  - timing: passive (global trigger)
+  - effect: whenever event_1, event_2, event_3, or event_10 is played, this persona gains 1 × +1 token.
+  - UX: automatic, log per trigger.
+  - notes/edge-cases: trigger condition is “event card played/resolved”, regardless of whether its token placement was skipped.
+
+- persona_39 — Recycle + Buff Reds
+  - timing: during_your_turn (activated)
+  - effect: you may put this persona from your coalition back on top of the deck (or into the deck, shuffled). Then, all **red_nationalist** personas in your coalition gain 2 × +1 tokens.
+  - UX: show an “activate” prompt/button when it’s your turn; confirm → remove this persona + apply buffs.
+  - notes/edge-cases: clarify placement: default to “shuffle into deck” unless we explicitly want “top of deck”. Cannot activate if not in your coalition.
+
+- persona_41 — FBK Rally
+  - timing: on_enter
+  - effect: when this persona enters your coalition, each **FBK** persona in your coalition gains 1 × +1 token.
+  - UX: automatic tokens + log.
+  - notes/edge-cases: includes itself if it’s FBK.
+
+- persona_43 — Rightwing Tax Collector (with +1 dampener)
+  - timing: on_enter + passive (replacement)
+  - effect: on enter, take 1 × +1 token from each **rightwing** persona in play (if they have any) and add those tokens to this persona. Also, whenever this persona would gain N × +1 tokens from any source, it gains (N-1) instead (minimum 0).
+  - UX: on enter, animate token drains. For the dampener, show a small badge/tooltip.
+  - notes/edge-cases: only reduces **+1 gains**, not -1 gains. For multi-token grants (like +4), reduce by exactly 1.
 
 ---
 
@@ -248,3 +292,8 @@ When you send effects, I’ll rewrite each entry in this format:
   - effect: <plain English>
   - UX: <what the UI must prompt/allow>
   - notes/edge-cases: <limits, targeting rules, cleanup>
+
+Notes:
+- “Implemented” means: rules effect works, UI prompts exist, log entries are sane.
+- If a card is wired in YAML with `abilityKey` but has no logic, mark it 🟡.
+
