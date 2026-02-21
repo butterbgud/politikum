@@ -1321,7 +1321,16 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
                 return (p?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
               };
-              const playerIds = (G.players || []).map((p) => String(p.id)).sort((a, b) => scoreNow(b) - scoreNow(a));
+              const playerIds = (G.players || [])
+                .filter((p) => !!p?.active)
+                .filter((p) => {
+                  const n = String(p?.name || '').trim();
+                  if (!n) return false;
+                  if (n.startsWith('[H] Seat')) return false;
+                  return true;
+                })
+                .map((p) => String(p.id))
+                .sort((a, b) => scoreNow(b) - scoreNow(a));
 
               return (
                 <>
@@ -1378,10 +1387,18 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             {/* fallback if no history */}
             {(!Array.isArray(G.history) || G.history.length < 2) && (
               <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
-                {(G.players || []).map((p) => {
-                  const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
-                  return `${p.name}: ${pts} vp (coalition ${(p.coalition || []).length})`;
-                }).join('\n')}
+                {(G.players || [])
+                  .filter((p) => !!p?.active)
+                  .filter((p) => {
+                    const n = String(p?.name || '').trim();
+                    if (!n) return false;
+                    if (n.startsWith('[H] Seat')) return false;
+                    return true;
+                  })
+                  .map((p) => {
+                    const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+                    return `${p.name}: ${pts} vp (coalition ${(p.coalition || []).length})`;
+                  }).join('\n')}
               </div>
             )}
 
