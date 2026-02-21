@@ -316,8 +316,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const pendingP33Source = pendingP33 ? String(pending?.sourceCardId || '') : '';
   const pendingP34 = pending?.kind === 'persona_34_guess_topdeck' && String(pending?.playerId) === String(playerID);
   const pendingP34Source = pendingP34 ? String(pending?.sourceCardId || '') : '';
-  const pendingP39 = pending?.kind === 'persona_39_activate' && String(pending?.playerId) === String(playerID);
-  const pendingP39Source = pendingP39 ? String(pending?.sourceCardId || '') : '';
+  const canUseP39 = isMyTurn && !!G.hasDrawn && !G.pending && (me?.coalition || []).some((c) => String(c.id).split('#')[0] === 'persona_39');
 
   const pendingP16 = pending?.kind === 'persona_16_discard3_from_hand' && String(pending?.playerId) === String(playerID);
   const pendingP16Source = pendingP16 ? String(pending?.sourceCardId || '') : '';
@@ -446,7 +445,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       }
 
       // p39 activate
-      if (pendingP39 && key === 'r') {
+      if (canUseP39 && key === 'r') {
         try { moves.persona39ActivateRecycle(); } catch {}
         return;
       }
@@ -1533,15 +1532,15 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const pendingP32Here = pendingP32;
                 const pendingP12Here = pendingP12 && (String(c.id) === pendingP12Left || String(c.id) === pendingP12Right);
                 const pendingP7Here = pendingP7 && c.type === 'persona' && !isImmovablePersona(c);
-                const pendingP39Here = pendingP39 && String(c.id).split('#')[0] === 'persona_39';
+                const canUseP39Here = canUseP39 && String(c.id).split('#')[0] === 'persona_39';
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || pendingP39Here
-                        ? (pendingP39Here ? "border-emerald-300/70 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here
+                        ? (canUseP39Here ? "border-emerald-300/70 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer")
                         : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
@@ -1587,7 +1586,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         try { moves.persona12ChooseAdjacentRed(c.id); } catch {}
                         return;
                       }
-                      if (pendingP39Here) {
+                      if (canUseP39Here) {
                         try { moves.persona39ActivateRecycle(); } catch {}
                         return;
                       }
