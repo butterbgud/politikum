@@ -718,8 +718,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   const canClickFaceForP37 = pendingP37 && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP3A = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:leftwing') && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP7 = pendingP7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
+                  const canClickFaceForP14 = pending?.kind === 'discard_one_persona_from_any_coalition' && String(pending?.playerId) === String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -765,6 +766,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                           if (String(p7FirstPick.cardId) === String(it.card.id)) return;
                           try { playSfx('ui', 0.35); moves.persona7SwapTwoInCoalition(String(p.id), p7FirstPick.cardId, it.card.id); } catch {}
                           setP7FirstPick(null);
+                          return;
+                        }
+                        if (canClickFaceForP14) {
+                          try { playSfx('ui', 0.35); moves.discardPersonaFromCoalition(String(p.id), it.card.id); } catch {}
                           return;
                         }
                       }}
@@ -1145,31 +1150,11 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Persona_14 discard prompt (active player chooses any coalition persona) */}
+      {/* Persona_14 discard prompt (no modal) */}
       {G.pending?.kind === 'discard_one_persona_from_any_coalition' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard a persona</div>
-            <div className="mt-2 text-amber-100/80 text-sm">Choose any persona from any coalition (including yours) to discard.</div>
-            <div className="mt-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-              {(G.players || []).map((p) => (
-                <div key={p.id} className="">
-                  <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
-                  <div className="mt-2 flex gap-3 flex-wrap">
-                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && !isImmovablePersona(c)).map((c) => (
-                      <button
-                        key={c.id}
-                        className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
-                        onClick={() => moves.discardPersonaFromCoalition(String(p.id), c.id)}
-                        title={c.name || c.id}
-                      >
-                        <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            p14: click any persona on the table to discard it
           </div>
         </div>
       )}
@@ -1651,14 +1636,17 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const pendingP12Here = pendingP12 && (String(c.id) === pendingP12Left || String(c.id) === pendingP12Right);
                 const pendingP7Here = pendingP7 && c.type === 'persona' && !isImmovablePersona(c);
                 const canUseP39Here = canUseP39 && String(c.id).split('#')[0] === 'persona_39';
+                const pendingP14Here = pending?.kind === 'discard_one_persona_from_any_coalition' && String(pending?.playerId) === String(playerID) && c.type === 'persona' && !c.shielded && !isImmovablePersona(c);
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here
-                        ? (canUseP39Here ? "border-emerald-300/70 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
+                        ? (canUseP39Here
+                          ? "border-emerald-300/70 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30"
+                          : (pendingP14Here ? "border-emerald-400/60 hover:border-emerald-300 cursor-pointer" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer"))
                         : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
@@ -1717,6 +1705,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         if (String(p7FirstPick.cardId) === String(c.id)) return;
                         try { moves.persona7SwapTwoInCoalition(String(playerID), p7FirstPick.cardId, c.id); } catch {}
                         setP7FirstPick(null);
+                        return;
+                      }
+                      if (pendingP14Here) {
+                        try { moves.discardPersonaFromCoalition(String(playerID), c.id); } catch {}
                         return;
                       }
                       if (!pendingTokens) return;
