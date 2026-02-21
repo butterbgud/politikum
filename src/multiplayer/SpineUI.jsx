@@ -80,7 +80,7 @@ function Board({ G, ctx, moves, playerID }) {
   const cards = hand;
   const fanN = Math.max(1, cards.length);
   const cardW = 144; // ~ w-36
-  const handStep = Math.min(52, Math.max(24, 320 / Math.max(1, fanN - 1)));
+  const handStep = Math.min(44, Math.max(18, 280 / Math.max(1, fanN - 1)));
   const handWidth = cardW + (fanN - 1) * handStep;
 
   const scaleByDist = (dist) => {
