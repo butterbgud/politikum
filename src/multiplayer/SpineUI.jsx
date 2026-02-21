@@ -1639,8 +1639,19 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
           <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Place persona</div>
-            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
-              {`Pick a neighbor in your coalition, then choose side.`}
+            <div className="mt-2 flex items-center gap-4">
+              {(() => {
+                const pc = (me?.hand || []).find((c) => String(c.id) === String(placementMode?.cardId));
+                if (!pc?.img) return null;
+                return (
+                  <div className="w-16 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 opacity-60">
+                    <img src={pc.img} alt={pc.id} className="w-full h-full object-cover" draggable={false} />
+                  </div>
+                );
+              })()}
+              <div className="text-amber-100/85 text-sm font-mono whitespace-pre">
+                {`Click a neighbor in your coalition, then choose LEFT/RIGHT.`}
+              </div>
             </div>
             <div className="mt-3 flex gap-2 pointer-events-auto">
               <button
@@ -1805,12 +1816,22 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       return;
                     }
 
-                    // Placement mode should be explicit (Shift+click), not every click.
+                    const POSITION_SENSITIVE = new Set(['persona_1','persona_12','persona_18','persona_19','persona_25','persona_42']);
+
+                    // Ghost placement mode for position-sensitive personas.
+                    if (haveCoal && POSITION_SENSITIVE.has(baseId)) {
+                      playSfx('ui', 0.35);
+                      setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' });
+                      return;
+                    }
+
+                    // Placement mode for any persona (legacy): Shift+click.
                     if (haveCoal && e?.shiftKey) {
                       playSfx('ui', 0.35);
                       setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' });
                       return;
                     }
+
                     playSfx('play');
                     moves.playPersona(card.id);
                   }
