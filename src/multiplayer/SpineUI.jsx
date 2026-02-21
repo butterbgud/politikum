@@ -349,7 +349,7 @@ function Board({ G, ctx, moves, playerID }) {
 
           const show = Math.min(12, oppFanCards.length);
           const stepBack = 6;  // 2x tighter
-          const stepFace = 18; // less tight
+          const stepFace = 24; // more spacing so tokens are visible
 
           const calcWidth = () => {
             const shown = oppFanCards.slice(0, show);
