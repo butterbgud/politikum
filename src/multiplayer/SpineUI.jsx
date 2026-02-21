@@ -735,7 +735,7 @@ function Board({ G, ctx, moves, playerID }) {
               >
                 <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
                 {showHotkeys && (
-                  <div className="absolute left-2 top-2 px-2 py-1 rounded-full bg-black/65 border border-amber-900/30 text-amber-100 font-mono font-black text-[11px]">
+                  <div className="absolute left-2 -top-8 px-2 py-1 rounded-full bg-black/65 border border-amber-900/30 text-amber-100 font-mono font-black text-[11px]">
                     ({idx + 1})
                   </div>
                 )}
