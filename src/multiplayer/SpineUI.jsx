@@ -315,7 +315,9 @@ function Board({ G, ctx, moves, playerID }) {
               <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
             )}
             <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
+            {showHotkeys && (
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
+            )}
           </div>
         </button>
 
@@ -333,7 +335,9 @@ function Board({ G, ctx, moves, playerID }) {
         >
           <div className="relative w-full h-auto">
             <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
-            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
+            {showHotkeys && (
+              <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
+            )}
           </div>
         </button>
       </div>
