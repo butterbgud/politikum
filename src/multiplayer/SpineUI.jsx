@@ -366,21 +366,13 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Tutorial overlay (hotkeys overlay removed) */}
+      {/* Tutorial: simple center-board text (toggle T) */}
       {showTutorial && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto" onClick={() => { setShowTutorial(false); }}>
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[560px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center">
-              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Tutorial</div>
-              <button className="ml-auto text-amber-200/60 hover:text-amber-200 font-black" onClick={() => { setShowTutorial(false); }}>x</button>
-            </div>
-
-            <div className="mt-4 text-amber-100/80 text-sm">
-              <div className="font-black uppercase tracking-widest text-[11px] text-amber-200/70">Turn</div>
-              <div className="mt-1">1) Draw (C)</div>
-              <div>2) Play 1 card (click or 1..9/0)</div>
-              <div>3) End turn (E)</div>
-              <div className="mt-3 text-amber-200/60 text-xs">Press T anytime to show/hide this.</div>
+        <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Tutorial (T)</div>
+            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
+              {`1) Draw: C (or click deck)\n2) Play: click a card (or 1..9, 0=10)\n3) End: E (or click cookies)\n\nL toggles logs · H toggles hint badges`}
             </div>
           </div>
         </div>
