@@ -402,6 +402,13 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         }
         return;
       }
+      if (responseKind && key === '3') {
+        // p8 swap during cancel_persona window
+        if (responseActive && responseKind === 'cancel_persona' && canPersona8Swap && String(response?.playedBy) !== String(playerID)) {
+          try { moves.persona8SwapWithPlayedPersona(); } catch {}
+        }
+        return;
+      }
 
       // Fast cancels during response windows
       if (responseKind && key === '1') {
@@ -948,10 +955,36 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             </div>
             {responseKind === 'cancel_persona' && haveAction8 && (
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded-full bg-emerald-700/70 border border-emerald-200/20 text-emerald-50 font-black text-[11px]">1</span>
-                <span className="text-amber-200/70">use A8</span>
-                <span className="px-2 py-1 rounded-full bg-slate-800/70 border border-amber-900/20 text-amber-50 font-black text-[11px]">2</span>
-                <span className="text-amber-200/70">skip</span>
+                <button
+                  type="button"
+                  className="pointer-events-auto px-2 py-1 rounded-full bg-emerald-700/70 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[11px]"
+                  onClick={() => {
+                    // action_8 is in-hand and clickable too, but this is faster.
+                    const c8 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
+                    if (c8) { try { moves.playAction(c8.id); } catch {} }
+                  }}
+                  title="(1)"
+                >
+                  1 · A8
+                </button>
+                <button
+                  type="button"
+                  className="pointer-events-auto px-2 py-1 rounded-full bg-slate-800/70 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[11px]"
+                  onClick={() => { try { moves.skipResponseWindow(); } catch {} }}
+                  title="(2)"
+                >
+                  2 · Skip
+                </button>
+                {canPersona8Swap && (
+                  <button
+                    type="button"
+                    className="pointer-events-auto px-2 py-1 rounded-full bg-purple-800/60 hover:bg-purple-700/60 border border-purple-200/20 text-purple-50 font-black text-[11px]"
+                    onClick={() => { try { moves.persona8SwapWithPlayedPersona(); } catch {} }}
+                    title="(3)"
+                  >
+                    3 · p8 swap
+                  </button>
+                )}
               </div>
             )}
           </div>
