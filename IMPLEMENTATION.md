@@ -52,20 +52,21 @@ If you want me to draft real effects, I need at least one of:
 
 ## Personas
 ### Implemented
+- p1 (persona_1 / Runov) ✅ on enter: if adjacent (L/R) to persona_19 or persona_42 → place **4 × +1** tokens on self. (Requires placement mode.)
+- p2 (persona_2 / Serezhko) ✅ passive: **-1 VP per male** in your coalition (including itself if male).
+- p3 (persona_3 / SVTV) ✅ on enter: gets **1 × -1** token, then choose:
+  - (A) discard a **leftwing** persona (any coalition) to discard pile *(currently first-valid target; can upgrade to pick exact)*
+  - (B) remove up to **2 × +1** tokens from all opponents’ **leftwing** personas
+- p4 (persona_4 / Yashin) ✅ on enter: gets **2 × -1** per `twitter_squabble` event in discard; also whenever a `twitter_squabble` event is drawn → gets **2 × -1**.
+- p5 (persona_5 / Pevchih) ✅ on enter: pick an opponent **liberal** persona → discard it; transfer all its tokens (+/-) onto Pevchih.
+- p6 (persona_6 / Kashin) ✅ passive: whenever **action_8** is played → each Kashin in play gets **1 × +1** token.
+- p19 (persona_19 / Girkin) ✅ on enter: if adjacent (L/R) to persona_1 or persona_42 → place **4 × +1** tokens on self.
+- p42 (persona_42 / Strelkov) ✅ on enter: if adjacent (L/R) to persona_1 or persona_19 → place **4 × +1** tokens on self.
 - persona_14 (Roizman) ✅ on enter: discard **any** coalition persona (any player)
 - persona_40 (Duncova) ✅ on enter: place **3 × +1** tokens on any coalition personas (choose targets)
 
 ### Not implemented (needs spec)
-- persona_1..45 (except 14, 40) ❌ 📝 TBD (need each card’s ability text)
-p1 - (should be possible for player to choose where to insert this card) if on enter to the left or to the right of this card persona_19 or persona_42 are present - add four +1 tokens on this persona.
-p2 - reduces its vp for each male in your coalition
-p3 - on enter  you can add one -1 token and do one of the two: move any Leftwing persona to discard. Remove up to two +1 tokens from all Leftwing personas in your opponents coalitions
-p4 - On enter gets two -1 tokens for each "twitter squabble" in discard pile. When "twitter squabble" gets played - gets two -1 tokens.
-p5 - on enter discards any liberal fraction from opponents coalition, if that persona had +1/-1 tokens gets all of them
-p6 - gets one +1 token every time action8 gets played
-
-p19 - (should be possible for player to choose where to insert this card) if on enter to the left or to the right of this card persona_1 or persona_42 are present - add four +1 tokens on this persona.
-p42 - (should be possible for player to choose where to insert this card) if on enter to the left or to the right of this card persona_19 or persona_1 are present - add four +1 tokens on this persona.
+- remaining personas ❌ / 📝 TBD
 
 ---
 
