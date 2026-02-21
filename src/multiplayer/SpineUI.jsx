@@ -70,6 +70,7 @@ function Board({ G, ctx, moves, playerID }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId } (targeting mode)
   const [pickTargetForAction9, setPickTargetForAction9] = useState(null); // { cardId } (targeting mode)
+  const [placementMode, setPlacementMode] = useState(null); // { cardId, neighborId, side }
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
@@ -143,6 +144,7 @@ function Board({ G, ctx, moves, playerID }) {
       if (key === 'escape') {
         setPickTargetForAction4(null);
         setPickTargetForAction9(null);
+        setPlacementMode(null);
         return;
       }
       if (key === 'h') {
@@ -941,6 +943,21 @@ function Board({ G, ctx, moves, playerID }) {
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
                     onClick={() => {
+                      if (placementMode) {
+                        // If click is on far-left or far-right card, treat as placement side.
+                        if (i === 0) {
+                          try { playSfx('play'); moves.playPersona(placementMode.cardId, c.id, 'left'); } catch {}
+                          setPlacementMode(null);
+                          return;
+                        }
+                        if (i === (coal.length - 1)) {
+                          try { playSfx('play'); moves.playPersona(placementMode.cardId, c.id, 'right'); } catch {}
+                          setPlacementMode(null);
+                          return;
+                        }
+                        setPlacementMode((m) => ({ ...(m || {}), neighborId: c.id }));
+                        return;
+                      }
                       if (!pendingTokens) return;
                       try { moves.applyPendingToken(c.id); } catch {}
                     }}
@@ -971,6 +988,53 @@ function Board({ G, ctx, moves, playerID }) {
           );
         })()}
       </div>
+
+      {/* Placement mode prompt */}
+      {!!placementMode && (
+        <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Place persona</div>
+            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
+              {`Pick a neighbor in your coalition, then choose side.`}
+            </div>
+            <div className="mt-3 flex gap-2 pointer-events-auto">
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
+                onClick={() => {
+                  if (!placementMode?.neighborId) return;
+                  try { playSfx('play'); moves.playPersona(placementMode.cardId, placementMode.neighborId, 'left'); } catch {}
+                  setPlacementMode(null);
+                }}
+                disabled={!placementMode?.neighborId}
+                title="Place to the LEFT of selected card"
+              >
+                LEFT
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
+                onClick={() => {
+                  if (!placementMode?.neighborId) return;
+                  try { playSfx('play'); moves.playPersona(placementMode.cardId, placementMode.neighborId, 'right'); } catch {}
+                  setPlacementMode(null);
+                }}
+                disabled={!placementMode?.neighborId}
+                title="Place to the RIGHT of selected card"
+              >
+                RIGHT
+              </button>
+              <button
+                type="button"
+                className="ml-auto px-3 py-1 rounded-full bg-black/40 border border-amber-900/20 text-amber-200/70 font-mono font-black text-[12px] hover:bg-black/60"
+                onClick={() => setPlacementMode(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Total VP (bottom-right) */}
       <div className="fixed bottom-4 right-4 z-[2500] pointer-events-none select-none">
@@ -1023,7 +1087,16 @@ function Board({ G, ctx, moves, playerID }) {
                 key={card.id}
                 onClick={() => {
                   if (!canClick) return;
-                  if (canPlayPersona) { playSfx('play'); moves.playPersona(card.id); }
+                  if (canPlayPersona) {
+                    // If coalition already has personas, allow choosing insertion position relative to a neighbor.
+                    if ((me?.coalition || []).filter((c) => c.type === 'persona').length >= 1) {
+                      playSfx('ui', 0.35);
+                      setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' });
+                      return;
+                    }
+                    playSfx('play');
+                    moves.playPersona(card.id);
+                  }
                   else if (canPlayAction) {
                     if (baseId === 'action_4') { playSfx('ui', 0.35); setPickTargetForAction4({ cardId: card.id }); return; }
                     if (baseId === 'action_9') { playSfx('ui', 0.35); setPickTargetForAction9({ cardId: card.id }); return; }
