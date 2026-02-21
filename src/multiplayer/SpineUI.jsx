@@ -30,7 +30,7 @@ function Card({ card, onClick, disabled }) {
 }
 
 function Board({ G, ctx, moves, playerID }) {
-  const [showHotkeys, setShowHotkeys] = useState(true);
+  const [showHotkeys, setShowHotkeys] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId }
   const logRef = React.useRef(null);
