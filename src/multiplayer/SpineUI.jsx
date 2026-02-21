@@ -12,19 +12,24 @@ const NAMES = [
   'Beatrix', 'Lambert', 'Maude', 'Odilia', 'Viggo', 'Sibylla', 'Katarina', 'Norbert', 'Quintus',
 ];
 
-function Card({ card, onClick, disabled }) {
+function Card({ card, onClick, disabled, showCheck }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       className={
-        'w-32 aspect-[2/3] rounded-2xl overflow-hidden border shadow-2xl transition-transform ' +
+        'relative w-32 aspect-[2/3] rounded-2xl overflow-hidden border shadow-2xl transition-transform ' +
         (disabled ? 'opacity-40 cursor-not-allowed border-black/30' : 'cursor-pointer hover:scale-[1.03] border-amber-500/30')
       }
       title={card?.id}
     >
       <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
+      {showCheck && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-2 w-6 h-6 rounded-full bg-white/90 text-black border border-black/20 flex items-center justify-center text-[14px] font-black shadow">
+          ✓
+        </div>
+      )}
     </button>
   );
 }
@@ -73,6 +78,24 @@ function Board({ G, ctx, moves, playerID }) {
   const [placementMode, setPlacementMode] = useState(null); // { cardId, neighborId, side }
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
+
+  // ✓ = fully polished (per IMPLEMENTATION.md)
+  const POLISHED = useMemo(() => {
+    const s = new Set([
+      // Events
+      'event_1','event_2','event_3','event_10','event_11','event_12a','event_12b','event_12c','event_15','event_16',
+      // Actions
+      'action_4','action_5','action_6','action_7','action_8','action_9','action_13','action_14','action_17','action_18',
+      // Personas
+      'persona_1','persona_2','persona_3','persona_4','persona_5','persona_6','persona_14','persona_19','persona_20','persona_25','persona_27','persona_29','persona_30','persona_31','persona_35','persona_40','persona_42','persona_44'
+    ]);
+    return s;
+  }, []);
+
+  const isPolishedCard = (card) => {
+    const bid = String(card?.id || '').split('#')[0];
+    return POLISHED.has(bid);
+  };
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
   const current = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
   const currentIsBot = String(current?.name || '').startsWith('[B]');
@@ -527,14 +550,13 @@ function Board({ G, ctx, moves, playerID }) {
             </div>
             <div className="mt-4 flex gap-3 flex-wrap">
               {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true) && !c.shielded && !isImmovablePersona(c)).map((c) => (
-                <button
+                <Card
                   key={c.id}
-                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  card={c}
                   onClick={() => moves.discardFromCoalition(c.id)}
-                  title={c.name || c.id}
-                >
-                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                </button>
+                  disabled={false}
+                  showCheck={isPolishedCard(c)}
+                />
               ))}
             </div>
           </div>
