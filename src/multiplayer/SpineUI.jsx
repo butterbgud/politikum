@@ -159,6 +159,9 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingP32 = pending?.kind === 'persona_32_pick_bounce_target' && String(pending?.playerId) === String(playerID);
   const pendingP32Source = pendingP32 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP37 = pending?.kind === 'persona_37_pick_opponent_persona' && String(pending?.playerId) === String(playerID);
+  const pendingP37Source = pendingP37 ? String(pending?.sourceCardId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -465,8 +468,9 @@ function Board({ G, ctx, moves, playerID }) {
                   const canClickFaceForP21 = pendingP21 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
                   const canClickFaceForP26 = pendingP26 && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:red_nationalist') && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP28 = pendingP28 && it.kind === 'face' && it.card?.type === 'persona' && !(Array.isArray(it.card?.tags) && it.card.tags.includes('faction:fbk')) && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP37 = pendingP37 && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -493,6 +497,10 @@ function Board({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForP28) {
                           try { playSfx('ui', 0.35); moves.persona28StealPlusTokens(String(p.id), it.card.id, 3); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP37) {
+                          try { playSfx('ui', 0.35); moves.persona37BribeAndSilence(String(p.id), it.card.id); } catch {}
                           return;
                         }
                       }}
@@ -617,6 +625,14 @@ function Board({ G, ctx, moves, playerID }) {
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP32Source}: click a persona in YOUR coalition to return it to hand
+          </div>
+        </div>
+      )}
+
+      {pendingP37 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP37Source}: click an opponent persona to bribe (+2) and block abilities
           </div>
         </div>
       )}
