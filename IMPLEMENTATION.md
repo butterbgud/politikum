@@ -24,15 +24,16 @@ If you want me to draft real effects, I need at least one of:
 - event_1 ✅ place **3 × +1** tokens on any coalition personas (choose targets)
 - event_2 ✅ place **2 × +1** tokens on any coalition personas (choose targets)
 - event_3 ✅ place **5 × +1** tokens on any coalition personas (choose targets)
+- event_10 ✅ place **4 × +1** tokens on any coalition personas (choose targets)
+- event_11 ✅ draw **2 cards** from the deck (extra draws; events resolve immediately on chain-draw)
+- event_12a ✅ all in-play personas with faction **FBK** get **1 × -1** token; then you draw **1 card** (tagged `event_type:twitter_squabble`)
+- event_12b ✅ all **other players** discard **1 card from hand** (human players choose; bots auto-discard first card). Tagged `event_type:twitter_squabble`.
+- event_12c ✅ all in-play personas with faction **liberal** get **1 × -1** token; then you draw **1 card** (tagged `event_type:twitter_squabble`)
+- event_15 ✅ all cards in players' hands are shuffled together and redealt so everyone keeps the **same hand size**
+- event_16 ✅ discard **1 persona from your coalition**, then draw **1 card**
 
 ### Not implemented (needs spec)
-- event_10 ❌ 📝 TBD (need card text)
-- event_11 ❌ 📝 TBD (need card text)
-- event_12a ❌ 📝 TBD (need card text)
-- event_12b ❌ 📝 TBD (need card text)
-- event_12c ❌ 📝 TBD (need card text)
-- event_15 ❌ 📝 TBD (need card text)
-- event_16 ❌ 📝 TBD (need card text)
+(none for events)
 
 ## Actions
 ### Implemented

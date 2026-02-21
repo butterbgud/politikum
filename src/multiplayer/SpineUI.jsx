@@ -506,6 +506,31 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {/* Event_12b: each affected player discards 1 card from hand */}
+      {G.pending?.kind === 'event_12b_discard_from_hand' && Array.isArray(G.pending.targetIds) && G.pending.targetIds.includes(String(playerID)) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from hand</div>
+            <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 card from your hand to discard.</div>
+            <div className="mt-4 flex gap-3 flex-wrap">
+              {(me?.hand || []).map((c) => (
+                <button
+                  key={c.id}
+                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  onClick={() => moves.discardFromHandForEvent12b(c.id)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+              {!(me?.hand || []).length && (
+                <div className="text-amber-200/70 text-sm">You have no cards to discard.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Persona_14 discard prompt (active player chooses any coalition persona) */}
       {G.pending?.kind === 'discard_one_persona_from_any_coalition' && String(playerID) === String(G.pending.playerId) && (
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
@@ -530,6 +555,31 @@ function Board({ G, ctx, moves, playerID }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Event_16: discard one of YOUR personas, then draw 1 */}
+      {G.pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard a persona</div>
+            <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 persona from your coalition to discard, then draw 1 card.</div>
+            <div className="mt-4 flex gap-3 flex-wrap">
+              {(me?.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                <button
+                  key={c.id}
+                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  onClick={() => moves.discardPersonaFromOwnCoalitionForEvent16(c.id)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+              {!(me?.coalition || []).some((c) => c.type === 'persona') && (
+                <div className="text-amber-200/70 text-sm">You have no personas to discard.</div>
+              )}
             </div>
           </div>
         </div>
