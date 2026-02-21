@@ -123,7 +123,7 @@ function Board({ G, ctx, moves, playerID }) {
       }
 
       // Fast cancels during response windows
-      if (responseActive && key === '1') {
+      if (responseKind && key === '1') {
         // action_6 cancels actions
         if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID)) {
           const c6 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
@@ -701,8 +701,10 @@ function Board({ G, ctx, moves, playerID }) {
             const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
 
             // out-of-turn cancels
-            const canCancelAction = responseActive && responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
-            const canCancelPersona = responseActive && responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID);
+            // Allow clicking cancels as long as server is advertising a response window.
+            // Server enforces actual expiry; UI shouldn't block.
+            const canCancelAction = responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
+            const canCancelPersona = responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID);
 
             const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona;
 
