@@ -363,10 +363,9 @@ function Board({ G, ctx, moves, playerID }) {
           const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
 
           const scaleByDist2 = (dist) => {
-            // Keep zoom within top edge (opponents are near top of viewport)
-            if (dist === 0) return 1.4;
-            if (dist === 1) return 1.15;
-            if (dist === 2) return 1.06;
+            if (dist === 0) return 1.8;
+            if (dist === 1) return 1.25;
+            if (dist === 2) return 1.10;
             return 1;
           };
 
