@@ -454,18 +454,24 @@ function Board({ G, ctx, moves, playerID }) {
             </div>
             {Array.isArray(G.history) && G.history.length >= 2 && (() => {
               const hist = G.history;
-              const playerIds = (G.players || []).map((p) => String(p.id));
+              // Use the same ordering for legend + chart: sort by final score DESC.
               const colors = ['#f59e0b', '#22c55e', '#60a5fa', '#f472b6', '#a78bfa'];
+              const scoreNow = (pid) => {
+                const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
+                return (p?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+              };
+              const playerIds = (G.players || []).map((p) => String(p.id)).sort((a, b) => scoreNow(b) - scoreNow(a));
 
               return (
                 <>
                   <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
-                    {(G.players || []).map((p, i) => {
-                      const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+                    {playerIds.map((pid, i) => {
+                      const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
+                      const pts = scoreNow(pid);
                       const col = colors[i % colors.length];
                       return (
-                        <div key={p.id} style={{ color: col }}>
-                          {p.name}: {pts} vp (coalition {(p.coalition || []).length})
+                        <div key={pid} style={{ color: col }}>
+                          {p?.name || pid}: {pts} vp (coalition {(p?.coalition || []).length || 0})
                         </div>
                       );
                     })}
