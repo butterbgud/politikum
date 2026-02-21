@@ -156,6 +156,9 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingP28 = pending?.kind === 'persona_28_pick_non_fbk' && String(pending?.playerId) === String(playerID);
   const pendingP28Source = pendingP28 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP32 = pending?.kind === 'persona_32_pick_bounce_target' && String(pending?.playerId) === String(playerID);
+  const pendingP32Source = pendingP32 ? String(pending?.sourceCardId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -602,6 +605,14 @@ function Board({ G, ctx, moves, playerID }) {
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP23Source}: choose self-inflict (-1) tokens then draw
             <span className="ml-3 text-amber-200/70">(keys 0..3)</span>
+          </div>
+        </div>
+      )}
+
+      {pendingP32 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP32Source}: click a persona in YOUR coalition to return it to hand
           </div>
         </div>
       )}
@@ -1171,13 +1182,14 @@ function Board({ G, ctx, moves, playerID }) {
                 const pendingP21Here = pendingP21;
                 const pendingP26Here = pendingP26;
                 const pendingP28Here = pendingP28;
+                const pendingP32Here = pendingP32;
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -1212,6 +1224,10 @@ function Board({ G, ctx, moves, playerID }) {
                       }
                       if (pendingP28Here) {
                         try { moves.persona28StealPlusTokens(String(playerID), c.id, 3); } catch {}
+                        return;
+                      }
+                      if (pendingP32Here) {
+                        try { moves.persona32BounceToHand(c.id); } catch {}
                         return;
                       }
                       if (!pendingTokens) return;
