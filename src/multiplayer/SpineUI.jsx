@@ -34,7 +34,108 @@ function Card({ card, onClick, disabled, showCheck }) {
   );
 }
 
-function Board({ G, ctx, moves, playerID }) {
+function LobbyBoard({ G, ctx, moves, playerID }) {
+  const me = (G.players || []).find((p) => String(p.id) === String(playerID));
+  const isHost = String(playerID) === '0';
+  const [name, setName] = useState(() => {
+    const cur = String(me?.name || '').trim();
+    if (!cur) return '';
+    if (cur.startsWith('[H] Seat')) return '';
+    return cur;
+  });
+
+  const activeCount = (G.activePlayerIds || []).length;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-amber-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
+        <div className="flex items-baseline justify-between">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Pregame lobby</div>
+          </div>
+          <div className="text-xs font-mono text-amber-200/60">Players: {activeCount}</div>
+        </div>
+
+        <div className="mt-6 grid gap-4">
+          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Your name</div>
+            <div className="mt-2 flex gap-2">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter name"
+                className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+              />
+              <button
+                onClick={() => moves.setPlayerName(name)}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-sm uppercase"
+              >
+                Set
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
+            <div className="mt-3 grid gap-2">
+              {(G.players || []).map((p) => {
+                const active = !!p.active;
+                const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                return (
+                  <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                    <div className="flex items-center gap-2">
+                      <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
+                        {p.name || `Seat ${p.id}`}
+                      </div>
+                      <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
+                      {!active && <div className="text-[10px] font-mono text-amber-900/50">(empty)</div>}
+                      {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                    </div>
+
+                    {isHost && String(p.id) !== '0' && active && bot && (
+                      <button
+                        onClick={() => moves.removePlayer(String(p.id))}
+                        className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {isHost && (
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => moves.addBot()}
+                  className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                >
+                  Add bot
+                </button>
+                <button
+                  onClick={() => moves.startGame()}
+                  className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                >
+                  Start game
+                </button>
+              </div>
+            )}
+
+            {!isHost && (
+              <div className="mt-4 text-xs text-amber-200/60 font-mono">Waiting for host to start…</div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 text-[11px] text-amber-200/40 font-mono">phase: {String(ctx.phase || '')}</div>
+      </div>
+    </div>
+  );
+}
+
+function ActionBoard({ G, ctx, moves, playerID }) {
   // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
@@ -225,7 +326,7 @@ function Board({ G, ctx, moves, playerID }) {
         return;
       }
       if (key === 'c') {
-        if (!isMyTurn || G.hasDrawn) return;
+        if (!isMyTurn || G.pending || G.hasDrawn) return;
         playSfx('draw');
         moves.drawCard();
         return;
@@ -602,14 +703,14 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Deck (Draw) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
+          onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+            ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
           }
           style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
-          title={((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
-          aria-disabled={!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
+          title={G.pending ? "Resolve pending" : ((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
+          aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
         >
           <div className="relative w-full h-auto">
             {(isMyTurn && !G.hasDrawn) && (
@@ -1599,6 +1700,11 @@ function Board({ G, ctx, moves, playerID }) {
   );
 }
 
+function Board(props) {
+  const phase = String(props?.ctx?.phase || '');
+  if (phase === 'lobby') return <LobbyBoard {...props} />;
+  return <ActionBoard {...props} />;
+}
 
 const GameClient = Client({
   game: PolitikumGame,
