@@ -48,7 +48,10 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
   const activeCount = (G.activePlayerIds || []).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-amber-50 flex items-center justify-center p-6">
+    <div
+      className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
+      style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}
+    >
       <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
         <div className="flex items-baseline justify-between">
           <div>
