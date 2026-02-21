@@ -382,7 +382,26 @@ function Board({ G, ctx, moves, playerID }) {
                   const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
+                onTouchStart={(e) => {
+                  if (!pickTargetForAction4 && !pickTargetForAction9) return;
+                  const touch = e.touches?.[0];
+                  if (!touch) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = touch.clientX - rect.left;
+                  const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
+                  setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
+                }}
+                onTouchMove={(e) => {
+                  if (!pickTargetForAction4 && !pickTargetForAction9) return;
+                  const touch = e.touches?.[0];
+                  if (!touch) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = touch.clientX - rect.left;
+                  const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
+                  setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
+                }}
                 onMouseLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
+                onTouchEnd={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
                 title={`Total: ${nTotal}`}
               >
                 {/* count */}
