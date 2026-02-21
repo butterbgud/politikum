@@ -394,6 +394,12 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         return;
       }
 
+      // p3: option B hotkey
+      if (G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && key === 'b') {
+        try { moves.persona3ChooseOption('b'); } catch {}
+        return;
+      }
+
       // p33 choice: faction
       if (pendingP33 && (key >= '1' && key <= '7')) {
         const map = {
@@ -670,8 +676,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   const canClickFaceForP26 = pendingP26 && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:red_nationalist') && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP28 = pendingP28 && it.kind === 'face' && it.card?.type === 'persona' && !(Array.isArray(it.card?.tags) && it.card.tags.includes('faction:fbk')) && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP37 = pendingP37 && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP3A = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:leftwing') && !it.card?.shielded && !isImmovablePersona(it.card);
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -702,6 +709,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForP37) {
                           try { playSfx('ui', 0.35); moves.persona37BribeAndSilence(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP3A) {
+                          try { playSfx('ui', 0.35); moves.persona3ChooseOption('a', String(p.id), it.card.id); } catch {}
                           return;
                         }
                       }}
@@ -964,30 +975,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 
       {/* Persona_3 choice prompt */}
       {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[720px] max-w-[94vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">SVTV (p3) — choose one</div>
-            <div className="mt-3 flex flex-col gap-3">
-              <button
-                className="px-4 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/20 text-left"
-                onClick={() => {
-                  // discard first available leftwing persona from selected owner (simple)
-                  const opts = (G.players || []).filter((p) => (p.coalition || []).some((c) => c.type === 'persona' && Array.isArray(c.tags) && c.tags.includes('faction:leftwing') && !c.shielded));
-                  const owner = opts[0];
-                  if (!owner) return;
-                  moves.persona3ChooseOption('a', String(owner.id));
-                }}
-              >
-                Discard a leftwing persona (any coalition)
-              </button>
-              <button
-                className="px-4 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/20 text-left"
-                onClick={() => moves.persona3ChooseOption('b')}
-              >
-                Remove up to 2 +1 tokens from all leftwing personas in opponents' coalitions
-              </button>
-            </div>
-            <div className="mt-4 text-amber-200/60 text-xs">(We can upgrade option A to let you pick exact target.)</div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            SVTV (p3): click a LEFTWING persona to discard it, or press B for option B
           </div>
         </div>
       )}
