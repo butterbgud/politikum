@@ -1808,9 +1808,8 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Tiny debug */}
-      <div className="fixed bottom-4 left-4 z-[900] pointer-events-none select-none">
+      <div className="fixed top-3 left-3 z-[900] pointer-events-none select-none">
         <div className="bg-black/45 border border-amber-900/20 rounded-xl px-3 py-2 text-[10px] font-mono text-amber-200/70 whitespace-pre">
-          hand: P{grouped.persona.length} A{grouped.action.length} E{grouped.event.length}{"\n"}
           turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}
         </div>
       </div>
