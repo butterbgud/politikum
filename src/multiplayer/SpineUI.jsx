@@ -76,6 +76,7 @@ function Board({ G, ctx, moves, playerID }) {
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId } (targeting mode)
   const [pickTargetForAction9, setPickTargetForAction9] = useState(null); // { cardId } (targeting mode)
   const [placementMode, setPlacementMode] = useState(null); // { cardId, neighborId, side }
+  const [p16DiscardPick, setP16DiscardPick] = useState([]); // array of hand cardIds
   const [placementModeOpp, setPlacementModeOpp] = useState(null); // { cardId, targetId, neighborId, side }
   const [pickTargetForPersona9, setPickTargetForPersona9] = useState(null); // { cardId }
   const logRef = React.useRef(null);
@@ -168,6 +169,9 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingP34Source = pendingP34 ? String(pending?.sourceCardId || '') : '';
   const pendingP39 = pending?.kind === 'persona_39_activate' && String(pending?.playerId) === String(playerID);
   const pendingP39Source = pendingP39 ? String(pending?.sourceCardId || '') : '';
+
+  const pendingP16 = pending?.kind === 'persona_16_discard3_from_hand' && String(pending?.playerId) === String(playerID);
+  const pendingP16Source = pendingP16 ? String(pending?.sourceCardId || '') : '';
 
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
@@ -289,8 +293,31 @@ function Board({ G, ctx, moves, playerID }) {
         return;
       }
 
+      // p16 discard3: press 1..9 to toggle cards, Enter to confirm
+      if (pendingP16) {
+        if (key >= '1' && key <= '9') {
+          const idx = Number(key) - 1;
+          const c = (me?.hand || [])[idx];
+          if (!c) return;
+          setP16DiscardPick((arr) => {
+            const s = new Set(arr || []);
+            if (s.has(c.id)) s.delete(c.id);
+            else s.add(c.id);
+            return Array.from(s).slice(0, 3);
+          });
+          return;
+        }
+        if (key === 'enter') {
+          const ids = (p16DiscardPick || []).slice(0, 3);
+          if (ids.length < Math.min(3, (me?.hand || []).length)) return;
+          try { moves.persona16Discard3FromHand(ids[0], ids[1], ids[2]); } catch {}
+          setP16DiscardPick([]);
+          return;
+        }
+      }
+
       // Number hotkeys for hand (quick-play): 1..9, 0 = 10
-      if (!responseActive && !pendingP23 && (key === '0' || (key >= '1' && key <= '9'))) {
+      if (!responseActive && !pendingP23 && !pendingP16 && (key === '0' || (key >= '1' && key <= '9'))) {
         const n = key === '0' ? 10 : Number(key);
         const idx = n - 1;
         const card = (me?.hand || [])[idx];
@@ -310,7 +337,7 @@ function Board({ G, ctx, moves, playerID }) {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves, responseKind, responseSecondsLeft, response?.playedBy, playerID, me?.hand]);
+  }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves, responseKind, responseSecondsLeft, response?.playedBy, playerID, me?.hand, pendingP16, p16DiscardPick]);
 
   // Drive bot turns (pacing): tick only when it's a bot turn.
   // Calling tickBot during human turns causes invalid stateID spam and can wedge the match.
@@ -695,6 +722,14 @@ function Board({ G, ctx, moves, playerID }) {
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP39Source}: press R to recycle into deck + buff reds (+2)
+          </div>
+        </div>
+      )}
+
+      {pendingP16 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP16Source}: discard 3 from hand (keys 1..3 select, Enter confirm)
           </div>
         </div>
       )}
