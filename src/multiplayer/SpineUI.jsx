@@ -234,7 +234,7 @@ function Board({ G, ctx, moves, playerID }) {
 
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
-    }, 500);
+    }, 900);
     return () => clearInterval(t);
   }, [moves, currentIsBot, G?.pending, (G.players || []).length]);
 
