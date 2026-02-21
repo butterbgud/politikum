@@ -363,9 +363,10 @@ function Board({ G, ctx, moves, playerID }) {
           const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
 
           const scaleByDist2 = (dist) => {
-            if (dist === 0) return 1.7;
-            if (dist === 1) return 1.2;
-            if (dist === 2) return 1.08;
+            // Keep zoom within top edge (opponents are near top of viewport)
+            if (dist === 0) return 1.4;
+            if (dist === 1) return 1.15;
+            if (dist === 2) return 1.06;
             return 1;
           };
 
@@ -416,12 +417,19 @@ function Board({ G, ctx, moves, playerID }) {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = (e.clientX ?? 0) - rect.left;
                   // Note: opponent fan has variable spacing; use proportional index for hover.
-                  const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
+                  let idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
+                  const shown = oppFanCards.slice(0, show);
+                  // Ignore facedown backs completely (no hover effect)
+                  if (shown[idx]?.kind === 'back') {
+                    setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }));
+                    return;
+                  }
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
                 onPointerEnter={() => {
-                  const idx = Math.max(0, Math.floor((show - 1) / 2));
-                  setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
+                  const shown = oppFanCards.slice(0, show);
+                  const firstFace = shown.findIndex((it) => it.kind === 'face');
+                  setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: firstFace >= 0 ? firstFace : null }));
                 }}
                 onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
                 title={`Total: ${nTotal}`}
@@ -464,7 +472,7 @@ function Board({ G, ctx, moves, playerID }) {
                     <div
                       key={`${p.id}-${i}-${id}`}
                       className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
-                      style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
+                      style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                       title={id}
                       onClick={() => {
                         if (!canClickFace) return;
