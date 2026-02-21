@@ -43,6 +43,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     if (cur.startsWith('[H] Seat')) return '';
     return cur;
   });
+  const [chatInput, setChatInput] = useState('');
 
   const activeCount = (G.activePlayerIds || []).length;
 
@@ -58,6 +59,41 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
         </div>
 
         <div className="mt-6 grid gap-4">
+          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
+            <div className="mt-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar space-y-2">
+              {(G.chat || []).map((m, i) => (
+                <div key={i} className="text-sm font-serif">
+                  <span className="text-amber-200/60 font-mono text-[11px] mr-2">{m.sender}:</span>
+                  <span className="text-amber-50/90">{m.text}</span>
+                </div>
+              ))}
+              {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">No messages yet.</div>}
+            </div>
+            <form
+              className="mt-3 flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const msg = String(chatInput || '').trim();
+                if (!msg) return;
+                try { moves.submitChat(msg, String(me?.name || playerID)); } catch {}
+                setChatInput('');
+              }}
+            >
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Say something…"
+                className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase"
+              >
+                Send
+              </button>
+            </form>
+          </div>
           <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
             <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Your name</div>
             <div className="mt-2 flex gap-2">
