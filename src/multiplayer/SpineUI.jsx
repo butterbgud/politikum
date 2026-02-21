@@ -1007,6 +1007,33 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {pendingP16 && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
+            <span>p16: select 3 cards to discard ({(p16DiscardPick || []).length}/3)</span>
+            <button
+              type="button"
+              className={( (p16DiscardPick || []).length >= 3 ? 'bg-emerald-700/80 hover:bg-emerald-600/80 ' : 'bg-slate-800/60 ' ) + 'pointer-events-auto px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20'}
+              onClick={() => {
+                const ids = (p16DiscardPick || []).slice(0, 3);
+                if (ids.length < 3) return;
+                try { moves.persona16Discard3FromHand(ids[0], ids[1], ids[2]); } catch {}
+                setP16DiscardPick([]);
+              }}
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              className="pointer-events-auto px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60"
+              onClick={() => setP16DiscardPick([])}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Persona_5 target prompt */}
       {G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && (
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
@@ -1694,13 +1721,23 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             const baseIs14 = baseId === 'action_14';
             const canCancelEffectOnMe = responseKind === 'cancel_action' && responseTargetsMe && baseIs14;
 
-            const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
+            const canClickP16 = pendingP16; // select cards to discard
+            const canClick = canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
 
             return (
               <button
                 key={card.id}
                 onClick={(e) => {
                   if (!canClick) return;
+                  if (canClickP16) {
+                    setP16DiscardPick((arr) => {
+                      const s = new Set(arr || []);
+                      if (s.has(card.id)) s.delete(card.id);
+                      else s.add(card.id);
+                      return Array.from(s).slice(0, 3);
+                    });
+                    return;
+                  }
                   if (canPlayPersona) {
                     const haveCoal = (me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).length >= 1;
 
@@ -1742,7 +1779,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 aria-disabled={!canClick}
                 className={
                   'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl border-2 transition-all duration-200 ease-out shadow-xl overflow-visible ' +
-                  (canClick ? ((canCancelAction || canCancelPersona) ? 'border-emerald-500/50 hover:border-emerald-300 cursor-pointer' : 'border-amber-700/40 hover:border-amber-400 cursor-pointer') : 'border-slate-900 cursor-not-allowed')
+                  (canClickP16
+                    ? ((p16DiscardPick || []).includes(card.id) ? 'border-emerald-300 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30' : 'border-emerald-500/40 hover:border-emerald-300 cursor-pointer')
+                    : (canClick ? ((canCancelAction || canCancelPersona) ? 'border-emerald-500/50 hover:border-emerald-300 cursor-pointer' : 'border-amber-700/40 hover:border-amber-400 cursor-pointer') : 'border-slate-900 cursor-not-allowed'))
                 }
                 style={{
                   left: `${left}px`,
