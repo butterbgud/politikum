@@ -152,8 +152,6 @@ If you want me to draft real effects, I need at least one of:
   - notes/edge-cases: If the chosen opponent has an empty hand, the effect fizzles (log only).
 
 
-### Not implemented (Konsta's shitty brief)
-
 #### ✅ Implemented quick-wins (polished)
 - persona_25 — Left-Stack Scaler ✅
   - timing: passive (recalc)
@@ -192,37 +190,37 @@ If you want me to draft real effects, I need at least one of:
   - notes: triggers for any player’s discarded persona.
 
 #### Specs converted (not yet implemented)
-- persona_21 — Token Inverter
+- persona_21 — Token Inverter ✅
   - timing: on_enter
   - effect: choose any persona in play; swap its +1 and -1 totals (vpDelta := -vpDelta).
   - UX: click a target persona card.
   - notes/edge-cases: can target anyone; blocked/shield doesn’t protect.
 
-- persona_22 — Светов
+- persona_22 — Светов ✅
   - timing: passive (global trigger)
   - effect: whenever a **liberal** enters any coalition → it gets -1. whenever a **rightwing** enters any coalition → it gets +2.
   - UX: automatic, log per trigger.
   - notes/edge-cases: define “enters” = after placement resolves.
 
-- persona_23 — Self-Inflict Draw
+- persona_23 — Self-Inflict Draw ✅
   - timing: on_enter
   - effect: you may place up to 3 × -1 tokens on this persona; draw that many cards.
   - UX: prompt 0..3, then draw.
   - notes/edge-cases: if deck short, draw as many as possible.
 
-- persona_24 — Dual Leftwing Scaler
+- persona_24 — Dual Leftwing Scaler ✅
   - timing: passive (recalc)
   - effect: +1 VP for each leftwing persona in **other** coalitions; -1 VP for each leftwing persona in **your** coalition.
   - UX: live VP modifier display.
   - notes/edge-cases: counts current board state, updates on reorder/plays.
 
-- persona_26 — Red Nationalist Purge → Inherit Tokens
+- persona_26 — Red Nationalist Purge → Inherit Tokens ✅
   - timing: on_enter
   - effect: choose any **red_nationalist** persona in play; discard it. Then this persona gains that discarded persona’s **+1 tokens only** (ignore -1).
   - UX: click a red_nationalist target persona; animate discard + token transfer.
   - notes/edge-cases: if target has vpDelta<0, transfer 0. If target shielded/immovable, treat as invalid.
 
-- persona_28 — Steal Up To 3 +1 Tokens
+- persona_28 — Steal Up To 3 +1 Tokens ✅
   - timing: on_enter
   - effect: choose any **non-FBK** persona in play; move up to 3 × +1 tokens from that target onto this persona.
   - UX: click a non-FBK target; then choose 0..3 (capped by target’s current +1).
