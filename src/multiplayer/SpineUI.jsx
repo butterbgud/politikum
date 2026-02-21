@@ -116,6 +116,8 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingTokensRemaining = pendingTokens ? Number(pending?.remaining || 0) : 0;
   const pendingTokensSource = pendingTokens ? String(pending?.sourceCardId || '') : '';
 
+  const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
+
   // Hand fan geometry (ported from Citadel MP)
   const cards = hand;
   const fanN = Math.max(1, cards.length);
@@ -220,14 +222,21 @@ function Board({ G, ctx, moves, playerID }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isMyTurn, G.hasDrawn, G.hasPlayed, moves, responseKind, responseSecondsLeft, response?.playedBy, playerID, me?.hand]);
 
-  // Drive bot turns (pacing): tick every 500ms when it's a bot's turn.
+  // Drive bot turns (pacing): tick only when needed (prevents invalid stateID spam).
   useEffect(() => {
-    // Always tick bots in the background so the game advances after the last bot acts.
+    const pending = G?.pending;
+    const pendingOwnerId = String(pending?.playerId ?? pending?.attackerId ?? '');
+    const pendingOwner = (G.players || []).find((p) => String(p.id) === pendingOwnerId);
+    const pendingIsBot = !!pendingOwner && String(pendingOwner.name || '').startsWith('[B]');
+
+    const shouldTick = currentIsBot || (pending && pendingIsBot);
+    if (!shouldTick) return;
+
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
     }, 500);
     return () => clearInterval(t);
-  }, [moves]);
+  }, [moves, currentIsBot, G?.pending, (G.players || []).length]);
 
   useEffect(() => {
     const id = G.lastEvent?.id;
@@ -517,7 +526,7 @@ function Board({ G, ctx, moves, playerID }) {
                 : 'Choose 1 card from your coalition to discard.'}
             </div>
             <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true) && !c.shielded).map((c) => (
+              {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true) && !c.shielded && !isImmovablePersona(c)).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -627,7 +636,7 @@ function Board({ G, ctx, moves, playerID }) {
                 <div key={p.id} className="">
                   <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
                   <div className="mt-2 flex gap-3 flex-wrap">
-                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded).map((c) => (
+                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && !isImmovablePersona(c)).map((c) => (
                       <button
                         key={c.id}
                         className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -652,7 +661,7 @@ function Board({ G, ctx, moves, playerID }) {
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard a persona</div>
             <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 persona from your coalition to discard, then draw 1 card.</div>
             <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => c.type === 'persona' && !c.shielded).map((c) => (
+              {(me?.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && !isImmovablePersona(c)).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -681,7 +690,7 @@ function Board({ G, ctx, moves, playerID }) {
                 <div key={p.id} className="">
                   <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
                   <div className="mt-2 flex gap-3 flex-wrap">
-                    {(p.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                    {(p.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).map((c) => (
                       <button
                         key={c.id}
                         className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -706,7 +715,7 @@ function Board({ G, ctx, moves, playerID }) {
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 13 — Shield</div>
             <div className="mt-2 text-amber-100/80 text-sm">Choose one of your personas to shield. It can&apos;t be targeted by actions/abilities, and +1 gains are reduced by 1.</div>
             <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+              {(me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -732,7 +741,7 @@ function Board({ G, ctx, moves, playerID }) {
                 <div key={p.id} className="">
                   <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
                   <div className="mt-2 flex gap-3 flex-wrap">
-                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded).map((c) => (
+                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && !isImmovablePersona(c)).map((c) => (
                       <button
                         key={c.id}
                         className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -757,7 +766,7 @@ function Board({ G, ctx, moves, playerID }) {
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 18 — Return from discard</div>
             <div className="mt-2 text-amber-100/80 text-sm">Choose a persona from the discard pile to return to your hand.</div>
             <div className="mt-4 flex flex-wrap gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-              {(G.discard || []).filter((c) => c.type === 'persona').map((c) => (
+              {(G.discard || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -767,8 +776,33 @@ function Board({ G, ctx, moves, playerID }) {
                   <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
                 </button>
               ))}
-              {!(G.discard || []).some((c) => c.type === 'persona') && (
+              {!(G.discard || []).some((c) => c.type === 'persona' && !isImmovablePersona(c)) && (
                 <div className="text-amber-200/70 text-sm">No personas in discard.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Persona_20: take any card from discard to hand */}
+      {G.pending?.kind === 'persona_20_pick_from_discard' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm backdrop-filter pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Bykov (p20) — Take from discard</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose any 1 card from the discard pile to take into your hand.</div>
+            <div className="mt-4 flex flex-wrap gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {(G.discard || []).map((c) => (
+                <button
+                  key={c.id}
+                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  onClick={() => moves.persona20PickFromDiscard(c.id)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+              {!(G.discard || []).length && (
+                <div className="text-amber-200/70 text-sm">No cards in discard.</div>
               )}
             </div>
           </div>
@@ -1150,7 +1184,7 @@ function Board({ G, ctx, moves, playerID }) {
                   if (!canClick) return;
                   if (canPlayPersona) {
                     // If coalition already has personas, allow choosing insertion position relative to a neighbor.
-                    if ((me?.coalition || []).filter((c) => c.type === 'persona').length >= 1) {
+                    if ((me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).length >= 1) {
                       playSfx('ui', 0.35);
                       setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' });
                       return;
