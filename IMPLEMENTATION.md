@@ -57,6 +57,15 @@ If you want me to draft real effects, I need at least one of:
 
 ### Not implemented (needs spec)
 - persona_1..45 (except 14, 40) ❌ 📝 TBD (need each card’s ability text)
+p1 - (should be possible for player to choose where to insert this card) if on enter to the left or to the right of this card persona_19 or persona_42 are present - add four +1 tokens on this persona.
+p2 - reduces its vp for each male in your coalition
+p3 - on enter  you can add one -1 token and do one of the two: move any Leftwing persona to discard. Remove up to two +1 tokens from all Leftwing personas in your opponents coalitions
+p4 - On enter gets two -1 tokens for each "twitter squabble" in discard pile. When "twitter squabble" gets played - gets two -1 tokens.
+p5 - on enter discards any liberal fraction from opponents coalition, if that persona had +1/-1 tokens gets all of them
+p6 - gets one +1 token every time action8 gets played
+
+p19 - (should be possible for player to choose where to insert this card) if on enter to the left or to the right of this card persona_1 or persona_42 are present - add four +1 tokens on this persona.
+p42 - (should be possible for player to choose where to insert this card) if on enter to the left or to the right of this card persona_19 or persona_1 are present - add four +1 tokens on this persona.
 
 ---
 
