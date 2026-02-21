@@ -291,7 +291,8 @@ function Board({ G, ctx, moves, playerID }) {
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
-                  const idx = Math.max(0, Math.min(show - 1, Math.round(x / step)));
+                  // Note: opponent fan has variable spacing; use proportional index for hover.
+                  const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
                 onMouseLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
