@@ -35,7 +35,7 @@ function Board({ G, ctx, moves, playerID }) {
   // Legacy states kept only to avoid touching large JSX blocks.
   // Hotkey/tutorial overlays are hard-disabled below.
   const [showTutorial, setShowTutorial] = useState(false);
-  const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId }
+  const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId } (targeting mode)
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
@@ -102,6 +102,10 @@ function Board({ G, ctx, moves, playerID }) {
       const key = String(e.key || '').toLowerCase();
       if (key === 'l') {
         setLogCollapsed((v) => !v);
+        return;
+      }
+      if (key === 'escape') {
+        setPickTargetForAction4(null);
         return;
       }
       if (key === 'h') {
@@ -216,7 +220,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[700] flex gap-10 pointer-events-none">
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[700] flex gap-10 pointer-events-auto">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -265,8 +269,16 @@ function Board({ G, ctx, moves, playerID }) {
 
               {/* single opponent fan (coalition + hand) */}
               <div
-                className="relative h-44 pointer-events-auto"
+                className={
+                  "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
+                  (pickTargetForAction4 ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
+                }
                 style={{ width: Math.max(width, 260) }}
+                onClick={() => {
+                  if (!pickTargetForAction4) return;
+                  try { moves.playAction(pickTargetForAction4.cardId, String(p.id)); } catch {}
+                  setPickTargetForAction4(null);
+                }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
@@ -373,6 +385,18 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {/* Targeting prompt (action_4) */}
+      {!!pickTargetForAction4 && (
+        <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 4</div>
+            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
+              {`Pick an opponent. They will discard 1 coalition card of their choice.\nClick their hand. (Esc to cancel)`}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Response window banner */}
       {responseActive && ((responseKind === 'cancel_action' && haveAction6) || (responseKind === 'cancel_persona' && haveAction8)) && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
@@ -390,35 +414,6 @@ function Board({ G, ctx, moves, playerID }) {
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Tutorial (T)</div>
             <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
               {`1) Draw: C (or click deck)\n2) Play: click a card (or 1..9, 0=10)\n3) End: E (or click cookies)\n\nL toggles logs · H toggles hint badges`}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Action_4 target picker */}
-      {!!pickTargetForAction4 && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto" onClick={() => setPickTargetForAction4(null)}>
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[520px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Choose target</div>
-            <div className="mt-2 text-amber-100 font-serif text-xl font-bold">Action 4</div>
-            <div className="mt-3 text-amber-100/70 text-sm">Pick an opponent. They will discard 1 coalition card of their choice.</div>
-            <div className="mt-4 flex flex-col gap-2">
-              {opponents.map((p) => (
-                <button
-                  key={p.id}
-                  className="px-4 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/20 text-left"
-                  onClick={() => {
-                    moves.playAction(pickTargetForAction4.cardId, String(p.id));
-                    setPickTargetForAction4(null);
-                  }}
-                >
-                  <div className="text-amber-100 font-black">{p.name}</div>
-                  <div className="text-amber-200/60 text-xs">Coalition: {(p.coalition || []).length}</div>
-                </button>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button className="text-amber-200/70 hover:text-amber-200 font-black" onClick={() => setPickTargetForAction4(null)}>Cancel</button>
             </div>
           </div>
         </div>
