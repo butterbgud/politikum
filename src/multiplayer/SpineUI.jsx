@@ -36,6 +36,7 @@ function Board({ G, ctx, moves, playerID }) {
   // Hotkey/tutorial overlays are hard-disabled below.
   const [showTutorial, setShowTutorial] = useState(false);
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId } (targeting mode)
+  const [pickTargetForAction9, setPickTargetForAction9] = useState(null); // { cardId } (targeting mode)
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
@@ -106,6 +107,7 @@ function Board({ G, ctx, moves, playerID }) {
       }
       if (key === 'escape') {
         setPickTargetForAction4(null);
+        setPickTargetForAction9(null);
         return;
       }
       if (key === 'h') {
@@ -155,6 +157,7 @@ function Board({ G, ctx, moves, playerID }) {
         if (canPlayPersona) moves.playPersona(card.id);
         else if (canPlayAction) {
           if (baseId === 'action_4') setPickTargetForAction4({ cardId: card.id });
+          else if (baseId === 'action_9') setPickTargetForAction9({ cardId: card.id });
           else moves.playAction(card.id);
         }
       }
@@ -271,13 +274,19 @@ function Board({ G, ctx, moves, playerID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
-                  (pickTargetForAction4 ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
+                  ((pickTargetForAction4 || pickTargetForAction9) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
                 onClick={() => {
-                  if (!pickTargetForAction4) return;
-                  try { moves.playAction(pickTargetForAction4.cardId, String(p.id)); } catch {}
-                  setPickTargetForAction4(null);
+                  if (pickTargetForAction4) {
+                    try { moves.playAction(pickTargetForAction4.cardId, String(p.id)); } catch {}
+                    setPickTargetForAction4(null);
+                    return;
+                  }
+                  if (pickTargetForAction9) {
+                    try { moves.playAction(pickTargetForAction9.cardId, String(p.id)); } catch {}
+                    setPickTargetForAction9(null);
+                  }
                 }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -391,12 +400,14 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Targeting prompt (action_4) */}
-      {!!pickTargetForAction4 && (
+      {((!!pickTargetForAction4) || (!!pickTargetForAction9)) && (
         <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
           <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 4</div>
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">{pickTargetForAction4 ? 'Action 4' : 'Action 9'}</div>
             <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
-              {`Pick an opponent. They will discard 1 coalition card of their choice.\nClick their hand. (Esc to cancel)`}
+              {pickTargetForAction4
+                ? `Pick an opponent. They will discard 1 coalition card of their choice.\nClick their hand. (Esc to cancel)`
+                : `Pick an opponent. Discard 1 persona from their coalition.\nClick their hand. (Esc to cancel)`}
             </div>
           </div>
         </div>
@@ -424,18 +435,23 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Action_4 discard prompt (target chooses) */}
-      {G.pending?.kind === 'action_4_discard' && String(playerID) === String(G.pending.targetId) && (
+      {/* Action_4 / Action_9 discard prompt (target chooses) */}
+      {(G.pending?.kind === 'action_4_discard' || G.pending?.kind === 'action_9_discard_persona') && String(playerID) === String(G.pending.targetId) && (
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from coalition</div>
-            <div className="mt-2 text-amber-100/80 text-sm">Choose 1 card from your coalition to discard.</div>
+            <div className="mt-2 text-amber-100/80 text-sm">
+              {G.pending?.kind === 'action_9_discard_persona'
+                ? 'Choose 1 PERSONA from your coalition to discard.'
+                : 'Choose 1 card from your coalition to discard.'}
+            </div>
             <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).map((c) => (
+              {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true)).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
                   onClick={() => moves.discardFromCoalition(c.id)}
+                  title={c.name || c.id}
                 >
                   <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
                 </button>
@@ -761,6 +777,10 @@ function Board({ G, ctx, moves, playerID }) {
                   else if (canPlayAction) {
                     if (baseId === 'action_4') {
                       setPickTargetForAction4({ cardId: card.id });
+                      return;
+                    }
+                    if (baseId === 'action_9') {
+                      setPickTargetForAction9({ cardId: card.id });
                       return;
                     }
                     moves.playAction(card.id);
