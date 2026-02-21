@@ -162,6 +162,13 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingP37 = pending?.kind === 'persona_37_pick_opponent_persona' && String(pending?.playerId) === String(playerID);
   const pendingP37Source = pendingP37 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP33 = pending?.kind === 'persona_33_choose_faction' && String(pending?.playerId) === String(playerID);
+  const pendingP33Source = pendingP33 ? String(pending?.sourceCardId || '') : '';
+  const pendingP34 = pending?.kind === 'persona_34_guess_topdeck' && String(pending?.playerId) === String(playerID);
+  const pendingP34Source = pendingP34 ? String(pending?.sourceCardId || '') : '';
+  const pendingP39 = pending?.kind === 'persona_39_activate' && String(pending?.playerId) === String(playerID);
+  const pendingP39Source = pendingP39 ? String(pending?.sourceCardId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -243,6 +250,36 @@ function Board({ G, ctx, moves, playerID }) {
           const c14 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_14');
           if (c14) moves.playAction(c14.id);
         }
+        return;
+      }
+
+      // p33 choice: faction
+      if (pendingP33 && (key >= '1' && key <= '7')) {
+        const map = {
+          '1': 'faction:liberal',
+          '2': 'faction:rightwing',
+          '3': 'faction:leftwing',
+          '4': 'faction:fbk',
+          '5': 'faction:red_nationalist',
+          '6': 'faction:system',
+          '7': 'faction:neutral',
+        };
+        try { moves.persona33ChooseFaction(map[key]); } catch {}
+        return;
+      }
+
+      // p34 guess
+      if (pendingP34 && key === 'g') {
+        try {
+          const guess = window.prompt('persona_34: guess next card base id (e.g. persona_12, event_10, action_8)');
+          if (guess) moves.persona34GuessTopdeck(String(guess).trim());
+        } catch {}
+        return;
+      }
+
+      // p39 activate
+      if (pendingP39 && key === 'r') {
+        try { moves.persona39ActivateRecycle(); } catch {}
         return;
       }
 
@@ -633,6 +670,31 @@ function Board({ G, ctx, moves, playerID }) {
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP37Source}: click an opponent persona to bribe (+2) and block abilities
+          </div>
+        </div>
+      )}
+
+      {pendingP33 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP33Source}: choose faction (keys 1..7)
+            <span className="ml-3 text-amber-200/70">1 liberal · 2 right · 3 left · 4 fbk · 5 red · 6 system · 7 neutral</span>
+          </div>
+        </div>
+      )}
+
+      {pendingP34 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP34Source}: guess top deck card id (press G)
+          </div>
+        </div>
+      )}
+
+      {pendingP39 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP39Source}: press R to recycle into deck + buff reds (+2)
           </div>
         </div>
       )}
@@ -1413,7 +1475,7 @@ function Board({ G, ctx, moves, playerID }) {
             // Allow clicking cancels as long as server is advertising a response window.
             // Server enforces actual expiry; UI shouldn't block.
             const canCancelAction = responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
-            const canCancelPersona = responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID);
+            const canCancelPersona = responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID) && String(response?.personaCard?.id || '').split('#')[0] !== 'persona_33';
             const canCancelWithPersona10 = canPersona10Cancel && card.type === 'persona' && baseId === 'persona_10';
 
             const baseIs14 = baseId === 'action_14';
@@ -1433,6 +1495,12 @@ function Board({ G, ctx, moves, playerID }) {
                     if (baseId === 'persona_9') {
                       playSfx('ui', 0.35);
                       setPickTargetForPersona9({ cardId: card.id });
+                      return;
+                    }
+
+                    if (baseId === 'persona_39') {
+                      playSfx('ui', 0.35);
+                      try { moves.playPersona(card.id); } catch {}
                       return;
                     }
 
