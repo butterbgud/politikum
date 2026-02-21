@@ -374,8 +374,6 @@ function Board({ G, ctx, moves, playerID }) {
                   }
                 }}
                 onMouseMove={(e) => {
-                  // Only allow fanning opponents when we're explicitly targeting them (e.g. action_4/action_9).
-                  if (!pickTargetForAction4 && !pickTargetForAction9) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
                   // Note: opponent fan has variable spacing; use proportional index for hover.
@@ -383,7 +381,6 @@ function Board({ G, ctx, moves, playerID }) {
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
                 onTouchStart={(e) => {
-                  if (!pickTargetForAction4 && !pickTargetForAction9) return;
                   const touch = e.touches?.[0];
                   if (!touch) return;
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -392,7 +389,6 @@ function Board({ G, ctx, moves, playerID }) {
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
                 onTouchMove={(e) => {
-                  if (!pickTargetForAction4 && !pickTargetForAction9) return;
                   const touch = e.touches?.[0];
                   if (!touch) return;
                   const rect = e.currentTarget.getBoundingClientRect();
