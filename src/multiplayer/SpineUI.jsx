@@ -147,6 +147,15 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingPersona45 = pending?.kind === 'persona_45_steal_from_opponent' && String(pending?.playerId) === String(playerID);
   const pendingPersona45Source = pendingPersona45 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP21 = pending?.kind === 'persona_21_pick_target_invert' && String(pending?.playerId) === String(playerID);
+  const pendingP21Source = pendingP21 ? String(pending?.sourceCardId || '') : '';
+  const pendingP23 = pending?.kind === 'persona_23_choose_self_inflict_draw' && String(pending?.playerId) === String(playerID);
+  const pendingP23Source = pendingP23 ? String(pending?.sourceCardId || '') : '';
+  const pendingP26 = pending?.kind === 'persona_26_pick_red_nationalist' && String(pending?.playerId) === String(playerID);
+  const pendingP26Source = pendingP26 ? String(pending?.sourceCardId || '') : '';
+  const pendingP28 = pending?.kind === 'persona_28_pick_non_fbk' && String(pending?.playerId) === String(playerID);
+  const pendingP28Source = pendingP28 ? String(pending?.sourceCardId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -231,8 +240,14 @@ function Board({ G, ctx, moves, playerID }) {
         return;
       }
 
+      // p23 choice: 0..3 tokens
+      if (pendingP23 && (key === '0' || key === '1' || key === '2' || key === '3')) {
+        try { moves.persona23ChooseSelfInflict(Number(key)); } catch {}
+        return;
+      }
+
       // Number hotkeys for hand (quick-play): 1..9, 0 = 10
-      if (!responseActive && (key === '0' || (key >= '1' && key <= '9'))) {
+      if (!responseActive && !pendingP23 && (key === '0' || (key >= '1' && key <= '9'))) {
         const n = key === '0' ? 10 : Number(key);
         const idx = n - 1;
         const card = (me?.hand || [])[idx];
@@ -438,7 +453,13 @@ function Board({ G, ctx, moves, playerID }) {
                   const canClickFaceForOppPlace = oppPlaceActive && it.kind === 'face' && it.card?.type === 'persona';
 
                   const canClickFaceForP8Swap = canPersona8Swap && it.kind === 'face' && String(it.card?.id) === String(p8SwapSpec?.playedPersonaId) && String(p.id) === String(p8SwapSpec?.ownerId);
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap;
+
+                  // persona picks (no modal)
+                  const canClickFaceForP21 = pendingP21 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
+                  const canClickFaceForP26 = pendingP26 && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:red_nationalist') && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP28 = pendingP28 && it.kind === 'face' && it.card?.type === 'persona' && !(Array.isArray(it.card?.tags) && it.card.tags.includes('faction:fbk')) && !it.card?.shielded && !isImmovablePersona(it.card);
+
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -453,6 +474,19 @@ function Board({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForOppPlace) {
                           setPlacementModeOpp((m) => ({ ...(m || {}), neighborId: it.card.id }));
+                          return;
+                        }
+                        if (canClickFaceForP21) {
+                          try { playSfx('ui', 0.35); moves.persona21InvertTokens(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP26) {
+                          try { playSfx('ui', 0.35); moves.persona26PurgeRedNationalist(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP28) {
+                          try { playSfx('ui', 0.35); moves.persona28StealPlusTokens(String(p.id), it.card.id, 3); } catch {}
+                          return;
                         }
                       }}
                     >
@@ -535,6 +569,39 @@ function Board({ G, ctx, moves, playerID }) {
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingTokensSource || 'EVENT'}: place +1 tokens on your coalition — click a coalition card ({pendingTokensRemaining} left)
+          </div>
+        </div>
+      )}
+
+      {pendingP21 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP21Source}: click any persona on the table to invert its tokens
+          </div>
+        </div>
+      )}
+
+      {pendingP26 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP26Source}: click a red_nationalist persona to discard + inherit its +1
+          </div>
+        </div>
+      )}
+
+      {pendingP28 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP28Source}: click a non-FBK persona to steal up to 3 × +1 (auto)
+          </div>
+        </div>
+      )}
+
+      {pendingP23 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            {pendingP23Source}: choose self-inflict (-1) tokens then draw
+            <span className="ml-3 text-amber-200/70">(keys 0..3)</span>
           </div>
         </div>
       )}
@@ -1101,13 +1168,16 @@ function Board({ G, ctx, moves, playerID }) {
                 const z = hoverMyCoalition == null ? i : (1000 - dist);
 
                 const pendingEvent16 = pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(pending?.playerId) === String(playerID);
+                const pendingP21Here = pendingP21;
+                const pendingP26Here = pendingP26;
+                const pendingP28Here = pendingP28;
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -1129,6 +1199,19 @@ function Board({ G, ctx, moves, playerID }) {
                       }
                       if (pendingEvent16) {
                         try { moves.discardPersonaFromOwnCoalitionForEvent16(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP21Here) {
+                        try { moves.persona21InvertTokens(String(playerID), c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP26Here) {
+                        // Can't pick red nationalist from own coalition usually, but allow.
+                        try { moves.persona26PurgeRedNationalist(String(playerID), c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP28Here) {
+                        try { moves.persona28StealPlusTokens(String(playerID), c.id, 3); } catch {}
                         return;
                       }
                       if (!pendingTokens) return;
