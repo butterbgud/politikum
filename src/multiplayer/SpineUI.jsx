@@ -671,7 +671,7 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Hand fan */}
-      <div className="fixed bottom-6 right-[310px] z-[999] pointer-events-auto">
+      <div className="fixed bottom-6 right-[310px] z-[3500] pointer-events-auto">
         <div
           className="relative h-56 overflow-visible"
           style={{ width: `${handWidth}px`, marginLeft: 'auto' }}
