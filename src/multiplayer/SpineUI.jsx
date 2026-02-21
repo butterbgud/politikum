@@ -187,10 +187,21 @@ function Board({ G, ctx, moves, playerID }) {
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
-      <div className="fixed top-3 left-3 z-[2000] pointer-events-none select-none">
-        <div className="bg-black/60 border border-amber-900/20 rounded-lg px-2 py-1 text-[10px] font-mono font-black tracking-widest text-amber-200/80">
-          {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit'}
-        </div>
+      <div className="fixed top-3 left-3 z-[2000] select-none">
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              const full = (typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit');
+              navigator.clipboard?.writeText?.(full);
+            } catch {}
+          }}
+          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90"
+          title={`app ${typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit'}\nengine ${typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? __ENGINE_GIT_SHA_SHORT__ : 'nogit'}\n(click to copy full app sha)`}
+        >
+          {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : (typeof __GIT_SHA__ !== 'undefined' ? String(__GIT_SHA__).slice(0,7) : 'nogit')}
+          {typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? ` · eng@${__ENGINE_GIT_SHA_SHORT__}` : ''}
+        </button>
       </div>
 
       {/* Opponents */}
