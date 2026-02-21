@@ -118,7 +118,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
             <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
             <div className="mt-3 grid gap-2">
-              {(G.players || []).map((p) => {
+              {(G.players || []).filter((p) => !!p?.active).map((p) => {
                 const active = !!p.active;
                 const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
                 return (
