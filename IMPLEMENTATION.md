@@ -97,7 +97,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: At the start of the owning player’s turn, if Соловей is in their coalition, show a choice: “Use Соловей: skip draw to discard an opponent persona?” If accepted, highlight opponents’ coalitions with all valid targets (persona_31 greyed out / unselectable). Player picks a target; discard both Соловей and the chosen persona.
   - notes/edge-cases: This replaces your normal draw for the turn (no draw at all). If there are no valid opponent personas (everyone empty or only persona_31), do not offer the option.
 
-- persona_12 (p12) — Савин
+- persona_12 (p12) — Савин ✅
   - timing: on_enter
   - effect: When Савин enters your coalition, if at least one adjacent persona (left or right) has the `faction:red_nationalist` tag, that adjacent persona gains **2 × +1** tokens. If both neighbors qualify, you choose which one gets the bonus.
   - UX: After you place Савин and finalise his position, check neighbors. If there is exactly one red_nationalist neighbor, automatically put 2 × +1 tokens on it and log. If there are two, prompt you to choose which adjacent persona receives the tokens.
@@ -109,7 +109,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: After a qualifying opponent action resolves (and its target/effect is confirmed), if you have Венедитков, prompt you to select a persona in that opponent’s coalition and place 1 × -1 token on it. If there are no personas to target, show a small log note that the trigger fizzled.
   - notes/edge-cases: Triggers once per action card play (not per individual persona targeted inside that action). Affects the coalition of the player who played the action.
 
-- persona_15 (p15) — Пожарский
+- persona_15 (p15) — Пожарский ✅
   - timing: passive (linked to persona_22 / Светов)
   - effect: As long as Пожарский is in any coalition, whenever any persona_22 (Светов) in any coalition gains +1 or -1 tokens, Пожарский gains the same type of tokens plus one extra of that type. Example: if Светов gets 2 × +1, Пожарский gets 3 × +1; if Светов gets 1 × -1, Пожарский gets 2 × -1.
   - UX: This is automatic. When Светов receives tokens, also animate token gain on Пожарский and add a log entry linking the two effects.
