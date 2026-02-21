@@ -555,6 +555,65 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {/* Persona_3 choice prompt */}
+      {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[720px] max-w-[94vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">SVTV (p3) — choose one</div>
+            <div className="mt-3 flex flex-col gap-3">
+              <button
+                className="px-4 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/20 text-left"
+                onClick={() => {
+                  // discard first available leftwing persona from selected owner (simple)
+                  const opts = (G.players || []).filter((p) => (p.coalition || []).some((c) => c.type === 'persona' && Array.isArray(c.tags) && c.tags.includes('faction:leftwing') && !c.shielded));
+                  const owner = opts[0];
+                  if (!owner) return;
+                  moves.persona3ChooseOption('a', String(owner.id));
+                }}
+              >
+                Discard a leftwing persona (any coalition)
+              </button>
+              <button
+                className="px-4 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/60 border border-amber-900/20 text-left"
+                onClick={() => moves.persona3ChooseOption('b')}
+              >
+                Remove up to 2 +1 tokens from all leftwing personas in opponents' coalitions
+              </button>
+            </div>
+            <div className="mt-4 text-amber-200/60 text-xs">(We can upgrade option A to let you pick exact target.)</div>
+          </div>
+        </div>
+      )}
+
+      {/* Persona_5 target prompt */}
+      {G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Pevchih (p5)</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Discard a liberal persona from an opponent’s coalition; steal all its tokens.</div>
+            <div className="mt-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {(G.players || []).filter((p) => String(p.id) !== String(playerID)).map((p) => (
+                <div key={p.id}>
+                  <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
+                  <div className="mt-2 flex gap-3 flex-wrap">
+                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && Array.isArray(c.tags) && c.tags.includes('faction:liberal')).map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                        onClick={() => moves.persona5PickLiberal(String(p.id), c.id)}
+                        title={c.name || c.id}
+                      >
+                        <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Persona_14 discard prompt (active player chooses any coalition persona) */}
       {G.pending?.kind === 'discard_one_persona_from_any_coalition' && String(playerID) === String(G.pending.playerId) && (
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
