@@ -133,16 +133,16 @@ If you want me to draft real effects, I need at least one of:
   - UX: Show Соболь’s VP as base 5 plus token modifiers plus a live adjacency modifier (e.g. via tooltip or small icon) so players can see the current penalty. Recompute whenever the coalition order changes.
   - notes/edge-cases: Only immediate neighbors count; having other FBK personas further away does nothing. If she has no adjacent FBK personas, there is no penalty.
 
-- persona_20 (p20) — Быков
+- persona_20 (p20) — Быков ✅
   - timing: on_enter
   - effect: When Быков enters your coalition, take any 1 card from the common discard pile into your hand.
-  - UX: After placement, open a discard-pile picker UI (paged if needed) showing all cards in discard. Let the player select one card; that card moves from discard into their hand. If discard is empty, show a short log “Быков: no cards in discard to take”.
+  - UX: After placement, if the discard pile has 0 cards, log “Быков: no cards in discard to take”. If it has 1 card, auto-take it into hand. If it has 2+ cards, open a discard-pile picker UI showing all cards; you click one to take. Bots auto-pick the first card.
   - notes/edge-cases: Can take any card type (persona, action, event). Taking a card may affect future effects that depend on discard contents.
 
-- persona_31 (p31) — Шлосберг
+- persona_31 (p31) — Шлосберг ✅
   - timing: passive
-  - effect: Шлосберг cannot be removed from your coalition by any effect: not sent to discard, and not cleared by action_7 or similar removal effects.
-  - UX: Mark Шлосберг with a “cannot be removed” icon/tooltip. When a removal effect attempts to target him, either do not allow targeting, or show a message “Шлосберг cannot be removed” and skip that target.
+  - effect: Шлосберг cannot be removed from any coalition by card effects and cannot be taken from discard by ACTION 18.
+  - UX: Treat Шлосберг as an invalid target for all discard / "choose a persona" prompts that would remove him from coalition or let someone take him from discard (UI filters him out; engine also rejects). Action 7 cannot target him, so his tokens/abilities are never cleared.
   - notes/edge-cases: Still can receive VP tokens (+/-). Effects that mention “discard any persona” should treat Шлосберг as an invalid target.
 
 - persona_45 (p45) — Шульман
@@ -150,6 +150,38 @@ If you want me to draft real effects, I need at least one of:
   - effect: When Шульман enters your coalition, choose an opponent. Randomly select one card from that opponent’s hand and add it to your hand.
   - UX: After placement, prompt you to choose an opponent; then, without revealing their full hand, randomly pick one card and animate it moving to your hand. Log that a random card was taken from that opponent.
   - notes/edge-cases: If the chosen opponent has an empty hand, the effect fizzles (log only).
+
+### Not implemented (Konsta's shitty brief)
+persona_25 - ✅ implemented (passive): +1 VP for each persona to his left
+persona_27 - ✅ implemented (passive): -1 VP for each non-leftwing persona in your coalition
+persona_29 - ✅ implemented (passive): gets -1 each time action8 is played
+persona_30 - ✅ implemented (on enter): all liberals in your coalition get +1 token
+persona_35 - ✅ implemented: no special abilities
+persona_44 - ✅ implemented (passive): when any persona goes to discard pile, gets +1
+
+persona_21 - pick any person in any coalition, change all his +1/-1 tokens on the opposite (i.e had +7 and -2 tokens total - it becomes +2 and -7 tokens)
+persona_22 - when Liberal enters any coalition gets -1, when Rightwing enters any coalition gets two +1 tokens
+persona_23 - on enter you can put up to three -1 tokens to gain same number of cards (i.e -2 tokens = 2 cards gained from the deck)
+persona_24 - gets +1 for each leftwing in other coalitions, reduces her vp for each Leftwing in your coalition
+persona_25 - gets +1 for each persona to his left
+persona_26 - on enter choose any red nationalist and discard him. this persona gets all his +1 tokens if it had any
+persona_27 - reduces his vp for each persona that is not leftwing in your coalition
+persona_28 - on enter choosy any non fbk persona, this persona takes up to three +1 from him
+persona_29 - gets -1 each time action8 is played
+persona_30 - on enter all liberals in your coalition get +1
+
+persona_32 - you can take persona from your coalition back into your hand
+persona_33 - on enter choose which fraction this persona belongs to, this persona gets +1vp for each persona of that fraction in your coalition including herself. Can not be target of action8
+persona_34 - on enter try to guess next card in the deck, if guess correctly you win the game
+persona_35 - no special abilties
+persona_36 - ignores action7, if is a target of action7 - gets four +1
+persona_37 - choose a persona in your opponent coalition, put two +1 on it, this persona blocks that characters abilities until the end of the game
+persona_38 - everytime event1,2,3,10 is played - takes one of those +1 tokens to himself
+persona_39 - during your turn you can put this persona back into the deck and put two +1 on all your red nationalists
+persona_41 - on enter put +1 on all your fbk fraction personas in your coalition
+persona_43 - on enter takes +1 from each rightwing persona in play, everytime this persona gets any number of +1, reduces the number by one ( ie was supposed to get three +1, gets only 2)
+persona_44 - when any character goes to discard pile - this persona gets +1
+
 ---
 
 ## Spec template (fill per card)
