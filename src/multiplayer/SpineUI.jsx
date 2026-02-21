@@ -313,6 +313,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const pendingP16 = pending?.kind === 'persona_16_discard3_from_hand' && String(pending?.playerId) === String(playerID);
   const pendingP16Source = pendingP16 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP12 = pending?.kind === 'persona_12_choose_adjacent_red' && String(pending?.playerId) === String(playerID);
+  const pendingP12Left = pendingP12 ? String(pending?.leftId || '') : '';
+  const pendingP12Right = pendingP12 ? String(pending?.rightId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -976,11 +980,19 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Persona_3 choice prompt */}
+      {/* Persona prompts (no modals) */}
       {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             SVTV (p3): click a LEFTWING persona to discard it, or press B for option B
+          </div>
+        </div>
+      )}
+
+      {pendingP12 && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            Savin (p12): click one adjacent red_nationalist to get +2
           </div>
         </div>
       )}
@@ -1451,13 +1463,14 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const pendingP26Here = pendingP26;
                 const pendingP28Here = pendingP28;
                 const pendingP32Here = pendingP32;
+                const pendingP12Here = pendingP12 && (String(c.id) === pendingP12Left || String(c.id) === pendingP12Right);
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -1496,6 +1509,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }
                       if (pendingP32Here) {
                         try { moves.persona32BounceToHand(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP12Here) {
+                        try { moves.persona12ChooseAdjacentRed(c.id); } catch {}
                         return;
                       }
                       if (!pendingTokens) return;
