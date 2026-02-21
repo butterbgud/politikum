@@ -318,8 +318,13 @@ function Board({ G, ctx, moves, playerID }) {
                       title={id}
                     >
                       <img src={img} alt={id} className="w-full h-full object-cover" draggable={false} />
-                      {(it.kind === 'face' && Number(it.card?.vpDelta || 0) < 0) && (
-                        <div className="absolute left-2 bottom-2 w-7 h-7 rounded-full bg-red-700/90 border border-red-200/30 flex items-center justify-center text-white font-black text-[13px]">{it.card.vpDelta}</div>
+                      {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
+                        <div className={
+                          "absolute left-2 bottom-2 w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] " +
+                          (Number(it.card?.vpDelta || 0) < 0 ? "bg-red-700/90 border-red-200/30" : "bg-emerald-700/90 border-emerald-200/30")
+                        }>
+                          {it.card.vpDelta}
+                        </div>
                       )}
                     </div>
                   );
@@ -657,7 +662,8 @@ function Board({ G, ctx, moves, playerID }) {
                 if (!coal.length) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = e.clientX - rect.left;
-                const idx = Math.max(0, Math.min(coal.length - 1, Math.round(x / step)));
+                // smoother: use card center thresholds instead of rounding
+                const idx = Math.max(0, Math.min(coal.length - 1, Math.floor((x + step / 2) / step)));
                 setHoverMyCoalition(idx);
               }}
               onMouseLeave={() => setHoverMyCoalition(null)}
