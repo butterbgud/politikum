@@ -72,8 +72,9 @@ function Board({ G, ctx, moves, playerID }) {
 
   const myCoalitionPoints = (me?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP scoring
 
-  const pendingEvent1 = pending?.kind === 'event_1_tokens' && String(pending?.playerId) === String(playerID);
-  const pendingEvent1Remaining = pendingEvent1 ? Number(pending?.remaining || 0) : 0;
+  const pendingTokens = pending?.kind === 'place_tokens_plus_vp' && String(pending?.playerId) === String(playerID);
+  const pendingTokensRemaining = pendingTokens ? Number(pending?.remaining || 0) : 0;
+  const pendingTokensSource = pendingTokens ? String(pending?.sourceCardId || '') : '';
 
   // Hand fan geometry (ported from Citadel MP)
   const cards = hand;
@@ -361,10 +362,10 @@ function Board({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Pending banner */}
-      {pendingEvent1 && pendingEvent1Remaining > 0 && (
+      {pendingTokens && pendingTokensRemaining > 0 && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            EVENT 1: place +1 tokens on your coalition — click a coalition card ({pendingEvent1Remaining} left)
+            {pendingTokensSource || 'EVENT'}: place +1 tokens on your coalition — click a coalition card ({pendingTokensRemaining} left)
           </div>
         </div>
       )}
@@ -643,13 +644,13 @@ function Board({ G, ctx, moves, playerID }) {
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (pendingEvent1 ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (pendingTokens ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
                     onClick={() => {
-                      if (!pendingEvent1) return;
-                      try { moves.applyEvent1Token(c.id); } catch {}
+                      if (!pendingTokens) return;
+                      try { moves.applyPendingToken(c.id); } catch {}
                     }}
                   >
                     <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
