@@ -934,7 +934,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       )}
 
       {/* Response window banner (center-table) */}
-      {responseActive && (
+      {responseActive && String(response?.playedBy) !== String(playerID) && (
         (responseKind === 'cancel_action' && (haveAction6 || (haveAction14 && responseTargetsMe))) ||
         (responseKind === 'cancel_persona' && haveAction8)
       ) && (
