@@ -276,7 +276,15 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   }, [hand]);
 
   const opponents = useMemo(() => {
-    return (G.players || []).filter((p) => String(p.id) !== String(playerID));
+    return (G.players || [])
+      .filter((p) => String(p.id) !== String(playerID))
+      .filter((p) => !!p?.active)
+      .filter((p) => {
+        const n = String(p?.name || '').trim();
+        if (!n) return false;
+        if (n.startsWith('[H] Seat')) return false;
+        return true;
+      });
   }, [G.players, playerID]);
 
   const myCoalitionPoints = (me?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP scoring
@@ -548,7 +556,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       </div>
 
       {/* Opponents */}
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[700] flex gap-10 pointer-events-auto">
+      <div className="fixed top-20 left-0 right-0 z-[700] flex justify-evenly pointer-events-auto">
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -587,13 +595,15 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           };
 
           return (
-            <div key={p.id} className="flex flex-col items-center gap-2 relative pt-10">
+            <div key={p.id} className="flex flex-col items-center gap-2 relative pt-10 px-6">
               {/* name/points as absolute overlay above cards */}
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap min-w-[180px] justify-center">
-                <span>{p.name}</span>
-                <span className="text-amber-200/50">•</span>
-                <span className="text-amber-200/80">{pts}p</span>
-              </div>
+              {String(p.name || '').trim() && !String(p.name || '').startsWith('[H] Seat') && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
+                  <span>{p.name}</span>
+                  <span className="text-amber-200/50">•</span>
+                  <span className="text-amber-200/80">{pts}p</span>
+                </div>
+              )}
 
               {/* single opponent fan (coalition + hand) */}
               <div
