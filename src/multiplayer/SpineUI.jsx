@@ -222,12 +222,12 @@ function Board({ G, ctx, moves, playerID }) {
 
   // Drive bot turns (pacing): tick every 500ms when it's a bot's turn.
   useEffect(() => {
-    if (!currentIsBot) return;
+    // Always tick bots in the background so the game advances after the last bot acts.
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
     }, 500);
     return () => clearInterval(t);
-  }, [currentIsBot, moves]);
+  }, [moves]);
 
   useEffect(() => {
     const id = G.lastEvent?.id;
