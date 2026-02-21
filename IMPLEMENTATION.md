@@ -228,7 +228,7 @@ If you want me to draft real effects, I need at least one of:
 
 
 #### Specs converted (not yet implemented) — remaining personas
-- persona_32 — Bounce Persona
+- persona_32 — Bounce Persona ✅
   - timing: during_your_turn (activated)
   - effect: choose a persona in your coalition; return it to your hand.
   - UX: click one of your coalition personas; it animates back to your hand.
@@ -258,7 +258,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: click an opponent persona. Animate +2 tokens on target and a permanent “X”/blocked marker.
   - notes/edge-cases: cannot target persona_31. If target is shielded, treat as invalid. “Blocked until end of game” persists through round end.
 
-- persona_38 — Token Vacuum (from squabble events)
+- persona_38 — Token Vacuum (from squabble events) ✅
   - timing: passive (global trigger)
   - effect: whenever event_1, event_2, event_3, or event_10 is played, this persona gains 1 × +1 token.
   - UX: automatic, log per trigger.
@@ -270,7 +270,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: show an “activate” prompt/button when it’s your turn; confirm → remove this persona + apply buffs.
   - notes/edge-cases: clarify placement: default to “shuffle into deck” unless we explicitly want “top of deck”. Cannot activate if not in your coalition.
 
-- persona_41 — FBK Rally
+- persona_41 — FBK Rally ✅
   - timing: on_enter
   - effect: when this persona enters your coalition, each **FBK** persona in your coalition gains 1 × +1 token.
   - UX: automatic tokens + log.
