@@ -43,12 +43,12 @@ If you want me to draft real effects, I need at least one of:
 - action_8 ✅ response: cancel a persona play (persona goes to discard)
 - action_9 ✅ choose opponent → they discard **1 persona** from coalition (persona-only)
 
-### Not implemented (needs spec)
-- action_7 ❌ 📝 TBD (need card text)
-- action_13 ❌ 📝 TBD (need card text)
-- action_14 ❌ 📝 TBD (need card text)
-- action_17 ❌ 📝 TBD (need card text)
-- action_18 ❌ 📝 TBD (need card text)
+### Newly implemented
+- action_7 ✅ block abilities on a targeted persona; clear all VP tokens (vpDelta reset); leaves a persistent marker above that card.
+- action_13 ✅ shield a persona in your coalition: it cannot be targeted by abilities/actions; when it would receive +1 tokens, it gets 1 fewer (to a minimum of 0); persistent shield marker.
+- action_14 ✅ response: when an action (e.g. action_4/action_9) targets your coalition, you may play this to cancel that effect (and discard both cards).
+- action_17 ✅ choose persona in an opponent coalition: it receives 2 × -1 tokens, or 4 × -1 if its base id is persona_3, persona_38, persona_41 or persona_43.
+- action_18 ✅ return a persona from the shared discard pile to your hand.
 
 ## Personas
 ### Implemented

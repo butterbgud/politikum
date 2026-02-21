@@ -85,6 +85,8 @@ function Board({ G, ctx, moves, playerID }) {
   const responseActive = !!responseKind && (responseExpiresAt - Date.now()) > -750;
   const haveAction6 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
   const haveAction8 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
+  const haveAction14 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_14');
+  const responseTargetsMe = !!pending && (pending.kind === 'action_4_discard' || pending.kind === 'action_9_discard_persona') && String(pending.targetId) === String(playerID);
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
   const ENABLE_EVENT_SPLASH = true;
@@ -175,15 +177,20 @@ function Board({ G, ctx, moves, playerID }) {
 
       // Fast cancels during response windows
       if (responseKind && key === '1') {
-        // action_6 cancels actions
+        // action_6 cancels actions (anyone)
         if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID)) {
           const c6 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
           if (c6) moves.playAction(c6.id);
         }
-        // action_8 cancels persona plays
+        // action_8 cancels persona plays (anyone)
         if (responseKind === 'cancel_persona' && String(response?.playedBy) !== String(playerID)) {
           const c8 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
           if (c8) moves.playAction(c8.id);
+        }
+        // action_14 cancels the effect of an action that is targeting YOU
+        if (responseKind === 'cancel_action' && responseTargetsMe) {
+          const c14 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_14');
+          if (c14) moves.playAction(c14.id);
         }
         return;
       }
@@ -380,6 +387,16 @@ function Board({ G, ctx, moves, playerID }) {
                           {it.card.vpDelta}
                         </div>
                       )}
+                      {it.kind === 'face' && (it.card?.shielded || it.card?.blockedAbilities) && (
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
+                          {it.card?.shielded && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
+                          )}
+                          {it.card?.blockedAbilities && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -459,10 +476,15 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Response window banner */}
-      {responseActive && ((responseKind === 'cancel_action' && haveAction6) || (responseKind === 'cancel_persona' && haveAction8)) && (
+      {responseActive && (
+        (responseKind === 'cancel_action' && (haveAction6 || (haveAction14 && responseTargetsMe))) ||
+        (responseKind === 'cancel_persona' && haveAction8)
+      ) && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {responseKind === 'cancel_action' ? 'Action played — respond with Action 6 to cancel' : 'Persona played — respond with Action 8 to cancel'}
+            {responseKind === 'cancel_persona' && haveAction8 && 'Persona played — respond with Action 8 to cancel'}
+            {responseKind === 'cancel_action' && haveAction6 && 'Action played — respond with Action 6 to cancel'}
+            {responseKind === 'cancel_action' && !haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
             <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
           </div>
         </div>
@@ -491,7 +513,7 @@ function Board({ G, ctx, moves, playerID }) {
                 : 'Choose 1 card from your coalition to discard.'}
             </div>
             <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true)).map((c) => (
+              {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true) && !c.shielded).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -542,7 +564,7 @@ function Board({ G, ctx, moves, playerID }) {
                 <div key={p.id} className="">
                   <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
                   <div className="mt-2 flex gap-3 flex-wrap">
-                    {(p.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded).map((c) => (
                       <button
                         key={c.id}
                         className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -567,7 +589,7 @@ function Board({ G, ctx, moves, playerID }) {
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard a persona</div>
             <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 persona from your coalition to discard, then draw 1 card.</div>
             <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+              {(me?.coalition || []).filter((c) => c.type === 'persona' && !c.shielded).map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -579,6 +601,111 @@ function Board({ G, ctx, moves, playerID }) {
               ))}
               {!(me?.coalition || []).some((c) => c.type === 'persona') && (
                 <div className="text-amber-200/70 text-sm">You have no personas to discard.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action_7: pick any persona to block abilities & clear tokens */}
+      {G.pending?.kind === 'action_7_block_persona' && String(playerID) === String(G.pending.attackerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 7 — Block persona</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose any persona in play. That persona&apos;s abilities are blocked and its VP tokens are cleared.</div>
+            <div className="mt-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {(G.players || []).map((p) => (
+                <div key={p.id} className="">
+                  <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
+                  <div className="mt-2 flex gap-3 flex-wrap">
+                    {(p.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                        onClick={() => moves.blockPersonaForAction7(String(p.id), c.id)}
+                        title={c.name || c.id}
+                      >
+                        <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action_13: shield one of YOUR personas */}
+      {G.pending?.kind === 'action_13_shield_persona' && String(playerID) === String(G.pending.attackerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 13 — Shield</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose one of your personas to shield. It can&apos;t be targeted by actions/abilities, and +1 gains are reduced by 1.</div>
+            <div className="mt-4 flex gap-3 flex-wrap">
+              {(me?.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                <button
+                  key={c.id}
+                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  onClick={() => moves.shieldPersonaForAction13(c.id)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action_17: choose opponent persona to receive -1 tokens */}
+      {G.pending?.kind === 'action_17_choose_opponent_persona' && String(playerID) === String(G.pending.attackerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 17 — Apply -1 tokens</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose an opponent persona. It gets 2 × -1 tokens (or 4 × -1 if it is persona_3, persona_38, persona_41 or persona_43).</div>
+            <div className="mt-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {(G.players || []).filter((p) => String(p.id) !== String(playerID)).map((p) => (
+                <div key={p.id} className="">
+                  <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
+                  <div className="mt-2 flex gap-3 flex-wrap">
+                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded).map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                        onClick={() => moves.applyAction17ToPersona(c.id)}
+                        title={c.name || c.id}
+                      >
+                        <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action_18: return persona from discard to hand */}
+      {G.pending?.kind === 'action_18_pick_persona_from_discard' && String(playerID) === String(G.pending.attackerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm backdrop-filter pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 18 — Return from discard</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose a persona from the discard pile to return to your hand.</div>
+            <div className="mt-4 flex flex-wrap gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {(G.discard || []).filter((c) => c.type === 'persona').map((c) => (
+                <button
+                  key={c.id}
+                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  onClick={() => moves.pickPersonaFromDiscardForAction18(c.id)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+              {!(G.discard || []).some((c) => c.type === 'persona') && (
+                <div className="text-amber-200/70 text-sm">No personas in discard.</div>
               )}
             </div>
           </div>
@@ -827,6 +954,16 @@ function Board({ G, ctx, moves, playerID }) {
                         {c.vpDelta}
                       </div>
                     )}
+                    {(c.shielded || c.blockedAbilities) && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
+                        {c.shielded && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
+                        )}
+                        {c.blockedAbilities && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
+                        )}
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -876,7 +1013,10 @@ function Board({ G, ctx, moves, playerID }) {
             const canCancelAction = responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
             const canCancelPersona = responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID);
 
-            const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona;
+            const baseIs14 = baseId === 'action_14';
+            const canCancelEffectOnMe = responseKind === 'cancel_action' && responseTargetsMe && baseIs14;
+
+            const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe;
 
             return (
               <button
@@ -889,7 +1029,7 @@ function Board({ G, ctx, moves, playerID }) {
                     if (baseId === 'action_9') { playSfx('ui', 0.35); setPickTargetForAction9({ cardId: card.id }); return; }
                     playSfx('play');
                     moves.playAction(card.id);
-                  } else if (canCancelAction || canCancelPersona) {
+                  } else if (canCancelAction || canCancelPersona || canCancelEffectOnMe) {
                     playSfx('ui', 0.35);
                     moves.playAction(card.id);
                   }
