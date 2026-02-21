@@ -139,6 +139,10 @@ function Board({ G, ctx, moves, playerID }) {
   const pendingTokensRemaining = pendingTokens ? Number(pending?.remaining || 0) : 0;
   const pendingTokensSource = pendingTokens ? String(pending?.sourceCardId || '') : '';
 
+  const pendingPersona45 = pending?.kind === 'persona_45_steal_from_opponent' && String(pending?.playerId) === String(playerID);
+  const pendingPersona45Source = pendingPersona45 ? String(pending?.sourceCardId || '') : '';
+
+
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
   // Hand fan geometry (ported from Citadel MP)
@@ -359,10 +363,14 @@ function Board({ G, ctx, moves, playerID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
-                  ((pickTargetForAction4 || pickTargetForAction9) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
+                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
                 onClick={() => {
+                  if (pendingPersona45) {
+                    try { moves.persona45StealFromOpponent(String(p.id)); } catch {}
+                    return;
+                  }
                   if (pickTargetForAction4) {
                     try { moves.playAction(pickTargetForAction4.cardId, String(p.id)); } catch {}
                     setPickTargetForAction4(null);
@@ -687,6 +695,15 @@ function Board({ G, ctx, moves, playerID }) {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Persona_45: choose opponent (no modal) */}
+      {pendingPersona45 && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            {pendingPersona45Source}: click an opponent to steal 1 random card
           </div>
         </div>
       )}
