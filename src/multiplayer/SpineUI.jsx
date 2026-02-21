@@ -30,7 +30,10 @@ function Card({ card, onClick, disabled }) {
 }
 
 function Board({ G, ctx, moves, playerID }) {
+  // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
   const [showHotkeys, setShowHotkeys] = useState(false);
+  // Legacy states kept only to avoid touching large JSX blocks.
+  // Hotkey/tutorial overlays are hard-disabled below.
   const [showTutorial, setShowTutorial] = useState(false);
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId }
   const logRef = React.useRef(null);
@@ -97,10 +100,7 @@ function Board({ G, ctx, moves, playerID }) {
         setShowHotkeys((v) => !v);
         return;
       }
-      if (key === 't') {
-        setShowTutorial((v) => !v);
-        return;
-      }
+      // (T) tutorial overlay removed
       if (key === 'c') {
         if (!isMyTurn || G.hasDrawn) return;
         moves.drawCard();
@@ -353,7 +353,7 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Hotkeys / Tutorial overlay */}
-      {(showHotkeys || showTutorial) && (
+      {false && (
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto" onClick={() => { setShowHotkeys(false); setShowTutorial(false); }}>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[560px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center">
