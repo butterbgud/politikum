@@ -217,6 +217,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const [pickTargetForAction9, setPickTargetForAction9] = useState(null); // { cardId } (targeting mode)
   const [placementMode, setPlacementMode] = useState(null); // { cardId, neighborId, side }
   const [p16DiscardPick, setP16DiscardPick] = useState([]); // array of hand cardIds
+  const [p7FirstPick, setP7FirstPick] = useState(null); // { ownerId, cardId }
   const [placementModeOpp, setPlacementModeOpp] = useState(null); // { cardId, targetId, neighborId, side }
   const [pickTargetForPersona9, setPickTargetForPersona9] = useState(null); // { cardId }
   const logRef = React.useRef(null);
@@ -325,6 +326,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const pendingP12Left = pendingP12 ? String(pending?.leftId || '') : '';
   const pendingP12Right = pendingP12 ? String(pending?.rightId || '') : '';
 
+  const pendingP7 = pending?.kind === 'persona_7_swap_two_in_coalition' && String(pending?.playerId) === String(playerID);
+  const pendingP7Source = pendingP7 ? String(pending?.sourceCardId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -357,6 +361,8 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         setPickTargetForAction4(null);
         setPickTargetForAction9(null);
         setPlacementMode(null);
+        setP16DiscardPick([]);
+        setP7FirstPick(null);
         return;
       }
       if (key === 'h') {
@@ -696,8 +702,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   const canClickFaceForP28 = pendingP28 && it.kind === 'face' && it.card?.type === 'persona' && !(Array.isArray(it.card?.tags) && it.card.tags.includes('faction:fbk')) && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP37 = pendingP37 && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP3A = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:leftwing') && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP7 = pendingP7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -732,6 +739,17 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForP3A) {
                           try { playSfx('ui', 0.35); moves.persona3ChooseOption('a', String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP7) {
+                          if (!p7FirstPick) {
+                            setP7FirstPick({ ownerId: String(p.id), cardId: it.card.id });
+                            return;
+                          }
+                          if (String(p7FirstPick.ownerId) !== String(p.id)) return;
+                          if (String(p7FirstPick.cardId) === String(it.card.id)) return;
+                          try { playSfx('ui', 0.35); moves.persona7SwapTwoInCoalition(String(p.id), p7FirstPick.cardId, it.card.id); } catch {}
+                          setP7FirstPick(null);
                           return;
                         }
                       }}
@@ -1032,6 +1050,25 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             >
               Clear
             </button>
+          </div>
+        </div>
+      )}
+
+      {pendingP7 && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
+            <span>
+              p7: {p7FirstPick ? 'pick SECOND persona (same coalition)' : 'pick FIRST persona'}
+            </span>
+            {p7FirstPick && (
+              <button
+                type="button"
+                className="pointer-events-auto px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60"
+                onClick={() => setP7FirstPick(null)}
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1503,13 +1540,14 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const pendingP28Here = pendingP28;
                 const pendingP32Here = pendingP32;
                 const pendingP12Here = pendingP12 && (String(c.id) === pendingP12Left || String(c.id) === pendingP12Right);
+                const pendingP7Here = pendingP7 && c.type === 'persona' && !isImmovablePersona(c);
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -1552,6 +1590,17 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }
                       if (pendingP12Here) {
                         try { moves.persona12ChooseAdjacentRed(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP7Here) {
+                        if (!p7FirstPick) {
+                          setP7FirstPick({ ownerId: String(playerID), cardId: c.id });
+                          return;
+                        }
+                        if (String(p7FirstPick.ownerId) !== String(playerID)) return;
+                        if (String(p7FirstPick.cardId) === String(c.id)) return;
+                        try { moves.persona7SwapTwoInCoalition(String(playerID), p7FirstPick.cardId, c.id); } catch {}
+                        setP7FirstPick(null);
                         return;
                       }
                       if (!pendingTokens) return;
