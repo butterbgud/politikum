@@ -1773,7 +1773,7 @@ function PolitikumWelcome({ onJoin }) {
     setLoading(true);
     try {
       const { matchID } = await lobbyClient.createMatch('politikum', {
-        numPlayers: 3,
+        numPlayers: 5,
         setupData: { hostName: playerName },
       });
       setTimeout(() => joinMatch(matchID), 250);
