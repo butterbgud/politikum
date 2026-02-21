@@ -127,7 +127,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: After placement, prompt you to choose an opponent. Then show that opponent’s hand fan to you (with personas visually distinguished from events/actions). Let you click one persona card to steal; that card is removed from opponent’s hand and added to yours, with a log entry.
   - notes/edge-cases: If the chosen opponent has no persona cards in hand, the effect fizzles after revealing (you see they have no personas; nothing is taken). Only personas are eligible targets.
 
-- persona_18 (p18) — Соболь
+- persona_18 (p18) — Соболь ✅
   - timing: passive (adjacency-based VP modifier)
   - effect: Соболь’s effective VP is reduced by **3** for each adjacent persona in your coalition with the `faction:fbk` tag (left and/or right neighbors). Max reduction is -6 if both neighbors are FBK.
   - UX: Show Соболь’s VP as base 5 plus token modifiers plus a live adjacency modifier (e.g. via tooltip or small icon) so players can see the current penalty. Recompute whenever the coalition order changes.
