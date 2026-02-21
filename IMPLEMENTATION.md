@@ -115,7 +115,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: This is automatic. When Светов receives tokens, also animate token gain on Пожарский and add a log entry linking the two effects.
   - notes/edge-cases: Triggers for any Светов on the table, in any player’s coalition. If multiple token events happen to Светов separately, each triggers separately. Does nothing if Светов is not in play.
 
-- persona_16 (p16) — Кац
+- persona_16 (p16) — Кац ✅
   - timing: on_enter
   - effect: When Кац enters your coalition, draw **3 cards** from the deck, then choose **3 cards** from your hand to discard (to the common discard pile). The discarded cards can include cards you just drew.
   - UX: After playing Кац, automatically draw 3 cards into your hand, then open a hand-selection UI requiring you to choose exactly 3 cards to discard. Confirm → move selected cards to discard and log the action.
