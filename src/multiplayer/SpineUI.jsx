@@ -150,7 +150,7 @@ function Board({ G, ctx, moves, playerID }) {
         if (!card) return;
 
         const baseId = String(card.id).split('#')[0];
-        const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
+        const canPlayPersona = isMyTurn && G.hasDrawn && card.type === 'persona';
         const canPlayAction = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'action';
         if (canPlayPersona) moves.playPersona(card.id);
         else if (canPlayAction) {
@@ -741,7 +741,7 @@ function Board({ G, ctx, moves, playerID }) {
 
             const baseId = String(card.id).split('#')[0];
 
-            const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
+            const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
             const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
 
             // out-of-turn cancels
