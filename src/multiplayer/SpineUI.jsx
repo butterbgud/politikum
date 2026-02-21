@@ -76,6 +76,8 @@ function Board({ G, ctx, moves, playerID }) {
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId } (targeting mode)
   const [pickTargetForAction9, setPickTargetForAction9] = useState(null); // { cardId } (targeting mode)
   const [placementMode, setPlacementMode] = useState(null); // { cardId, neighborId, side }
+  const [placementModeOpp, setPlacementModeOpp] = useState(null); // { cardId, targetId, neighborId, side }
+  const [pickTargetForPersona9, setPickTargetForPersona9] = useState(null); // { cardId }
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
 
@@ -363,12 +365,24 @@ function Board({ G, ctx, moves, playerID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
-                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
+                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
                 onClick={() => {
                   if (pendingPersona45) {
                     try { moves.persona45StealFromOpponent(String(p.id)); } catch {}
+                    return;
+                  }
+                  if (pickTargetForPersona9) {
+                    const coalFaces = (p.coalition || []).filter((c) => c.type === 'persona');
+                    if (coalFaces.length >= 1) {
+                      playSfx('ui', 0.35);
+                      setPlacementModeOpp({ cardId: pickTargetForPersona9.cardId, targetId: String(p.id), neighborId: null, side: 'right' });
+                      setPickTargetForPersona9(null);
+                      return;
+                    }
+                    try { playSfx('play'); moves.playPersona(pickTargetForPersona9.cardId, undefined, 'right', String(p.id)); } catch {}
+                    setPickTargetForPersona9(null);
                     return;
                   }
                   if (pickTargetForAction4) {
@@ -430,12 +444,18 @@ function Board({ G, ctx, moves, playerID }) {
 
                   const img = it.kind === 'back' ? '/assets/backing.jpg' : it.card.img;
                   const id = it.kind === 'back' ? 'back' : it.card.id;
+                  const oppPlaceActive = !!placementModeOpp && String(placementModeOpp.targetId) === String(p.id);
+                  const canClickFaceForOppPlace = oppPlaceActive && it.kind === 'face' && it.card?.type === 'persona';
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
-                      className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                      className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl " + (canClickFaceForOppPlace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                       title={id}
+                      onClick={() => {
+                        if (!canClickFaceForOppPlace) return;
+                        setPlacementModeOpp((m) => ({ ...(m || {}), neighborId: it.card.id }));
+                      }}
                     >
                       <img src={img} alt={id} className="w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
@@ -1174,6 +1194,52 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {!!placementModeOpp && (
+        <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Place persona into opponent</div>
+            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
+              {`Click a persona in their coalition, then choose side.`}
+            </div>
+            <div className="mt-3 flex gap-2 pointer-events-auto">
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
+                onClick={() => {
+                  if (!placementModeOpp?.neighborId) return;
+                  try { playSfx('play'); moves.playPersona(placementModeOpp.cardId, placementModeOpp.neighborId, 'left', placementModeOpp.targetId); } catch {}
+                  setPlacementModeOpp(null);
+                }}
+                disabled={!placementModeOpp?.neighborId}
+                title="Place to the LEFT of selected card"
+              >
+                LEFT
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
+                onClick={() => {
+                  if (!placementModeOpp?.neighborId) return;
+                  try { playSfx('play'); moves.playPersona(placementModeOpp.cardId, placementModeOpp.neighborId, 'right', placementModeOpp.targetId); } catch {}
+                  setPlacementModeOpp(null);
+                }}
+                disabled={!placementModeOpp?.neighborId}
+                title="Place to the RIGHT of selected card"
+              >
+                RIGHT
+              </button>
+              <button
+                type="button"
+                className="ml-auto px-3 py-1 rounded-full bg-black/40 border border-amber-900/20 text-amber-200/70 font-mono font-black text-[12px] hover:bg-black/60"
+                onClick={() => setPlacementModeOpp(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Total VP (bottom-right) */}
       <div className="fixed bottom-4 right-4 z-[2500] pointer-events-none select-none">
         <div className="bg-black/60 border border-amber-900/20 rounded-full px-4 py-2 text-amber-100/90 font-mono font-black tracking-widest text-[14px]">
@@ -1227,6 +1293,14 @@ function Board({ G, ctx, moves, playerID }) {
                   if (!canClick) return;
                   if (canPlayPersona) {
                     const haveCoal = (me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).length >= 1;
+
+                    // persona_9: must choose opponent receiver
+                    if (baseId === 'persona_9') {
+                      playSfx('ui', 0.35);
+                      setPickTargetForPersona9({ cardId: card.id });
+                      return;
+                    }
+
                     // Placement mode should be explicit (Shift+click), not every click.
                     if (haveCoal && e?.shiftKey) {
                       playSfx('ui', 0.35);
