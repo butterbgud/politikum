@@ -502,12 +502,14 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   useEffect(() => {
     if (G?.gameOver) return;
     if (!currentIsBot) return;
+    // Only one client should drive bot ticks; otherwise other players spam INVALID_MOVE due to stateID/turn mismatch.
+    if (String(playerID) !== '0') return;
 
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
     }, 900);
     return () => clearInterval(t);
-  }, [moves, currentIsBot, G?.gameOver]);
+  }, [moves, currentIsBot, G?.gameOver, playerID]);
 
   useEffect(() => {
     const id = G.lastEvent?.id;
