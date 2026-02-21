@@ -30,7 +30,7 @@ function Card({ card, onClick, disabled }) {
 }
 
 function Board({ G, ctx, moves, playerID }) {
-  const [showHotkeys, setShowHotkeys] = useState(false);
+  const [showHotkeys, setShowHotkeys] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
   const [pickTargetForAction4, setPickTargetForAction4] = useState(null); // { cardId }
   const logRef = React.useRef(null);
@@ -47,6 +47,7 @@ function Board({ G, ctx, moves, playerID }) {
   const haveAction8 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
+  const ENABLE_SPLASH = false;
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -112,16 +113,34 @@ function Board({ G, ctx, moves, playerID }) {
       }
 
       // Fast cancels during response windows
-      if (key === '1') {
+      if (responseActive && key === '1') {
         // action_6 cancels actions
-        if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID) && responseActive) {
+        if (responseKind === 'cancel_action' && String(response?.playedBy) !== String(playerID)) {
           const c6 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
           if (c6) moves.playAction(c6.id);
         }
         // action_8 cancels persona plays
-        if (responseKind === 'cancel_persona' && String(response?.playedBy) !== String(playerID) && responseActive) {
+        if (responseKind === 'cancel_persona' && String(response?.playedBy) !== String(playerID)) {
           const c8 = (me?.hand || []).find((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
           if (c8) moves.playAction(c8.id);
+        }
+        return;
+      }
+
+      // Number hotkeys for hand (quick-play): 1..9, 0 = 10
+      if (!responseActive && (key === '0' || (key >= '1' && key <= '9'))) {
+        const n = key === '0' ? 10 : Number(key);
+        const idx = n - 1;
+        const card = (me?.hand || [])[idx];
+        if (!card) return;
+
+        const baseId = String(card.id).split('#')[0];
+        const canPlayPersona = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'persona';
+        const canPlayAction = isMyTurn && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+        if (canPlayPersona) moves.playPersona(card.id);
+        else if (canPlayAction) {
+          if (baseId === 'action_4') setPickTargetForAction4({ cardId: card.id });
+          else moves.playAction(card.id);
         }
       }
     };
@@ -296,6 +315,7 @@ function Board({ G, ctx, moves, playerID }) {
               <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
             )}
             <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
           </div>
         </button>
 
@@ -311,7 +331,10 @@ function Board({ G, ctx, moves, playerID }) {
           title={(!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
           aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed}
         >
-          <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
+          <div className="relative w-full h-auto">
+            <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
+          </div>
         </button>
       </div>
 
@@ -487,7 +510,7 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Event splash (auto-hide) */}
-      {showEventSplash && !!G.lastEvent && (
+      {ENABLE_SPLASH && showEventSplash && !!G.lastEvent && (
         <div className="fixed inset-0 z-[2500] pointer-events-none">
           <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
             <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
@@ -503,7 +526,7 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Action splash (auto-hide) */}
-      {showActionSplash && !!G.lastAction && (
+      {ENABLE_SPLASH && showActionSplash && !!G.lastAction && (
         <div className="fixed inset-0 z-[2600] pointer-events-none">
           <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
             <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
@@ -686,6 +709,11 @@ function Board({ G, ctx, moves, playerID }) {
                 title={card.id}
               >
                 <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
+                {showHotkeys && (
+                  <div className="absolute left-2 top-2 px-2 py-1 rounded-full bg-black/65 border border-amber-900/30 text-amber-100 font-mono font-black text-[11px]">
+                    ({idx + 1})
+                  </div>
+                )}
               </button>
             );
           })}
