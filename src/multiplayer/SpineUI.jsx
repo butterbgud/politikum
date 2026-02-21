@@ -53,7 +53,8 @@ function Board({ G, ctx, moves, playerID }) {
   const haveAction8 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
-  const ENABLE_SPLASH = false;
+  const ENABLE_EVENT_SPLASH = true;
+  const ENABLE_ACTION_SPLASH = false;
 
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
@@ -530,7 +531,7 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Event splash (auto-hide) */}
-      {ENABLE_SPLASH && showEventSplash && !!G.lastEvent && (
+      {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && (
         <div className="fixed inset-0 z-[2500] pointer-events-none">
           <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
             <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
@@ -546,7 +547,7 @@ function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Action splash (auto-hide) */}
-      {ENABLE_SPLASH && showActionSplash && !!G.lastAction && (
+      {ENABLE_ACTION_SPLASH && showActionSplash && !!G.lastAction && (
         <div className="fixed inset-0 z-[2600] pointer-events-none">
           <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
             <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
