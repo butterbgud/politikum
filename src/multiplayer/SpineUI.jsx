@@ -903,14 +903,6 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {pendingP39 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP39Source}: press R to recycle into deck + buff reds (+2)
-          </div>
-        </div>
-      )}
-
       {pendingP16 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
@@ -1541,13 +1533,16 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const pendingP32Here = pendingP32;
                 const pendingP12Here = pendingP12 && (String(c.id) === pendingP12Left || String(c.id) === pendingP12Right);
                 const pendingP7Here = pendingP7 && c.type === 'persona' && !isImmovablePersona(c);
+                const pendingP39Here = pendingP39 && String(c.id).split('#')[0] === 'persona_39';
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || pendingP39Here
+                        ? (pendingP39Here ? "border-emerald-300/70 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer")
+                        : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -1590,6 +1585,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }
                       if (pendingP12Here) {
                         try { moves.persona12ChooseAdjacentRed(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP39Here) {
+                        try { moves.persona39ActivateRecycle(); } catch {}
                         return;
                       }
                       if (pendingP7Here) {
