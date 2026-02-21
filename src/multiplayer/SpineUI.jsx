@@ -1308,7 +1308,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       {/* Game over overlay */}
       {G.gameOver && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[520px] max-w-[92vw]">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Game over</div>
             <div className="mt-2 text-amber-100 font-serif text-2xl font-bold">
               Winner: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
@@ -1332,54 +1332,124 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 .map((p) => String(p.id))
                 .sort((a, b) => scoreNow(b) - scoreNow(a));
 
+              const leftIds = playerIds.slice(0, Math.ceil(playerIds.length / 2));
+              const rightIds = playerIds.slice(Math.ceil(playerIds.length / 2));
+
+              const Fan = ({ pid, color }) => {
+                const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
+                const coal = (p?.coalition || []).filter((c) => c.type === 'persona');
+                const show = Math.min(12, coal.length);
+                const stepFace = 24;
+                const width = 140 + Math.max(0, (show - 1)) * stepFace;
+                const hoverIdx = hoverOppCoalition?.[`go-${pid}`] ?? null;
+
+                const scaleByDist2 = (dist) => {
+                  if (dist === 0) return 1.8;
+                  if (dist === 1) return 1.25;
+                  if (dist === 2) return 1.10;
+                  return 1;
+                };
+
+                return (
+                  <div className="flex flex-col items-center gap-2 relative pt-10">
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest z-[2000] whitespace-nowrap justify-center" style={{ color }}>
+                      <span>{p?.name || pid}</span>
+                      <span className="opacity-50">•</span>
+                      <span>{scoreNow(pid)}vp</span>
+                    </div>
+                    <div
+                      className="relative h-44 pointer-events-auto"
+                      style={{ width: Math.max(width, 260) }}
+                      onPointerMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = (e.clientX ?? 0) - rect.left;
+                        const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
+                        setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: idx }));
+                      }}
+                      onPointerEnter={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: 0 }))}
+                      onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
+                    >
+                      {coal.slice(0, show).map((c, i) => {
+                        const t = show <= 1 ? 0.5 : i / (show - 1);
+                        const rot = (t - 0.5) * 12;
+                        const left = i * stepFace;
+                        const dist = (hoverIdx == null) ? 99 : Math.abs(i - hoverIdx);
+                        const scale = (hoverIdx == null) ? 1 : scaleByDist2(dist);
+                        const z = (hoverIdx == null) ? i : (1000 - dist);
+                        return (
+                          <div
+                            key={c.id}
+                            className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                            style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
+                          >
+                            <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                            {(Number(c.vpDelta || 0) !== 0) && (
+                              <div className={
+                                "absolute left-2 bottom-2 w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] " +
+                                (Number(c.vpDelta || 0) < 0 ? "bg-red-700/90 border-red-200/30" : "bg-emerald-700/90 border-emerald-200/30")
+                              }>
+                                {c.vpDelta}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              };
+
               return (
                 <>
-                  <div className="mt-4 text-amber-100/80 text-sm font-mono whitespace-pre">
-                    {playerIds.map((pid, i) => {
-                      const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
-                      const pts = scoreNow(pid);
-                      const col = colors[i % colors.length];
-                      return (
-                        <div key={pid} style={{ color: col }}>
-                          {p?.name || pid}: {pts} vp (coalition {(p?.coalition || []).length || 0})
-                        </div>
-                      );
-                    })}
+                  <div className="mt-4 flex gap-6 items-start">
+                    <div className="w-[300px] flex flex-col gap-6">
+                      {leftIds.map((pid, i) => (
+                        <Fan key={pid} pid={pid} color={colors[i % colors.length]} />
+                      ))}
+                    </div>
+
+                    <div className="flex-1">
+                      {/* Score history chart (turn vs VP) */}
+                      {(() => {
+                        const turns = hist.map((h) => Number(h.turn || 0));
+                        const minT = Math.min(...turns);
+                        const maxT = Math.max(...turns);
+
+                        const allScores = hist.flatMap((h) => playerIds.map((pid) => Number(h.scores?.[pid] ?? 0)));
+                        const minY = Math.min(0, ...allScores);
+                        const maxY = Math.max(1, ...allScores);
+
+                        const W = 460, H = 160, pad = 18;
+                        const sx = (t) => pad + ((t - minT) / Math.max(1, (maxT - minT))) * (W - pad * 2);
+                        const sy = (v) => (H - pad) - ((v - minY) / Math.max(1, (maxY - minY))) * (H - pad * 2);
+
+                        const pathFor = (pid) => {
+                          const pts = hist.map((h) => ({ x: sx(Number(h.turn || 0)), y: sy(Number(h.scores?.[pid] ?? 0)) }));
+                          return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+                        };
+
+                        return (
+                          <div>
+                            <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Progress (turn → VP)</div>
+                            <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
+                              {/* axes */}
+                              <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+                              <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+                              {playerIds.map((pid, i) => (
+                                <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
+                              ))}
+                            </svg>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="w-[300px] flex flex-col gap-6">
+                      {rightIds.map((pid, j) => (
+                        <Fan key={pid} pid={pid} color={colors[(leftIds.length + j) % colors.length]} />
+                      ))}
+                    </div>
                   </div>
-
-                  {/* Score history chart (turn vs VP) */}
-                  {(() => {
-                    const turns = hist.map((h) => Number(h.turn || 0));
-                    const minT = Math.min(...turns);
-                    const maxT = Math.max(...turns);
-
-                    const allScores = hist.flatMap((h) => playerIds.map((pid) => Number(h.scores?.[pid] ?? 0)));
-                    const minY = Math.min(0, ...allScores);
-                    const maxY = Math.max(1, ...allScores);
-
-                    const W = 460, H = 160, pad = 18;
-                    const sx = (t) => pad + ((t - minT) / Math.max(1, (maxT - minT))) * (W - pad * 2);
-                    const sy = (v) => (H - pad) - ((v - minY) / Math.max(1, (maxY - minY))) * (H - pad * 2);
-
-                    const pathFor = (pid) => {
-                      const pts = hist.map((h) => ({ x: sx(Number(h.turn || 0)), y: sy(Number(h.scores?.[pid] ?? 0)) }));
-                      return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-                    };
-
-                    return (
-                      <div className="mt-4">
-                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Progress (turn → VP)</div>
-                        <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
-                          {/* axes */}
-                          <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
-                          <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
-                          {playerIds.map((pid, i) => (
-                            <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
-                          ))}
-                        </svg>
-                      </div>
-                    );
-                  })()}
                 </>
               );
             })()}
@@ -1401,27 +1471,6 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   }).join('\n')}
               </div>
             )}
-
-            <div className="mt-5">
-              <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Final coalitions</div>
-              <div className="mt-3 flex flex-col gap-3 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
-                {(G.players || []).map((p) => (
-                  <div key={p.id} className="bg-black/30 border border-amber-900/20 rounded-2xl p-3">
-                    <div className="text-amber-100/90 font-mono font-black text-[12px] tracking-widest">{p.name}</div>
-                    <div className="mt-2 flex gap-2 flex-wrap">
-                      {(p.coalition || []).filter((c) => c.type === 'persona').map((c) => (
-                        <div key={c.id} className="w-16 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow">
-                          <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                        </div>
-                      ))}
-                      {(!(p.coalition || []).some((c) => c.type === 'persona')) && (
-                        <div className="text-amber-200/40 text-xs font-mono">(empty)</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             <div className="mt-4 text-amber-200/60 text-xs">(Refresh to start a new match for now.)</div>
           </div>
