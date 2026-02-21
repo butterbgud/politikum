@@ -394,6 +394,15 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         return;
       }
 
+      // Response hotkeys
+      if (responseKind && key === '2') {
+        // skip/decline response window
+        if (responseActive && String(response?.playedBy) !== String(playerID)) {
+          try { moves.skipResponseWindow(); } catch {}
+        }
+        return;
+      }
+
       // Fast cancels during response windows
       if (responseKind && key === '1') {
         // action_6 cancels actions (anyone)
@@ -924,17 +933,27 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Response window banner */}
+      {/* Response window banner (center-table) */}
       {responseActive && (
         (responseKind === 'cancel_action' && (haveAction6 || (haveAction14 && responseTargetsMe))) ||
         (responseKind === 'cancel_persona' && haveAction8)
       ) && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {responseKind === 'cancel_persona' && haveAction8 && 'Persona played — respond with Action 8 to cancel'}
-            {responseKind === 'cancel_action' && haveAction6 && 'Action played — respond with Action 6 to cancel'}
-            {responseKind === 'cancel_action' && !haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
-            <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+        <div className="fixed inset-0 z-[6000] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/70 border border-amber-900/30 rounded-full px-5 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-4 pointer-events-auto">
+            <div>
+              {responseKind === 'cancel_persona' && haveAction8 && 'Persona played — respond with Action 8 to cancel'}
+              {responseKind === 'cancel_action' && haveAction6 && 'Action played — respond with Action 6 to cancel'}
+              {responseKind === 'cancel_action' && !haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
+              <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+            </div>
+            {responseKind === 'cancel_persona' && haveAction8 && (
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-1 rounded-full bg-emerald-700/70 border border-emerald-200/20 text-emerald-50 font-black text-[11px]">1</span>
+                <span className="text-amber-200/70">use A8</span>
+                <span className="px-2 py-1 rounded-full bg-slate-800/70 border border-amber-900/20 text-amber-50 font-black text-[11px]">2</span>
+                <span className="text-amber-200/70">skip</span>
+              </div>
+            )}
           </div>
         </div>
       )}
