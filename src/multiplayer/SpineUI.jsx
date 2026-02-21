@@ -46,7 +46,9 @@ function Board({ G, ctx, moves, playerID }) {
   const responseKind = response?.kind || null;
   const responseExpiresAt = Number(response?.expiresAtMs || 0);
   const responseSecondsLeft = Math.max(0, Math.ceil((responseExpiresAt - Date.now()) / 1000));
-  const responseActive = !!responseKind && responseSecondsLeft > 0;
+  // Use a small grace window to avoid client clock skew blocking cancels.
+  // Server enforces the real deadline.
+  const responseActive = !!responseKind && (responseExpiresAt - Date.now()) > -750;
   const haveAction6 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_6');
   const haveAction8 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
   const [showEventSplash, setShowEventSplash] = useState(false);
