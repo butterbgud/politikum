@@ -695,27 +695,11 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Event_16: discard one of YOUR personas, then draw 1 */}
+      {/* Event_16: discard one of YOUR personas, then draw 1 (no modal) */}
       {G.pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard a persona</div>
-            <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 persona from your coalition to discard, then draw 1 card.</div>
-            <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && !isImmovablePersona(c)).map((c) => (
-                <button
-                  key={c.id}
-                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
-                  onClick={() => moves.discardPersonaFromOwnCoalitionForEvent16(c.id)}
-                  title={c.name || c.id}
-                >
-                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                </button>
-              ))}
-              {!(me?.coalition || []).some((c) => c.type === 'persona') && (
-                <div className="text-amber-200/70 text-sm">You have no personas to discard.</div>
-              )}
-            </div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            EVENT {G.pending.sourceCardId}: click a persona in YOUR coalition to discard it (then draw 1)
           </div>
         </div>
       )}
@@ -1068,13 +1052,14 @@ function Board({ G, ctx, moves, playerID }) {
                 const scale = hoverMyCoalition == null ? 1 : scaleByDist3(dist);
                 const z = hoverMyCoalition == null ? i : (1000 - dist);
 
+                const pendingEvent16 = pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(pending?.playerId) === String(playerID);
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
-                      (pendingTokens ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
+                      (placementMode || pendingTokens || pendingEvent16 ? "border-emerald-400/50 hover:border-emerald-300 cursor-pointer" : "border-black/40 cursor-default")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -1092,6 +1077,10 @@ function Board({ G, ctx, moves, playerID }) {
                           return;
                         }
                         setPlacementMode((m) => ({ ...(m || {}), neighborId: c.id }));
+                        return;
+                      }
+                      if (pendingEvent16) {
+                        try { moves.discardPersonaFromOwnCoalitionForEvent16(c.id); } catch {}
                         return;
                       }
                       if (!pendingTokens) return;
