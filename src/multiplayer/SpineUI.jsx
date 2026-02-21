@@ -100,7 +100,10 @@ function Board({ G, ctx, moves, playerID }) {
         setShowHotkeys((v) => !v);
         return;
       }
-      // (T) tutorial overlay removed
+      if (key === 't') {
+        setShowTutorial((v) => !v);
+        return;
+      }
       if (key === 'c') {
         if (!isMyTurn || G.hasDrawn) return;
         moves.drawCard();
@@ -363,34 +366,22 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Hotkeys / Tutorial overlay */}
-      {false && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto" onClick={() => { setShowHotkeys(false); setShowTutorial(false); }}>
+      {/* Tutorial overlay (hotkeys overlay removed) */}
+      {showTutorial && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto" onClick={() => { setShowTutorial(false); }}>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[560px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center">
-              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">{showTutorial ? 'Tutorial' : 'Hotkeys'}</div>
-              <button className="ml-auto text-amber-200/60 hover:text-amber-200 font-black" onClick={() => { setShowHotkeys(false); setShowTutorial(false); }}>x</button>
+              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Tutorial</div>
+              <button className="ml-auto text-amber-200/60 hover:text-amber-200 font-black" onClick={() => { setShowTutorial(false); }}>x</button>
             </div>
 
-            {showHotkeys && (
-              <div className="mt-4 font-mono text-sm text-amber-100/80 whitespace-pre">
-                L  toggle logs\n
-                C  draw card\n
-                E  end turn\n
-                H  hotkeys\n
-                T  tutorial
-              </div>
-            )}
-
-            {showTutorial && (
-              <div className="mt-4 text-amber-100/80 text-sm">
-                <div className="font-black uppercase tracking-widest text-[11px] text-amber-200/70">Turn</div>
-                <div className="mt-1">1) Draw (C)</div>
-                <div>2) Play 1 persona (click card)</div>
-                <div>3) End turn (E)</div>
-                <div className="mt-3 text-amber-200/60 text-xs">Events auto-resolve for now (they just show briefly).</div>
-              </div>
-            )}
+            <div className="mt-4 text-amber-100/80 text-sm">
+              <div className="font-black uppercase tracking-widest text-[11px] text-amber-200/70">Turn</div>
+              <div className="mt-1">1) Draw (C)</div>
+              <div>2) Play 1 card (click or 1..9/0)</div>
+              <div>3) End turn (E)</div>
+              <div className="mt-3 text-amber-200/60 text-xs">Press T anytime to show/hide this.</div>
+            </div>
           </div>
         </div>
       )}
