@@ -1284,6 +1284,27 @@ function ActionBoard({ G, ctx, moves, playerID }) {
               </div>
             )}
 
+            <div className="mt-5">
+              <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Final coalitions</div>
+              <div className="mt-3 flex flex-col gap-3 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
+                {(G.players || []).map((p) => (
+                  <div key={p.id} className="bg-black/30 border border-amber-900/20 rounded-2xl p-3">
+                    <div className="text-amber-100/90 font-mono font-black text-[12px] tracking-widest">{p.name}</div>
+                    <div className="mt-2 flex gap-2 flex-wrap">
+                      {(p.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                        <div key={c.id} className="w-16 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 shadow">
+                          <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                        </div>
+                      ))}
+                      {(!(p.coalition || []).some((c) => c.type === 'persona')) && (
+                        <div className="text-amber-200/40 text-xs font-mono">(empty)</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-4 text-amber-200/60 text-xs">(Refresh to start a new match for now.)</div>
           </div>
         </div>
