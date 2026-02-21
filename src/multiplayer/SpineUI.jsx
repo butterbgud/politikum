@@ -1221,11 +1221,12 @@ function Board({ G, ctx, moves, playerID }) {
             return (
               <button
                 key={card.id}
-                onClick={() => {
+                onClick={(e) => {
                   if (!canClick) return;
                   if (canPlayPersona) {
-                    // If coalition already has personas, allow choosing insertion position relative to a neighbor.
-                    if ((me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).length >= 1) {
+                    const haveCoal = (me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).length >= 1;
+                    // Placement mode should be explicit (Shift+click), not every click.
+                    if (haveCoal && e?.shiftKey) {
                       playSfx('ui', 0.35);
                       setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' });
                       return;
