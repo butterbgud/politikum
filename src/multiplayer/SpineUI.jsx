@@ -395,31 +395,18 @@ function Board({ G, ctx, moves, playerID }) {
                     setPickTargetForAction9(null);
                   }
                 }}
-                onMouseMove={(e) => {
+                onPointerMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
-                  const x = e.clientX - rect.left;
+                  const x = (e.clientX ?? 0) - rect.left;
                   // Note: opponent fan has variable spacing; use proportional index for hover.
                   const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
-                onTouchStart={(e) => {
-                  const touch = e.touches?.[0];
-                  if (!touch) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = touch.clientX - rect.left;
-                  const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
+                onPointerEnter={() => {
+                  const idx = Math.max(0, Math.floor((show - 1) / 2));
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
-                onTouchMove={(e) => {
-                  const touch = e.touches?.[0];
-                  if (!touch) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = touch.clientX - rect.left;
-                  const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
-                  setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
-                }}
-                onMouseLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
-                onTouchEnd={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
+                onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
                 title={`Total: ${nTotal}`}
               >
                 {/* count */}
