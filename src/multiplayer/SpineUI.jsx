@@ -32,6 +32,39 @@ function Card({ card, onClick, disabled }) {
 function Board({ G, ctx, moves, playerID }) {
   // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
   const [showHotkeys, setShowHotkeys] = useState(false);
+  const [soundOn, setSoundOn] = useState(() => {
+    try { return localStorage.getItem('politikum:soundOn') !== '0'; } catch { return true; }
+  });
+
+  const sfx = useMemo(() => {
+    const mk = (file) => {
+      const a = new Audio(`/assets/sfx/${file}`);
+      a.preload = 'auto';
+      return a;
+    };
+    return {
+      draw: mk('card-slide-7.ogg'),
+      play: mk('card-place-2.ogg'),
+      flip: mk('cardflip.ogg'),
+      coin: mk('coin.ogg'),
+      ui: mk('switch_005.ogg'),
+      error: mk('error_008.ogg'),
+      win: mk('win.ogg'),
+      lose: mk('lose.ogg'),
+    };
+  }, []);
+
+  const playSfx = (key, vol = 0.6) => {
+    if (!soundOn) return;
+    const a = sfx?.[key];
+    if (!a) return;
+    try {
+      a.pause();
+      a.currentTime = 0;
+      a.volume = vol;
+      a.play();
+    } catch {}
+  };
   // Legacy states kept only to avoid touching large JSX blocks.
   // Hotkey/tutorial overlays are hard-disabled below.
   const [showTutorial, setShowTutorial] = useState(false);
@@ -114,17 +147,28 @@ function Board({ G, ctx, moves, playerID }) {
         setShowHotkeys((v) => !v);
         return;
       }
+      if (key === 'm') {
+        setSoundOn((v) => {
+          const nv = !v;
+          try { localStorage.setItem('politikum:soundOn', nv ? '1' : '0'); } catch {}
+          return nv;
+        });
+        playSfx('ui', 0.4);
+        return;
+      }
       if (key === 't') {
         setShowTutorial((v) => !v);
         return;
       }
       if (key === 'c') {
         if (!isMyTurn || G.hasDrawn) return;
+        playSfx('draw');
         moves.drawCard();
         return;
       }
       if (key === 'e') {
         if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return;
+        playSfx('ui');
         moves.endTurn();
         return;
       }
@@ -350,7 +394,7 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Deck (Draw) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; moves.drawCard(); }}
+          onClick={() => { if (!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
             ((!isMyTurn || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
@@ -373,7 +417,7 @@ function Board({ G, ctx, moves, playerID }) {
         {/* Cookies (End Turn) */}
         <button
           type="button"
-          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; moves.endTurn(); }}
+          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
           className={
             "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
             ((!isMyTurn || !G.hasDrawn || !G.hasPlayed) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
@@ -636,6 +680,21 @@ function Board({ G, ctx, moves, playerID }) {
                   >
                     H
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSoundOn((v) => {
+                        const nv = !v;
+                        try { localStorage.setItem('politikum:soundOn', nv ? '1' : '0'); } catch {}
+                        return nv;
+                      });
+                      playSfx('ui', 0.4);
+                    }}
+                    className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (soundOn ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
+                    title="Sound (M)"
+                  >
+                    M
+                  </button>
                 </>
               )}
               <button
@@ -774,18 +833,14 @@ function Board({ G, ctx, moves, playerID }) {
                 key={card.id}
                 onClick={() => {
                   if (!canClick) return;
-                  if (canPlayPersona) moves.playPersona(card.id);
+                  if (canPlayPersona) { playSfx('play'); moves.playPersona(card.id); }
                   else if (canPlayAction) {
-                    if (baseId === 'action_4') {
-                      setPickTargetForAction4({ cardId: card.id });
-                      return;
-                    }
-                    if (baseId === 'action_9') {
-                      setPickTargetForAction9({ cardId: card.id });
-                      return;
-                    }
+                    if (baseId === 'action_4') { playSfx('ui', 0.35); setPickTargetForAction4({ cardId: card.id }); return; }
+                    if (baseId === 'action_9') { playSfx('ui', 0.35); setPickTargetForAction9({ cardId: card.id }); return; }
+                    playSfx('play');
                     moves.playAction(card.id);
                   } else if (canCancelAction || canCancelPersona) {
+                    playSfx('ui', 0.35);
                     moves.playAction(card.id);
                   }
                 }}
