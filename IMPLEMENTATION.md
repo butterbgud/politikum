@@ -73,19 +73,19 @@ If you want me to draft real effects, I need at least one of:
   - UX: After placement, prompt current player to select a coalition owner, then highlight personas in that coalition and let them click exactly two to swap. If a coalition has fewer than 2 personas, show it as disabled.
   - notes/edge-cases: Swapping affects adjacency-based abilities (e.g. persona_1/19/42/18); no immediate re-trigger unless we add a generic “on_reposition” hook later. Cannot choose the same persona twice.
 
-- persona_8 (p8) — Лазерсон
+- persona_8 (p8) — Лазерсон ✅
   - timing: response (triggered)
   - effect: While Лазерсон is in your coalition, whenever another player plays a persona into their coalition, you may swap Лазерсон with that newly played persona.
   - UX: When an opponent successfully plays a persona into their coalition (after its on_enter resolves), if you have Лазерсон in your coalition, show you a modal: “Use Лазерсон to swap with <persona>?” If confirmed, move Лазерсон into that coalition at the new card’s position and move the other persona into your coalition at Лазерсон’s previous position.
   - notes/edge-cases: Only triggers if Лазерсон is currently in your coalition, and only for personas entering other players’ coalitions (not your own). One trigger per persona play. If multiple valid Лазерсон copies ever exist, each may trigger separately.
 
-- persona_9 (p9) — Пономарёв
+- persona_9 (p9) — Пономарёв ✅
   - timing: on_play
   - effect: Пономарёв must be played into an opponent’s coalition instead of your own. When you play him, choose an opponent; Пономарёв enters that opponent’s coalition.
   - UX: When you choose to play Пономарёв, prompt “Choose opponent to receive Пономарёва”, then place the card into that opponent’s coalition (rightmost slot by default, or use placement UI if available).
   - notes/edge-cases: The card counts as part of the opponent’s coalition for VP and adjacency. Ownership for rules purposes is that coalition’s controller (same as other personas) unless we later add a “controller vs owner” distinction.
 
-- persona_10 (p10) — Наки
+- persona_10 (p10) — Наки ✅
   - timing: response (from hand)
   - effect: You may discard Наки from your hand to cancel any action or ability that targets a persona in your coalition (or your coalition as a whole).
   - UX: Whenever an action card or targeted persona ability is played that targets one of your personas or your coalition, and Наки is in your hand, show an interrupt prompt: “Discard Наки to cancel this effect?” If yes, discard Наки to the discard pile and cancel the pending effect (as if action_6/action_14 were used).
@@ -145,7 +145,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: Treat Шлосберг as an invalid target for all discard / "choose a persona" prompts that would remove him from coalition or let someone take him from discard (UI filters him out; engine also rejects). Action 7 cannot target him, so his tokens/abilities are never cleared.
   - notes/edge-cases: Still can receive VP tokens (+/-). Effects that mention “discard any persona” should treat Шлосберг as an invalid target.
 
-- persona_45 (p45) — Шульман
+- persona_45 (p45) — Шульман ✅
   - timing: on_enter
   - effect: When Шульман enters your coalition, choose an opponent. Randomly select one card from that opponent’s hand and add it to your hand.
   - UX: After placement, prompt you to choose an opponent; then, without revealing their full hand, randomly pick one card and animate it moving to your hand. Log that a random card was taken from that opponent.
@@ -246,13 +246,13 @@ If you want me to draft real effects, I need at least one of:
   - UX: on enter, show a picker of all possible card ids (or a type filter + search). Confirm guess; reveal top card in log.
   - notes/edge-cases: if deck is empty, effect fizzles. If you guessed wrong, nothing else happens (game continues).
 
-- persona_36 — Anti-Action7 / Gets Rewarded
+- persona_36 — Anti-Action7 / Gets Rewarded ✅
   - timing: passive (triggered)
   - effect: this persona ignores Action 7 (cannot have abilities blocked and its tokens cannot be cleared by Action 7). If Action 7 is played targeting it, instead it gains 4 × +1 tokens.
   - UX: Action 7 picker should still allow selecting it, but resolution shows “ignored” + token gain.
   - notes/edge-cases: Action 7 is considered “played” even if ignored (so other triggers can still see it).
 
-- persona_37 — Bribe & Silence
+- persona_37 — Bribe & Silence ✅
   - timing: on_enter
   - effect: choose a persona in an opponent’s coalition; place 2 × +1 tokens on that target. That target’s abilities are blocked until end of game.
   - UX: click an opponent persona. Animate +2 tokens on target and a permanent “X”/blocked marker.
