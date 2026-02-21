@@ -113,6 +113,9 @@ function Board({ G, ctx, moves, playerID }) {
   const haveAction8 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_8');
   const haveAction14 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_14');
   const responseTargetsMe = !!pending && (pending.kind === 'action_4_discard' || pending.kind === 'action_9_discard_persona') && String(pending.targetId) === String(playerID);
+  const canPersona10Cancel = responseKind === 'cancel_action' && String(response?.allowPersona10By || '') === String(playerID) && responseTargetsMe;
+  const p8SwapSpec = responseKind === 'cancel_persona' ? (response?.persona8Swap || null) : null;
+  const canPersona8Swap = !!p8SwapSpec && String(p8SwapSpec.playerId || '') === String(playerID);
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
   const ENABLE_EVENT_SPLASH = true;
@@ -433,15 +436,24 @@ function Board({ G, ctx, moves, playerID }) {
                   const id = it.kind === 'back' ? 'back' : it.card.id;
                   const oppPlaceActive = !!placementModeOpp && String(placementModeOpp.targetId) === String(p.id);
                   const canClickFaceForOppPlace = oppPlaceActive && it.kind === 'face' && it.card?.type === 'persona';
+
+                  const canClickFaceForP8Swap = canPersona8Swap && it.kind === 'face' && String(it.card?.id) === String(p8SwapSpec?.playedPersonaId) && String(p.id) === String(p8SwapSpec?.ownerId);
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
-                      className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl " + (canClickFaceForOppPlace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
+                      className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'bottom center' }}
                       title={id}
                       onClick={() => {
-                        if (!canClickFaceForOppPlace) return;
-                        setPlacementModeOpp((m) => ({ ...(m || {}), neighborId: it.card.id }));
+                        if (!canClickFace) return;
+                        if (canClickFaceForP8Swap) {
+                          try { playSfx('ui', 0.35); moves.persona8SwapWithPlayedPersona(); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForOppPlace) {
+                          setPlacementModeOpp((m) => ({ ...(m || {}), neighborId: it.card.id }));
+                        }
                       }}
                     >
                       <img src={img} alt={id} className="w-full h-full object-cover" draggable={false} />
@@ -711,6 +723,22 @@ function Board({ G, ctx, moves, playerID }) {
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             {pendingPersona45Source}: click an opponent to steal 1 random card
+          </div>
+        </div>
+      )}
+
+      {canPersona8Swap && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            persona_8: click the just-played persona to SWAP with it
+          </div>
+        </div>
+      )}
+
+      {canPersona10Cancel && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            persona_10: click Naki in your hand to cancel this effect
           </div>
         </div>
       )}
@@ -1267,11 +1295,12 @@ function Board({ G, ctx, moves, playerID }) {
             // Server enforces actual expiry; UI shouldn't block.
             const canCancelAction = responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
             const canCancelPersona = responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID);
+            const canCancelWithPersona10 = canPersona10Cancel && card.type === 'persona' && baseId === 'persona_10';
 
             const baseIs14 = baseId === 'action_14';
             const canCancelEffectOnMe = responseKind === 'cancel_action' && responseTargetsMe && baseIs14;
 
-            const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe;
+            const canClick = canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
 
             return (
               <button
@@ -1305,6 +1334,9 @@ function Board({ G, ctx, moves, playerID }) {
                   } else if (canCancelAction || canCancelPersona || canCancelEffectOnMe) {
                     playSfx('ui', 0.35);
                     moves.playAction(card.id);
+                  } else if (canCancelWithPersona10) {
+                    playSfx('ui', 0.35);
+                    moves.persona10CancelFromHand(card.id);
                   }
                 }}
                 aria-disabled={!canClick}
