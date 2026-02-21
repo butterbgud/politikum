@@ -151,6 +151,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: After placement, prompt you to choose an opponent; then, without revealing their full hand, randomly pick one card and animate it moving to your hand. Log that a random card was taken from that opponent.
   - notes/edge-cases: If the chosen opponent has an empty hand, the effect fizzles (log only).
 
+
 ### Not implemented (Konsta's shitty brief)
 
 #### ✅ Implemented quick-wins (polished)
@@ -226,6 +227,7 @@ If you want me to draft real effects, I need at least one of:
   - effect: choose any **non-FBK** persona in play; move up to 3 × +1 tokens from that target onto this persona.
   - UX: click a non-FBK target; then choose 0..3 (capped by target’s current +1).
   - notes/edge-cases: cannot take -1; if target has less than 3 +1, take as many as available.
+
 
 #### Specs converted (not yet implemented) — remaining personas
 - persona_32 — Bounce Persona
