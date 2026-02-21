@@ -443,7 +443,8 @@ function Board({ G, ctx, moves, playerID }) {
                   }
 
                   const dist = (hoverIdx == null) ? 99 : Math.abs(i - hoverIdx);
-                  const scale = (hoverIdx == null) ? 1 : scaleByDist2(dist);
+                  const isBack = it.kind === 'back';
+                  const scale = (hoverIdx == null) ? 1 : (isBack ? 1 : scaleByDist2(dist));
                   const z = (hoverIdx == null) ? i : (1000 - dist);
 
                   const img = it.kind === 'back' ? '/assets/backing.jpg' : it.card.img;
