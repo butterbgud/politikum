@@ -445,6 +445,35 @@ function Board({ G, ctx, moves, playerID }) {
         </div>
       )}
 
+      {/* Persona_14 discard prompt (active player chooses any coalition persona) */}
+      {G.pending?.kind === 'discard_one_persona_from_any_coalition' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard a persona</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose any persona from any coalition (including yours) to discard.</div>
+            <div className="mt-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {(G.players || []).map((p) => (
+                <div key={p.id} className="">
+                  <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
+                  <div className="mt-2 flex gap-3 flex-wrap">
+                    {(p.coalition || []).filter((c) => c.type === 'persona').map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                        onClick={() => moves.discardPersonaFromCoalition(String(p.id), c.id)}
+                        title={c.name || c.id}
+                      >
+                        <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Game over overlay */}
       {G.gameOver && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto">
