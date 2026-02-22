@@ -98,7 +98,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: After you place Савин and finalise his position, check neighbors. If there is exactly one red_nationalist neighbor, automatically put 2 × +1 tokens on it and log. If there are two, prompt you to choose which adjacent persona receives the tokens.
   - notes/edge-cases: Only checks immediate neighbors at the time of entering; moving cards later does not re-trigger this effect.
 
-- persona_13 (p13) — Венедитков
+- persona_13 (p13) — Венедитков ✅
   - timing: triggered (when targeted by opponent action)
   - effect: While Венедитков is in your coalition, whenever an opponent plays an action that targets you or any persona in your coalition, you place **1 × -1** token on any persona in that opponent’s coalition.
   - UX: After a qualifying opponent action resolves (and its target/effect is confirmed), if you have Венедитков, prompt you to select a persona in that opponent’s coalition and place 1 × -1 token on it. If there are no personas to target, show a small log note that the trigger fizzled.
