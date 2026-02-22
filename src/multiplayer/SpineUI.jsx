@@ -801,7 +801,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         </div>
                       )}
                       {it.kind === 'face' && (it.card?.shielded || it.card?.blockedAbilities) && (
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
                           {it.card?.shielded && (
                             <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                           )}
