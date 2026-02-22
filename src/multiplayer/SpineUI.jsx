@@ -2172,6 +2172,15 @@ function PolitikumWelcome({ onJoin }) {
       });
       setTimeout(() => joinMatch(matchID), 250);
     } catch (e) {
+      // Better error: usually means the :8001 server is unreachable from this browser.
+      try {
+        const r = await fetch(`${SERVER}/games/politikum`, { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      } catch {
+        alert(`createMatch failed: cannot reach server ${SERVER}\n\nOpen this URL in the same browser to verify:\n${SERVER}/games/politikum`);
+        setLoading(false);
+        return;
+      }
       alert('createMatch failed: ' + (e?.message || String(e)));
       setLoading(false);
     }
