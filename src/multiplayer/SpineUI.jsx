@@ -328,6 +328,13 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const pendingP7 = pending?.kind === 'persona_7_swap_two_in_coalition' && String(pending?.playerId) === String(playerID);
   const pendingP7Source = pendingP7 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP11Offer = pending?.kind === 'persona_11_offer' && String(pending?.playerId) === String(playerID);
+  const pendingP11Pick = pending?.kind === 'persona_11_pick_opponent_persona' && String(pending?.playerId) === String(playerID);
+
+  const pendingP17PickOpp = pending?.kind === 'persona_17_pick_opponent' && String(pending?.playerId) === String(playerID);
+  const pendingP17PickCard = pending?.kind === 'persona_17_pick_persona_from_hand' && String(pending?.playerId) === String(playerID);
+  const pendingP17TargetId = pendingP17PickCard ? String(pending?.targetId || '') : '';
+
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
 
@@ -632,10 +639,14 @@ function ActionBoard({ G, ctx, moves, playerID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
-                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
+                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
                 onClick={() => {
+                  if (pendingP17PickOpp) {
+                    try { moves.persona17PickOpponent(String(p.id)); } catch {}
+                    return;
+                  }
                   if (pendingPersona45) {
                     try { moves.persona45StealFromOpponent(String(p.id)); } catch {}
                     return;
@@ -719,8 +730,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   const canClickFaceForP3A = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:leftwing') && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP7 = pendingP7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
                   const canClickFaceForP14 = pending?.kind === 'discard_one_persona_from_any_coalition' && String(pending?.playerId) === String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP11 = pendingP11Pick && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -770,6 +782,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForP14) {
                           try { playSfx('ui', 0.35); moves.discardPersonaFromCoalition(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP11) {
+                          try { playSfx('ui', 0.35); moves.persona11DiscardOpponentPersona(String(p.id), it.card.id); } catch {}
                           return;
                         }
                       }}
@@ -1158,6 +1174,76 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           </div>
         </div>
       )}
+
+      {/* Persona_11 (Solovei) offer */}
+      {pendingP11Offer && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto flex items-center gap-2 bg-black/70 border border-amber-900/30 rounded-full px-3 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p11: skip draw → discard opponent persona?</span>
+            <button
+              type="button"
+              className="ml-2 px-3 py-1 rounded-full bg-emerald-700/70 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[11px]"
+              onClick={() => { try { moves.persona11Use(); } catch {} }}
+            >
+              Use
+            </button>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full bg-slate-800/70 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[11px]"
+              onClick={() => { try { moves.persona11Skip(); } catch {} }}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Persona_11 pick */}
+      {pendingP11Pick && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            p11: click an opponent persona to discard (Solovei will be discarded too)
+          </div>
+        </div>
+      )}
+
+      {/* Persona_17 pick opponent */}
+      {pendingP17PickOpp && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            p17: click an opponent to reveal their hand and steal 1 persona
+          </div>
+        </div>
+      )}
+
+      {/* Persona_17 pick persona from revealed hand */}
+      {pendingP17PickCard && (() => {
+        const target = (G.players || []).find((pp) => String(pp.id) === String(pendingP17TargetId));
+        const cards = (target?.hand || []).filter((c) => c?.type === 'persona');
+        return (
+          <div className="fixed inset-x-0 top-14 z-[2600] flex items-start justify-center pointer-events-none select-none">
+            <div className="pointer-events-auto bg-black/75 border border-amber-900/30 rounded-3xl shadow-2xl p-4 max-w-[96vw]">
+              <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">p17: pick a persona from {target?.name || pendingP17TargetId}</div>
+              <div className="mt-3 flex gap-3 flex-wrap justify-center">
+                {cards.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-emerald-400/40 hover:border-emerald-300 cursor-pointer shadow-2xl hover:scale-[1.02] transition-transform"
+                    onClick={() => { try { moves.persona17StealPersonaFromHand(c.id); } catch {} }}
+                    title={c.name || c.id}
+                  >
+                    <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                  </button>
+                ))}
+                {!cards.length && (
+                  <div className="text-amber-200/70 text-sm">No personas in hand.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Persona_45: choose opponent (no modal) */}
       {pendingPersona45 && (
