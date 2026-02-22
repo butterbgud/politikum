@@ -471,13 +471,33 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         }
       }
 
-      // p34 guess
-      if (pendingP34 && key === 'g') {
+      // p34 guess (1..N from remaining unseen personas)
+      if (pendingP34) {
+        const ALL = Array.from({ length: 45 }, (_, i) => `persona_${i + 1}`);
+        const seen = new Set();
         try {
-          const guess = window.prompt('persona_34: guess next card base id (e.g. persona_12, event_10, action_8)');
-          if (guess) moves.persona34GuessTopdeck(String(guess).trim());
+          for (const pp of (G.players || [])) {
+            for (const c of (pp.hand || [])) seen.add(String(c.id).split('#')[0]);
+            for (const c of (pp.coalition || [])) seen.add(String(c.id).split('#')[0]);
+          }
+          for (const c of (G.discard || [])) seen.add(String(c.id).split('#')[0]);
         } catch {}
-        return;
+        const remaining = ALL.filter((id) => !seen.has(id));
+        const code = String(e.code || '');
+        const codeDigit = code.startsWith('Digit') ? code.slice(5) : (code.startsWith('Numpad') ? code.slice(6) : '');
+        const k = (key >= '1' && key <= '9') ? key : (codeDigit >= '1' && codeDigit <= '9' ? codeDigit : '');
+        if (k) {
+          const idx = Number(k) - 1;
+          const pick = remaining[idx];
+          if (pick) {
+            try { moves.persona34GuessTopdeck(pick); } catch {}
+            return;
+          }
+        }
+        if (key === 'escape') {
+          try { moves.persona34GuessTopdeck('skip'); } catch {}
+          return;
+        }
       }
 
       // p39 activate
@@ -989,13 +1009,55 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {pendingP34 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP34Source}: guess top deck card id (press G)
+      {pendingP34 && (() => {
+        const ALL = Array.from({ length: 45 }, (_, i) => `persona_${i + 1}`);
+        const seen = new Set();
+        try {
+          for (const pp of (G.players || [])) {
+            for (const c of (pp.hand || [])) seen.add(String(c.id).split('#')[0]);
+            for (const c of (pp.coalition || [])) seen.add(String(c.id).split('#')[0]);
+          }
+          for (const c of (G.discard || [])) seen.add(String(c.id).split('#')[0]);
+        } catch {}
+        const remaining = ALL.filter((id) => !seen.has(id));
+        const show = remaining.slice(0, 9);
+
+        return (
+          <div className="fixed inset-0 z-[6000] pointer-events-none select-none">
+            <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/70 border border-amber-900/30 rounded-2xl px-5 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl pointer-events-auto">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <span className="opacity-80">{pendingP34Source}:</span> p34 guess persona
+                  <span className="ml-3 text-amber-200/70">(press 1..{Math.max(1, show.length)})</span>
+                </div>
+                <button
+                  type="button"
+                  className="px-3 py-1 rounded-full bg-slate-800/70 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[11px]"
+                  onClick={() => { try { moves.persona34GuessTopdeck('skip'); } catch {} }}
+                >
+                  Skip
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 justify-center">
+                {show.map((id, i) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="px-3 py-1 rounded-full bg-amber-600/80 hover:bg-amber-500/80 border border-amber-200/20 text-amber-950 font-black text-[11px] pointer-events-auto"
+                    onClick={() => { try { moves.persona34GuessTopdeck(id); } catch {} }}
+                    title={`(${i + 1})`}
+                  >
+                    {i + 1} · {id.replace('persona_', 'p')}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 text-amber-200/60 text-[10px] text-center">
+                (showing first 9 unseen personas; Esc/Skip clears)
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {pendingP16 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
