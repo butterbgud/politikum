@@ -445,7 +445,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       }
 
       // p33 choice: faction
-      if (pendingP33 && (key >= '1' && key <= '7')) {
+      if (pendingP33) {
         const map = {
           '1': 'faction:liberal',
           '2': 'faction:rightwing',
@@ -455,8 +455,16 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           '6': 'faction:system',
           '7': 'faction:neutral',
         };
-        try { moves.persona33ChooseFaction(map[key]); } catch {}
-        return;
+
+        // Support both normal digits and numpad.
+        const code = String(e.code || '');
+        const codeDigit = code.startsWith('Digit') ? code.slice(5) : (code.startsWith('Numpad') ? code.slice(6) : '');
+        const k = (key >= '1' && key <= '7') ? key : (codeDigit >= '1' && codeDigit <= '7' ? codeDigit : '');
+
+        if (k) {
+          try { moves.persona33ChooseFaction(map[k]); } catch {}
+          return;
+        }
       }
 
       // p34 guess
@@ -931,10 +939,35 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       )}
 
       {pendingP33 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP33Source}: choose faction (keys 1..7)
-            <span className="ml-3 text-amber-200/70">1 liberal · 2 right · 3 left · 4 fbk · 5 red · 6 system · 7 neutral</span>
+        <div className="fixed inset-0 z-[6000] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/70 border border-amber-900/30 rounded-2xl px-5 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl pointer-events-auto">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="opacity-80">{pendingP33Source}:</span> choose faction
+                <span className="ml-3 text-amber-200/70">(1..7)</span>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 justify-center">
+              {[
+                ['1', 'liberal', 'faction:liberal'],
+                ['2', 'right', 'faction:rightwing'],
+                ['3', 'left', 'faction:leftwing'],
+                ['4', 'fbk', 'faction:fbk'],
+                ['5', 'red', 'faction:red_nationalist'],
+                ['6', 'system', 'faction:system'],
+                ['7', 'neutral', 'faction:neutral'],
+              ].map(([k, label, tag]) => (
+                <button
+                  key={k}
+                  type="button"
+                  className="px-3 py-1 rounded-full bg-amber-600/80 hover:bg-amber-500/80 border border-amber-200/20 text-amber-950 font-black text-[11px] pointer-events-auto"
+                  onClick={() => { try { moves.persona33ChooseFaction(tag); } catch {} }}
+                  title={`(${k})`}
+                >
+                  {k} · {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
