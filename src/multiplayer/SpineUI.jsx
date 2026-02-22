@@ -312,6 +312,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const pendingP37 = pending?.kind === 'persona_37_pick_opponent_persona' && String(pending?.playerId) === String(playerID);
   const pendingP37Source = pendingP37 ? String(pending?.sourceCardId || '') : '';
 
+  const pendingP13 = pending?.kind === 'persona_13_pick_target' && String(pending?.playerId) === String(playerID);
+  const pendingP13Source = pendingP13 ? String(pending?.sourceCardId || '') : '';
+  const pendingP13AttackerId = pendingP13 ? String(pending?.attackerId || '') : '';
+
   const pendingP33 = pending?.kind === 'persona_33_choose_faction' && String(pending?.playerId) === String(playerID);
   const pendingP33Source = pendingP33 ? String(pending?.sourceCardId || '') : '';
   const pendingP34 = pending?.kind === 'persona_34_guess_topdeck' && String(pending?.playerId) === String(playerID);
@@ -740,8 +744,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   const canClickFaceForP7 = pendingP7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
                   const canClickFaceForP14 = pending?.kind === 'discard_one_persona_from_any_coalition' && String(pending?.playerId) === String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP11 = pendingP11Pick && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP13 = pendingP13 && String(p.id) === String(pendingP13AttackerId) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11 || canClickFaceForP13;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -795,6 +800,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForP11) {
                           try { playSfx('ui', 0.35); moves.persona11DiscardOpponentPersona(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP13) {
+                          try { playSfx('ui', 0.35); moves.persona13PickTarget(String(p.id), it.card.id); } catch {}
                           return;
                         }
                       }}
@@ -934,6 +943,14 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP37Source}: click an opponent persona to bribe (+2) and block abilities
+          </div>
+        </div>
+      )}
+
+      {pendingP13 && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            p13 ({pendingP13Source}): click attacker persona to give -1
           </div>
         </div>
       )}

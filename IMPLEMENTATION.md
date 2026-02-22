@@ -32,8 +32,6 @@ If you want me to draft real effects, I need at least one of:
 - event_15 ✅ all cards in players' hands are shuffled together and redealt so everyone keeps the **same hand size**
 - event_16 ✅ discard **1 persona from your coalition**, then draw **1 card**
 
-### Not implemented (needs spec)
-(none for events)
 
 ## Actions
 ### Implemented
@@ -42,8 +40,6 @@ If you want me to draft real effects, I need at least one of:
 - action_6 ✅ response: cancel an action (discard both)
 - action_8 ✅ response: cancel a persona play (persona goes to discard)
 - action_9 ✅ choose opponent → they discard **1 persona** from coalition (persona-only)
-
-### Newly implemented
 - action_7 ✅ block abilities on a targeted persona; clear all VP tokens (vpDelta reset); leaves a persistent marker above that card.
 - action_13 ✅ shield a persona in your coalition: it cannot be targeted by abilities/actions; when it would receive +1 tokens, it gets 1 fewer (to a minimum of 0); persistent shield marker.
 - action_14 ✅ response: when an action (e.g. action_4/action_9) targets your coalition, you may play this to cancel that effect (and discard both cards).
@@ -187,7 +183,6 @@ If you want me to draft real effects, I need at least one of:
   - UX: automatic, log per trigger.
   - notes: triggers for any player’s discarded persona.
 
-#### Specs converted (not yet implemented)
 - persona_21 — Token Inverter ✅
   - timing: on_enter
   - effect: choose any persona in play; swap its +1 and -1 totals (vpDelta := -vpDelta).
