@@ -1419,54 +1419,45 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 
               return (
                 <>
-                  <div className="mt-4 flex gap-6 items-start">
-                    <div className="w-[300px] flex flex-col gap-6">
-                      {leftIds.map((pid, i) => (
-                        <Fan key={pid} pid={pid} color={colors[i % colors.length]} />
-                      ))}
-                    </div>
+                  {/* Score history chart (turn vs VP) */}
+                  {(() => {
+                    const turns = hist.map((h) => Number(h.turn || 0));
+                    const minT = Math.min(...turns);
+                    const maxT = Math.max(...turns);
 
-                    <div className="flex-1">
-                      {/* Score history chart (turn vs VP) */}
-                      {(() => {
-                        const turns = hist.map((h) => Number(h.turn || 0));
-                        const minT = Math.min(...turns);
-                        const maxT = Math.max(...turns);
+                    const allScores = hist.flatMap((h) => playerIds.map((pid) => Number(h.scores?.[pid] ?? 0)));
+                    const minY = Math.min(0, ...allScores);
+                    const maxY = Math.max(1, ...allScores);
 
-                        const allScores = hist.flatMap((h) => playerIds.map((pid) => Number(h.scores?.[pid] ?? 0)));
-                        const minY = Math.min(0, ...allScores);
-                        const maxY = Math.max(1, ...allScores);
+                    const W = 460, H = 160, pad = 18;
+                    const sx = (t) => pad + ((t - minT) / Math.max(1, (maxT - minT))) * (W - pad * 2);
+                    const sy = (v) => (H - pad) - ((v - minY) / Math.max(1, (maxY - minY))) * (H - pad * 2);
 
-                        const W = 460, H = 160, pad = 18;
-                        const sx = (t) => pad + ((t - minT) / Math.max(1, (maxT - minT))) * (W - pad * 2);
-                        const sy = (v) => (H - pad) - ((v - minY) / Math.max(1, (maxY - minY))) * (H - pad * 2);
+                    const pathFor = (pid) => {
+                      const pts = hist.map((h) => ({ x: sx(Number(h.turn || 0)), y: sy(Number(h.scores?.[pid] ?? 0)) }));
+                      return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+                    };
 
-                        const pathFor = (pid) => {
-                          const pts = hist.map((h) => ({ x: sx(Number(h.turn || 0)), y: sy(Number(h.scores?.[pid] ?? 0)) }));
-                          return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-                        };
+                    return (
+                      <div className="mt-4">
+                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Progress (turn → VP)</div>
+                        <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
+                          {/* axes */}
+                          <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+                          <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+                          {playerIds.map((pid, i) => (
+                            <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
+                          ))}
+                        </svg>
+                      </div>
+                    );
+                  })()}
 
-                        return (
-                          <div>
-                            <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">Progress (turn → VP)</div>
-                            <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
-                              {/* axes */}
-                              <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
-                              <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
-                              {playerIds.map((pid, i) => (
-                                <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
-                              ))}
-                            </svg>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="w-[300px] flex flex-col gap-6">
-                      {rightIds.map((pid, j) => (
-                        <Fan key={pid} pid={pid} color={colors[(leftIds.length + j) % colors.length]} />
-                      ))}
-                    </div>
+                  {/* Final coalitions: single bottom row */}
+                  <div className="mt-6 flex justify-evenly gap-6 items-end flex-wrap">
+                    {playerIds.map((pid, i) => (
+                      <Fan key={pid} pid={pid} color={colors[i % colors.length]} />
+                    ))}
                   </div>
                 </>
               );
