@@ -369,6 +369,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         setPlacementMode(null);
         setP16DiscardPick([]);
         setP7FirstPick(null);
+        if (pendingP32) { try { moves.persona32CancelBounce(); } catch {} }
         return;
       }
       if (key === 'h') {
@@ -908,8 +909,15 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 
       {pendingP32 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP32Source}: click a persona in YOUR coalition to return it to hand
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-2">
+            <span>{pendingP32Source}: click a persona in YOUR coalition to return it to hand</span>
+            <button
+              type="button"
+              className="ml-2 px-3 py-1 rounded-full bg-slate-800/70 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[11px]"
+              onClick={() => { try { moves.persona32CancelBounce(); } catch {} }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
