@@ -65,7 +65,6 @@ If you want me to draft real effects, I need at least one of:
 - persona_14 (Roizman) ✅ on enter: discard **any** coalition persona (any player)
 - persona_40 (Duncova) ✅ on enter: place **3 × +1** tokens on any coalition personas (choose targets)
 
-### Not implemented (spec drafted 📝)
 
 - persona_7 (p7) — Каспаров ✅
   - timing: on_enter
@@ -91,7 +90,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: Whenever an action card or targeted persona ability is played that targets one of your personas or your coalition, and Наки is in your hand, show an interrupt prompt: “Discard Наки to cancel this effect?” If yes, discard Наки to the discard pile and cancel the pending effect (as if action_6/action_14 were used).
   - notes/edge-cases: Does not cancel global, non-targeted effects (e.g. “all players discard a card”). Works alongside other response cards; if multiple responses are available, follow existing response timing rules/priority.
 
-- persona_11 (p11) — Соловей
+- persona_11 (p11) — Соловей ✅
   - timing: at_start_of_turn (optional trigger)
   - effect: At the beginning of your turn, before drawing, you may choose to skip drawing a card. If you do, discard Соловей from your coalition and then discard any one persona from an opponent’s coalition (except persona_31 / Шлосберг).
   - UX: At the start of the owning player’s turn, if Соловей is in their coalition, show a choice: “Use Соловей: skip draw to discard an opponent persona?” If accepted, highlight opponents’ coalitions with all valid targets (persona_31 greyed out / unselectable). Player picks a target; discard both Соловей and the chosen persona.
@@ -121,7 +120,7 @@ If you want me to draft real effects, I need at least one of:
   - UX: After playing Кац, automatically draw 3 cards into your hand, then open a hand-selection UI requiring you to choose exactly 3 cards to discard. Confirm → move selected cards to discard and log the action.
   - notes/edge-cases: If the deck has fewer than 3 cards, draw as many as possible, then still ask you to discard up to that many cards (cannot discard more than current hand size). Кац stays in coalition and is not a discard candidate (already on board).
 
-- persona_17 (p17) — Арно
+- persona_17 (p17) — Арно ✅
   - timing: on_enter
   - effect: When Арно enters your coalition, choose an opponent. That opponent reveals their entire hand to you; then you choose one **persona** card from that hand and take it into your own hand.
   - UX: After placement, prompt you to choose an opponent. Then show that opponent’s hand fan to you (with personas visually distinguished from events/actions). Let you click one persona card to steal; that card is removed from opponent’s hand and added to yours, with a log entry.
