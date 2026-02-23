@@ -1596,6 +1596,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }}
                       onPointerEnter={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: 0 }))}
                       onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
+                      onPointerCancel={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
                     >
                       {coal.slice(0, show).map((c, i) => {
                         const t = show <= 1 ? 0.5 : i / (show - 1);
