@@ -1515,7 +1515,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Bykov (p20) — Take from discard</div>
             <div className="mt-2 text-amber-100/80 text-sm">Choose any 1 card from the discard pile to take into your hand.</div>
             <div className="mt-4 flex flex-wrap gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-              {(G.discard || []).map((c) => (
+              {(G.discard || []).filter((c) => c.type !== 'event').map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
