@@ -2189,7 +2189,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       {/* Turn status (below version hashes) */}
       <div className="fixed top-12 left-3 z-[900] pointer-events-none select-none">
         <div className="bg-black/45 border border-amber-900/20 rounded-xl px-3 py-2 text-[10px] font-mono text-amber-200/70 whitespace-pre">
-          turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}
+          turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}{(G && G.debugLastEndTurnReject) ? `\nendTurn blocked: ${G.debugLastEndTurnReject}` : ''}
         </div>
       </div>
     </div>
