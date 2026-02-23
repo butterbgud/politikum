@@ -833,9 +833,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }}
                     >
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
-                        <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute inset-0 w-full h-full object-cover opacity-95" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                        <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute inset-0 w-full h-full object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
                       )}
-                      <img src={img} alt={id} className="w-full h-full object-cover" draggable={false} />
+                      <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
                         <div className={
                           "absolute left-2 bottom-2 w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] " +
@@ -1884,9 +1884,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     }}
                   >
                     {String(c?.shieldedBy || '') === 'action_13' && (
-                      <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute inset-0 w-full h-full object-cover opacity-95" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                      <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute inset-0 w-full h-full object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
                     )}
-                    <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                    <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
                       <div className={
                         "absolute left-2 bottom-2 w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] " +
