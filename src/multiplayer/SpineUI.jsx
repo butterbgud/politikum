@@ -288,7 +288,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       });
   }, [G.players, playerID]);
 
-  const myCoalitionPoints = (me?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP scoring
+  const myCoalitionPoints = (me?.coalition || []).reduce((s, c) => s + Number(c.vp || 0) + Number(c.vpDelta || 0), 0); // MVP scoring (base vp + vpDelta tokens)
 
   const pendingTokens = pending?.kind === 'place_tokens_plus_vp' && String(pending?.playerId) === String(playerID);
   const pendingTokensRemaining = pendingTokens ? Number(pending?.remaining || 0) : 0;
