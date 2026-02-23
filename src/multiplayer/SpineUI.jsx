@@ -374,6 +374,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         setP16DiscardPick([]);
         setP7FirstPick(null);
         if (pendingP32) { try { moves.persona32CancelBounce(); } catch {} }
+        // generic pending cancel (stability)
+        if (G.pending && String(G.pending.playerId || G.pending.attackerId || G.pending.targetId || '') === String(playerID)) {
+          try { moves.cancelPending(); } catch {}
+        }
         return;
       }
       if (key === 'h') {

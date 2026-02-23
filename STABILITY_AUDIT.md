@@ -52,6 +52,8 @@ For each pending kind ensure:
 - Engine: implemented `maybeResolveDeferredPersona(G)` and wired it into `endTurn` + `drawCard`.
   - Fixes `resolve_persona_after_response` softlocks where the response window ended but pending still blocked play.
 - Engine: action_8 cancel now clears a matching `resolve_persona_after_response` pending (ability will not fire after cancel).
+- Engine: added generic `moves.cancelPending()` (allowlist) for most choice pendings.
+- UI: Esc now also calls `moves.cancelPending()` when the pending belongs to you.
 
 ## Next implementation steps
 1) Add a generic engine move: `cancelPending()` with allowlist of cancellable kinds.
