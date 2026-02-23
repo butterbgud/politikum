@@ -54,6 +54,8 @@ For each pending kind ensure:
 - Engine: action_8 cancel now clears a matching `resolve_persona_after_response` pending (ability will not fire after cancel).
 - Engine: added generic `moves.cancelPending()` (allowlist) for most choice pendings.
 - UI: Esc now also calls `moves.cancelPending()` when the pending belongs to you.
+- Engine: added missing bot resolvers for: persona_20/persona_21/persona_23/persona_28/persona_33/persona_34 (skip), persona_13 retaliation, and action_7/action_13/action_17/action_18 pendings.
+  - All are now no-softlock: if no valid target, pending clears.
 
 ## Next implementation steps
 1) Add a generic engine move: `cancelPending()` with allowlist of cancellable kinds.
