@@ -1567,16 +1567,11 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                 const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
                 const coal = (p?.coalition || []).filter((c) => c.type === 'persona');
                 const show = Math.min(12, coal.length);
-                const stepFace = 24;
+                const stepFace = 40;
                 const width = 140 + Math.max(0, (show - 1)) * stepFace;
                 const hoverIdx = hoverOppCoalition?.[`go-${pid}`] ?? null;
 
-                const scaleByDist2 = (dist) => {
-                  if (dist === 0) return 1.8;
-                  if (dist === 1) return 1.25;
-                  if (dist === 2) return 1.10;
-                  return 1;
-                };
+                const scaleByDist2 = (_dist) => 1; // no zoom on win screen
 
                 return (
                   <div className="flex flex-col items-center gap-2 relative pt-10">
@@ -1588,17 +1583,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     <div
                       className="relative h-44 pointer-events-auto"
                       style={{ width: Math.max(width, 260) }}
-                      onPointerMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const x = (e.clientX ?? 0) - rect.left;
-                        const idx = Math.max(0, Math.min(show - 1, Math.floor((x / Math.max(1, width)) * show)));
-                        setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: idx }));
-                      }}
-                      onPointerEnter={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: 0 }))}
-                      onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
-                      onPointerCancel={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
-                      onPointerOut={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
-                      onMouseLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [`go-${pid}`]: null }))}
+                      // no hover-zoom on win screen
                     >
                       {coal.slice(0, show).map((c, i) => {
                         const t = show <= 1 ? 0.5 : i / (show - 1);
