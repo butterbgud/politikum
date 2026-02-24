@@ -92,7 +92,7 @@ async function syncFinishedGames(db) {
   }
 }
 
-const PORT = 8001;
+const PORT = Number.parseInt(process.env.PORT || '8000', 10);
 
 server.run({ port: PORT, host: '0.0.0.0' }, () => {
   const { app } = server;

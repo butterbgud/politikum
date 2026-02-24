@@ -5,3 +5,6 @@ dist/
 vendor/citadel-engine/
 dist/
 node_modules/
+
+# local sqlite db
+/var/*.sqlite*
