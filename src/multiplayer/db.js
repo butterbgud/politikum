@@ -47,8 +47,7 @@ function openDatabase() {
       num_bots INTEGER,
       winner_player_id TEXT,
       winner_name TEXT,
-      result_json TEXT,
-      elo_applied INTEGER NOT NULL DEFAULT 0
+      result_json TEXT
     );
 
     CREATE TABLE IF NOT EXISTS ratings (
@@ -59,7 +58,6 @@ function openDatabase() {
       updated_at INTEGER NOT NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_games_elo_applied ON games(elo_applied);
     CREATE INDEX IF NOT EXISTS idx_ratings_updated_at ON ratings(updated_at);
 
     -- migrations for existing DBs
@@ -79,7 +77,9 @@ function openDatabase() {
 
   // Migrate older DBs (best effort)
   try { db.prepare('ALTER TABLE games ADD COLUMN elo_applied INTEGER NOT NULL DEFAULT 0').run(); } catch {}
+  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_games_elo_applied ON games(elo_applied)').run(); } catch {}
   try { db.prepare('CREATE TABLE IF NOT EXISTS ratings (player_id TEXT PRIMARY KEY, rating INTEGER NOT NULL, games_played INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run(); } catch {}
+  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_ratings_updated_at ON ratings(updated_at)').run(); } catch {}
 
   return db;
 }
