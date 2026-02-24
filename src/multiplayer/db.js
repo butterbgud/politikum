@@ -247,8 +247,19 @@ function applyEloForGameId(gameId) {
     if (byName) winnerId = String(byName.playerId);
   }
 
-  // If we still don't know winner, skip Elo (but mark applied so we don't loop).
+  // If we still don't know a HUMAN winner (e.g. bots won), don't change ratings,
+  // but still count the game for human participants.
   if (!winnerId) {
+    for (const p of humans) {
+      const pid = String(p.playerId);
+      const cur = getRating(pid);
+      setRating({
+        playerId: pid,
+        rating: cur.rating,
+        gamesPlayed: Number(cur.gamesPlayed || 0) + 1,
+        wins: Number(cur.wins || 0),
+      });
+    }
     db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
     return;
   }
