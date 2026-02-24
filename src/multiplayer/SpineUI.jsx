@@ -446,139 +446,123 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           <div className="text-xs font-mono text-amber-200/60">Players: {activeCount}</div>
         </div>
 
-        <div className="mt-6 grid gap-4">
-          {/* Beta login (shared password) */}
-          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
-            <div className="mt-2 flex flex-col sm:flex-row gap-2">
-              <input
-                value={betaPassword}
-                onChange={(e) => setBetaPassword(e.target.value)}
-                placeholder="beta password"
-                type="password"
-                className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
-              />
-              <button
-                type="button"
-                onClick={doBetaLogin}
-                className="px-4 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
-              >
-                Login
-              </button>
-            </div>
-            <div className="mt-2 text-[10px] font-mono text-amber-200/50">
-              {authToken ? 'Logged in (token saved).' : 'Not logged in.'}
-              {authStatus ? ` · ${authStatus}` : ''}
-            </div>
-          </div>
-
-          {/* Top 10 moved to Guest List screen. */}
-          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
-            <div className="mt-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar space-y-2">
-              {(G.chat || []).map((m, i) => (
-                <div key={i} className="text-sm font-serif">
-                  <span className="text-amber-200/60 font-mono text-[11px] mr-2">{m.sender}:</span>
-                  <span className="text-amber-50/90">{m.text}</span>
-                </div>
-              ))}
-              {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">No messages yet.</div>}
-            </div>
-            <form
-              className="mt-3 flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const msg = String(chatInput || '').trim();
-                if (!msg) return;
-                try { moves.submitChat(msg, String(me?.name || playerID)); } catch {}
-                setChatInput('');
-              }}
-            >
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Say something…"
-                className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase"
-              >
-                Send
-              </button>
-            </form>
-          </div>
-          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Your name</div>
-            <div className="mt-2 flex gap-2">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter name"
-                className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
-              />
-              <button
-                onClick={() => moves.setPlayerName(name)}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-sm uppercase"
-              >
-                Set
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
-            <div className="mt-3 grid gap-2">
-              {(G.players || []).filter((p) => !!p?.active).map((p) => {
-                const active = !!p.active;
-                const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
-                return (
-                  <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
-                    <div className="flex items-center gap-2">
-                      <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
-                        {p.name || `Seat ${p.id}`}
-                      </div>
-                      <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
-                      {!active && <div className="text-[10px] font-mono text-amber-900/50">(empty)</div>}
-                      {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
-                    </div>
-
-                    {isHost && String(p.id) !== '0' && active && bot && (
-                      <button
-                        onClick={() => moves.removePlayer(String(p.id))}
-                        className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
-                      >
-                        Remove
-                      </button>
-                    )}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
+          {/* Main column */}
+          <div className="grid gap-4">
+            {/* Lobby chat */}
+            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
+              <div className="mt-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                {(G.chat || []).map((m, i) => (
+                  <div key={i} className="text-sm font-serif">
+                    <span className="text-amber-200/60 font-mono text-[11px] mr-2">{m.sender}:</span>
+                    <span className="text-amber-50/90">{m.text}</span>
                   </div>
-                );
-              })}
+                ))}
+                {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">No messages yet.</div>}
+              </div>
+              <form
+                className="mt-3 flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const msg = String(chatInput || '').trim();
+                  if (!msg) return;
+                  try { moves.submitChat(msg, String(me?.name || playerID)); } catch {}
+                  setChatInput('');
+                }}
+              >
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Say something…"
+                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase"
+                >
+                  Send
+                </button>
+              </form>
             </div>
 
-            {isHost && (
-              <div className="mt-4 flex gap-2">
+            {/* Seats */}
+            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
+              <div className="mt-3 grid gap-2">
+                {(G.players || []).filter((p) => !!p?.active).map((p) => {
+                  const active = !!p.active;
+                  const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                  return (
+                    <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                      <div className="flex items-center gap-2">
+                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
+                          {p.name || `Seat ${p.id}`}
+                        </div>
+                        <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
+                        {!active && <div className="text-[10px] font-mono text-amber-900/50">(empty)</div>}
+                        {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                      </div>
+
+                      {isHost && String(p.id) !== '0' && active && bot && (
+                        <button
+                          onClick={() => moves.removePlayer(String(p.id))}
+                          className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {isHost && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => moves.addBot()}
+                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                  >
+                    Add bot
+                  </button>
+                  <button
+                    onClick={() => moves.startGame()}
+                    className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                  >
+                    Start game
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Side panel */}
+          <div className="grid gap-4">
+            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={betaPassword}
+                  onChange={(e) => setBetaPassword(e.target.value)}
+                  placeholder="beta password"
+                  type="password"
+                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
+                />
                 <button
-                  onClick={() => moves.addBot()}
-                  className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                  type="button"
+                  onClick={doBetaLogin}
+                  className="px-4 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
                 >
-                  Add bot
-                </button>
-                <button
-                  onClick={() => moves.startGame()}
-                  className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
-                >
-                  Start game
+                  Login
                 </button>
               </div>
-            )}
-
-            {!isHost && (
-              <div className="mt-4 text-xs text-amber-200/60 font-mono">Waiting for host to start…</div>
-            )}
+              <div className="mt-2 text-[10px] font-mono text-amber-200/50">
+                {authToken ? 'Logged in (token saved).' : 'Not logged in.'}
+                {authStatus ? ` · ${authStatus}` : ''}
+              </div>
+            </div>
           </div>
         </div>
-
         <div className="mt-5 text-[11px] text-amber-200/40 font-mono">phase: {String(ctx.phase || '')}</div>
       </div>
     </div>
@@ -1106,13 +1090,17 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 
           const pts = (coal || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
-          // Single opponent fan: coal face-up + hand face-down in one stack
+          // Single opponent fan: show coalition faces reliably (don’t let a big hand hide them).
           // We want: backs VERY tight, faces less tight.
           const backs = Array.from({ length: nHand }, () => ({ kind: 'back' }));
           const faces = coal.map((c) => ({ kind: 'face', card: c }));
-          const oppFanCards = [...backs, ...faces];
 
-          const show = Math.min(12, oppFanCards.length);
+          // Always include all coalition cards, and only show as many backs as fit.
+          const MAX_SHOW = 12;
+          const backsShown = Math.min(nHand, Math.max(0, MAX_SHOW - faces.length));
+          const oppFanCards = [...backs.slice(0, backsShown), ...faces];
+
+          const show = oppFanCards.length;
           const stepBack = 6;  // 2x tighter
           const stepFace = 24; // more spacing so tokens are visible
 
