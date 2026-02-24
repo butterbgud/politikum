@@ -2600,6 +2600,10 @@ const GameClient = Client({
 function PolitikumWelcome({ onJoin }) {
   const [matches, setMatches] = useState([]);
   const [playerName, setPlayerName] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('politikum.playerName');
+      if (saved && String(saved).trim()) return String(saved);
+    } catch {}
     const base = NAMES[Math.floor(Math.random() * NAMES.length)];
     return `[H] ${base}`;
   });
@@ -2615,6 +2619,10 @@ function PolitikumWelcome({ onJoin }) {
     const interval = setInterval(() => refreshMatches().catch(() => {}), 4000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('politikum.playerName', playerName); } catch {}
+  }, [playerName]);
 
   const createMatch = async () => {
     if (!playerName) return alert('Enter your name first!');
