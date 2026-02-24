@@ -47,8 +47,23 @@ function openDatabase() {
       num_bots INTEGER,
       winner_player_id TEXT,
       winner_name TEXT,
-      result_json TEXT
+      result_json TEXT,
+      elo_applied INTEGER NOT NULL DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS ratings (
+      player_id TEXT PRIMARY KEY,
+      rating INTEGER NOT NULL,
+      games_played INTEGER NOT NULL,
+      wins INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_games_elo_applied ON games(elo_applied);
+    CREATE INDEX IF NOT EXISTS idx_ratings_updated_at ON ratings(updated_at);
+
+    -- migrations for existing DBs
+    PRAGMA foreign_keys = ON;
 
     CREATE TABLE IF NOT EXISTS game_players (
       id INTEGER PRIMARY KEY,
@@ -61,6 +76,10 @@ function openDatabase() {
     CREATE INDEX IF NOT EXISTS idx_games_finished_at ON games(finished_at);
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
   `);
+
+  // Migrate older DBs (best effort)
+  try { db.prepare('ALTER TABLE games ADD COLUMN elo_applied INTEGER NOT NULL DEFAULT 0').run(); } catch {}
+  try { db.prepare('CREATE TABLE IF NOT EXISTS ratings (player_id TEXT PRIMARY KEY, rating INTEGER NOT NULL, games_played INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run(); } catch {}
 
   return db;
 }
@@ -120,6 +139,87 @@ export function authGetSession(token) {
   return row;
 }
 
+
+function getRating(playerId) {
+  const db = sqlite;
+  const row = db.prepare('SELECT player_id AS playerId, rating, games_played AS gamesPlayed, wins, updated_at AS updatedAt FROM ratings WHERE player_id = ?').get(String(playerId));
+  if (row) return { ...row, rating: Number(row.rating) };
+  return { playerId: String(playerId), rating: 1000, gamesPlayed: 0, wins: 0, updatedAt: null };
+}
+
+function setRating({ playerId, rating, gamesPlayed, wins }) {
+  const db = sqlite;
+  const now = nowMs();
+  db.prepare(`
+    INSERT INTO ratings (player_id, rating, games_played, wins, updated_at)
+    VALUES (@player_id, @rating, @games_played, @wins, @updated_at)
+    ON CONFLICT(player_id) DO UPDATE SET
+      rating=excluded.rating,
+      games_played=excluded.games_played,
+      wins=excluded.wins,
+      updated_at=excluded.updated_at
+  `).run({
+    player_id: String(playerId),
+    rating: Math.round(Number(rating) || 1000),
+    games_played: Number(gamesPlayed) || 0,
+    wins: Number(wins) || 0,
+    updated_at: now,
+  });
+}
+
+function eloExpected(ra, rb) {
+  return 1 / (1 + Math.pow(10, (rb - ra) / 400));
+}
+
+function applyEloForGameId(gameId) {
+  const db = sqlite;
+  const game = db.prepare('SELECT id, elo_applied AS eloApplied, winner_player_id AS winnerPlayerId FROM games WHERE id = ?').get(gameId);
+  if (!game || Number(game.eloApplied || 0) === 1) return;
+
+  const players = db.prepare('SELECT player_id AS playerId, name, is_bot AS isBot FROM game_players WHERE game_id = ?').all(gameId);
+  const humans = players.filter((p) => !p.isBot && p.playerId);
+  if (humans.length < 2 || !game.winnerPlayerId) {
+    db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
+    return;
+  }
+
+  const winnerId = String(game.winnerPlayerId);
+  const K = 24;
+
+  // Only update winner-vs-each-other pairwise (simple FFA MVP).
+  const deltas = new Map();
+  for (const p of humans) deltas.set(String(p.playerId), 0);
+
+  for (const p of humans) {
+    const pid = String(p.playerId);
+    if (pid === winnerId) continue;
+
+    const rw = getRating(winnerId).rating;
+    const rl = getRating(pid).rating;
+    const ew = eloExpected(rw, rl);
+    const el = eloExpected(rl, rw);
+    const dw = K * (1 - ew);
+    const dl = K * (0 - el);
+
+    deltas.set(winnerId, (deltas.get(winnerId) || 0) + dw);
+    deltas.set(pid, (deltas.get(pid) || 0) + dl);
+  }
+
+  // Persist
+  for (const p of humans) {
+    const pid = String(p.playerId);
+    const cur = getRating(pid);
+    const isWinner = pid === winnerId;
+    setRating({
+      playerId: pid,
+      rating: cur.rating + (deltas.get(pid) || 0),
+      gamesPlayed: Number(cur.gamesPlayed || 0) + 1,
+      wins: Number(cur.wins || 0) + (isWinner ? 1 : 0),
+    });
+  }
+
+  db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
+}
 
 export function recordGameFinished({
   matchId,
@@ -193,6 +293,7 @@ export function recordGameFinished({
   // Log once per successful insert.
   const gameRow = db.prepare('SELECT id FROM games WHERE match_id = ?').get(matchId);
   if (gameRow) {
+    try { applyEloForGameId(gameRow.id); } catch {}
     console.log(
       `Recorded game matchId=${matchId} winner=${winnerName ?? 'n/a'} finishedAt=${finishedAt}`,
     );
@@ -224,33 +325,34 @@ export function getLeaderboard({ limit = 20 }) {
   const db = sqlite;
   const lim = Math.min(200, Math.max(1, Number(limit) || 20));
 
-  // MVP identity = player name string (no accounts yet).
+  // Elo leaderboard (stable player_id). Join a name if we have one from recent games.
   const rows = db.prepare(`
-    WITH humans AS (
-      SELECT gp.name AS name
-      FROM game_players gp
-      WHERE gp.is_bot = 0 AND gp.name IS NOT NULL AND TRIM(gp.name) <> ''
-    )
     SELECT
-      h.name AS name,
-      COUNT(*) AS games,
-      SUM(CASE WHEN g.winner_name = h.name THEN 1 ELSE 0 END) AS wins,
-      MAX(g.finished_at) AS lastFinishedAt
-    FROM humans h
-    JOIN game_players gp ON gp.name = h.name AND gp.is_bot = 0
-    JOIN games g ON g.id = gp.game_id
-    WHERE g.finished_at IS NOT NULL
-    GROUP BY h.name
-    ORDER BY wins DESC, games DESC, lastFinishedAt DESC
+      r.player_id AS playerId,
+      r.rating AS rating,
+      r.games_played AS games,
+      r.wins AS wins,
+      r.updated_at AS updatedAt,
+      (
+        SELECT gp.name
+        FROM game_players gp
+        WHERE gp.player_id = r.player_id AND gp.name IS NOT NULL AND TRIM(gp.name) <> ''
+        ORDER BY gp.id DESC
+        LIMIT 1
+      ) AS name
+    FROM ratings r
+    ORDER BY r.rating DESC, r.wins DESC, r.games_played DESC
     LIMIT @limit;
   `).all({ limit: lim });
 
   return {
     items: rows.map((r) => ({
-      name: r.name,
+      playerId: r.playerId,
+      name: r.name || null,
+      rating: Number(r.rating || 1000),
       games: Number(r.games || 0),
       wins: Number(r.wins || 0),
-      lastFinishedAt: r.lastFinishedAt ?? null,
+      updatedAt: r.updatedAt ?? null,
     })),
   };
 }
