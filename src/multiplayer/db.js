@@ -41,7 +41,6 @@ function openDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_account_id ON sessions(account_id);
-    CREATE INDEX IF NOT EXISTS idx_sessions_device_id ON sessions(device_id);
 
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY,
