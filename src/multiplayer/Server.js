@@ -69,7 +69,7 @@ async function syncFinishedGames(db) {
     const finishedAt = metadata.gameover?.finishedAt ?? metadata.updatedAt ?? Date.now();
     const createdAt = metadata.createdAt ?? initialState?.ctx?.turnStart ?? finishedAt;
 
-    const winnerPlayerId = state?.ctx?.gameover?.winnerPlayerId ?? metadata.gameover?.winnerPlayerId;
+    const seatWinnerPlayerId = state?.ctx?.gameover?.winnerPlayerId ?? metadata.gameover?.winnerPlayerId;
     const winnerName = state?.ctx?.gameover?.winnerName ?? metadata.gameover?.winnerName;
 
     const players = Array.isArray(metadata.players)
@@ -77,17 +77,33 @@ async function syncFinishedGames(db) {
       : Object.values(metadata.players || {});
 
     const statePlayers = Array.isArray(state?.G?.players) ? state.G.players : [];
+    const activeIds = new Set((state?.G?.activePlayerIds || []).map(String));
 
-    const playerSummaries = players.map((p, index) => {
-      const seatId = String(p.id ?? String(index));
-      const sp = statePlayers.find((x) => String(x?.id) === seatId);
-      const stable = sp?.identity?.playerId;
-      return {
-        playerId: stable || seatId,
-        name: p.name ?? p.displayName ?? sp?.name ?? null,
-        isBot: Boolean(p.isBot || p.bot || sp?.isBot || String(sp?.name || '').startsWith('[B]')),
-      };
-    });
+    const seatToStable = (seatId) => {
+      const sp = statePlayers.find((x) => String(x?.id) === String(seatId));
+      return sp?.identity?.playerId || null;
+    };
+
+    const winnerPlayerId = seatWinnerPlayerId ? (seatToStable(seatWinnerPlayerId) || String(seatWinnerPlayerId)) : null;
+
+    const playerSummaries = players
+      .map((p, index) => {
+        const seatId = String(p.id ?? String(index));
+        const sp = statePlayers.find((x) => String(x?.id) === seatId);
+        const stable = sp?.identity?.playerId;
+        const name = p.name ?? p.displayName ?? sp?.name ?? null;
+        const isBot = Boolean(p.isBot || p.bot || sp?.isBot || String(sp?.name || '').startsWith('[B]'));
+        const active = Boolean(sp?.active) || activeIds.has(seatId);
+        return { seatId, playerId: stable || seatId, name, isBot, active };
+      })
+      .filter((p) => p.active)
+      .filter((p) => {
+        const n = String(p.name || '').trim();
+        if (!n) return false;
+        if (n.startsWith('[H] Seat')) return false;
+        return true;
+      })
+      .map(({ playerId, name, isBot }) => ({ playerId, name, isBot }));
 
     const durationMs = finishedAt && createdAt ? finishedAt - createdAt : null;
 
