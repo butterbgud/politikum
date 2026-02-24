@@ -70,6 +70,25 @@ function AdminPage() {
     }
   };
 
+  const forceSync = async () => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/sync`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token },
+      });
+      if (!res.ok) throw new Error(`sync: HTTP ${res.status}`);
+      // after sync, refresh all tables
+      await fetchAdmin();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatTime = (ms) => {
     if (!ms) return '—';
     const d = new Date(ms);
@@ -114,7 +133,7 @@ function AdminPage() {
               placeholder="Paste shared secret"
             />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
             <button
               type="button"
               onClick={fetchAdmin}
@@ -122,6 +141,15 @@ function AdminPage() {
               className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest"
             >
               {loading ? 'Loading…' : 'Refresh'}
+            </button>
+            <button
+              type="button"
+              onClick={forceSync}
+              disabled={loading}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-xs uppercase tracking-widest"
+              title="Force rescan finished matches and write to SQLite"
+            >
+              Sync
             </button>
           </div>
         </div>
@@ -150,6 +178,9 @@ function AdminPage() {
               <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Last finished</div>
               <div className="text-[11px] font-mono text-amber-100/80 leading-tight">
                 {summary.lastFinishedAt ? formatTime(summary.lastFinishedAt) : '—'}
+              </div>
+              <div className="mt-1 text-[10px] font-mono text-amber-200/40">
+                sync: {summary.lastAdminSyncAt ? formatTime(summary.lastAdminSyncAt) : '—'}
               </div>
             </div>
           </div>

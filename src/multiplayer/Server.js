@@ -176,6 +176,19 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       return;
     }
 
+    if (ctx.path === '/admin/sync' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      await syncFinishedGames(ctx.db);
+      const storage = await getStorageStats(ctx.db);
+      ctx.body = {
+        ok: true,
+        ...getSummary(),
+        ...storage,
+        lastAdminSyncAt,
+      };
+      return;
+    }
+
     if (ctx.path === '/admin/games' && ctx.method === 'GET') {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);
