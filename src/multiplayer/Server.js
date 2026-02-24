@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -253,6 +253,13 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         ...storage,
         lastAdminSyncAt,
       };
+      return;
+    }
+
+    if (ctx.path === '/admin/elo/recompute' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      eloRecomputeAll();
+      ctx.body = { ok: true, leaderboard: getLeaderboard({ limit: 50 }) };
       return;
     }
 

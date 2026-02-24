@@ -173,20 +173,35 @@ function eloExpected(ra, rb) {
 
 function applyEloForGameId(gameId) {
   const db = sqlite;
-  const game = db.prepare('SELECT id, elo_applied AS eloApplied, winner_player_id AS winnerPlayerId FROM games WHERE id = ?').get(gameId);
+  const game = db.prepare('SELECT id, elo_applied AS eloApplied, winner_player_id AS winnerPlayerId, winner_name AS winnerName FROM games WHERE id = ?').get(gameId);
   if (!game || Number(game.eloApplied || 0) === 1) return;
 
   const players = db.prepare('SELECT player_id AS playerId, name, is_bot AS isBot FROM game_players WHERE game_id = ?').all(gameId);
   const humans = players.filter((p) => !p.isBot && p.playerId);
-  if (humans.length < 2 || !game.winnerPlayerId) {
+  if (humans.length < 1) {
     db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
     return;
   }
 
-  const winnerId = String(game.winnerPlayerId);
+  // Determine winner.
+  let winnerId = game.winnerPlayerId ? String(game.winnerPlayerId) : null;
+  if (winnerId && !humans.some((p) => String(p.playerId) === winnerId)) {
+    winnerId = null;
+  }
+  if (!winnerId && game.winnerName) {
+    const byName = humans.find((p) => String(p.name || '').trim() === String(game.winnerName).trim());
+    if (byName) winnerId = String(byName.playerId);
+  }
+
+  // If we still don't know winner, skip Elo (but mark applied so we don't loop).
+  if (!winnerId) {
+    db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
+    return;
+  }
+
   const K = 24;
 
-  // Only update winner-vs-each-other pairwise (simple FFA MVP).
+  // Winner-vs-each-other pairwise (simple FFA MVP).
   const deltas = new Map();
   for (const p of humans) deltas.set(String(p.playerId), 0);
 
@@ -205,7 +220,6 @@ function applyEloForGameId(gameId) {
     deltas.set(pid, (deltas.get(pid) || 0) + dl);
   }
 
-  // Persist
   for (const p of humans) {
     const pid = String(p.playerId);
     const cur = getRating(pid);
@@ -219,6 +233,17 @@ function applyEloForGameId(gameId) {
   }
 
   db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
+}
+
+export function eloRecomputeAll() {
+  const db = sqlite;
+  const txn = db.transaction(() => {
+    db.prepare('DELETE FROM ratings').run();
+    db.prepare('UPDATE games SET elo_applied = 0').run();
+    const ids = db.prepare('SELECT id FROM games WHERE finished_at IS NOT NULL ORDER BY finished_at ASC').all();
+    for (const r of ids) applyEloForGameId(r.id);
+  });
+  txn();
 }
 
 export function recordGameFinished({
