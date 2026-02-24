@@ -484,7 +484,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const canPersona8Swap = !!p8SwapSpec && String(p8SwapSpec.playerId || '') === String(playerID);
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
-  const ENABLE_EVENT_SPLASH = false;
+  const ENABLE_EVENT_SPLASH = true;
   const ENABLE_ACTION_SPLASH = false;
 
   const [logCollapsed, setLogCollapsed] = useState(false);
@@ -800,13 +800,20 @@ function ActionBoard({ G, ctx, moves, playerID }) {
     return () => clearInterval(t);
   }, [moves, currentIsBot, G?.gameOver, playerID]);
 
+  // Keep event card visible while the event is still being resolved.
   useEffect(() => {
     const id = G.lastEvent?.id;
     if (!id) return;
     setShowEventSplash(true);
-    const t = setTimeout(() => setShowEventSplash(false), 2000);
-    return () => clearTimeout(t);
   }, [G.lastEvent?.id]);
+
+  useEffect(() => {
+    if (!showEventSplash) return;
+    // When no pending decisions remain, fade the event card shortly after.
+    if (G.pending) return;
+    const t = setTimeout(() => setShowEventSplash(false), 800);
+    return () => clearTimeout(t);
+  }, [showEventSplash, G.pending]);
 
   // Autoscroll log to bottom on new lines
   useEffect(() => {
@@ -1869,17 +1876,27 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Event splash (auto-hide) */}
+      {/* Event card: pinned while resolving (dismissable) */}
       {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && (
-        <div className="fixed inset-0 z-[2500] pointer-events-none">
-          <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
-            <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
+        <div className="fixed top-14 right-4 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto flex items-end gap-3 bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl p-3">
+            <button
+              type="button"
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-black/70 border border-amber-900/20 text-amber-200/70 text-[12px] font-black"
+              onClick={() => setShowEventSplash(false)}
+              title="Hide"
+            >
+              ×
+            </button>
+            <div className="w-24 aspect-[2/3] rounded-xl overflow-hidden border border-black/50">
               <img src={G.lastEvent.img} alt={G.lastEvent.id} className="w-full h-full object-cover" draggable={false} />
             </div>
-            <div className="max-w-[360px]">
-              <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
-              <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.lastEvent.id}</div>
-              <div className="mt-2 text-amber-100/70 text-sm">Event effects not implemented yet.</div>
+            <div className="max-w-[260px]">
+              <div className="text-amber-200/70 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
+              <div className="mt-1 text-amber-100 font-serif text-[16px] font-bold leading-tight">{G.lastEvent.id}</div>
+              {G.pending && (
+                <div className="mt-1 text-amber-100/70 text-[11px]">resolving…</div>
+              )}
             </div>
           </div>
         </div>
