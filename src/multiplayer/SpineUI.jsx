@@ -323,8 +323,32 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     return cur;
   });
   const [chatInput, setChatInput] = useState('');
+  const [top10, setTop10] = useState([]);
+  const [top10Err, setTop10Err] = useState('');
 
   const activeCount = (G.activePlayerIds || []).length;
+
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      try {
+        const token = window.localStorage.getItem('politikum.adminToken') || '';
+        if (!token) return;
+        const res = await fetch(`${SERVER}/admin/leaderboard?limit=10`, { headers: { 'X-Admin-Token': token } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!alive) return;
+        setTop10(Array.isArray(json.items) ? json.items : []);
+        setTop10Err('');
+      } catch (e) {
+        if (!alive) return;
+        setTop10Err(e?.message || String(e));
+      }
+    };
+    run();
+    const t = setInterval(run, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
 
   return (
     <div
@@ -341,6 +365,26 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
         </div>
 
         <div className="mt-6 grid gap-4">
+          {/* Top 10 leaderboard (optional) */}
+          {(top10 && top10.length > 0) && (
+            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Top 10 (wins)</div>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {top10.map((r, i) => (
+                  <div key={i} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="text-[11px] font-mono text-amber-200/60 w-6">#{i + 1}</div>
+                      <div className="font-serif text-sm truncate">{r.name || '(anon)'}</div>
+                    </div>
+                    <div className="text-xs font-mono text-emerald-300 font-black">{r.wins}W</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {(top10Err && !top10.length) && (
+            <div className="text-[10px] font-mono text-amber-200/40">Leaderboard unavailable: {top10Err}</div>
+          )}
           <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
             <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
             <div className="mt-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar space-y-2">
