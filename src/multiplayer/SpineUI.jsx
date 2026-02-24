@@ -80,7 +80,7 @@ function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-black text-amber-50 flex items-center justify-center p-4">
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
