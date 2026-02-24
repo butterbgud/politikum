@@ -176,6 +176,37 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
 function ActionBoard({ G, ctx, moves, playerID }) {
   // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
+
+  const TokenPips = ({ delta, compact }) => {
+    const d = Number(delta || 0);
+    if (!d) return null;
+    const isNeg = d < 0;
+    const n = Math.min(10, Math.abs(d));
+    const more = Math.max(0, Math.abs(d) - 10);
+    return (
+      <div className={"absolute left-2 bottom-2 flex items-center gap-1 " + (compact ? "scale-[0.9]" : "")}
+        style={{ pointerEvents: 'none' }}
+      >
+        {Array.from({ length: n }).map((_, i) => (
+          <div
+            key={i}
+            className={
+              "w-2.5 h-2.5 rounded-full border shadow " +
+              (isNeg ? "bg-red-700/90 border-red-200/40" : "bg-emerald-700/90 border-emerald-200/40")
+            }
+          />
+        ))}
+        {more > 0 && (
+          <div className={
+            "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black border " +
+            (isNeg ? "bg-red-900/70 border-red-200/30 text-red-50" : "bg-emerald-900/70 border-emerald-200/30 text-emerald-50")
+          }>
+            ×{more + 10}
+          </div>
+        )}
+      </div>
+    );
+  };
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
     try { return localStorage.getItem('politikum:soundOn') !== '0'; } catch { return true; }
@@ -837,12 +868,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
-                        <div className={
-                          "absolute left-2 bottom-2 w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] " +
-                          (Number(it.card?.vpDelta || 0) < 0 ? "bg-red-700/90 border-red-200/30" : "bg-emerald-700/90 border-emerald-200/30")
-                        }>
-                          {it.card.vpDelta}
-                        </div>
+                        <TokenPips delta={it.card.vpDelta} compact />
                       )}
                       {it.kind === 'face' && (it.card?.shielded || it.card?.blockedAbilities) && (
                         <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
@@ -1888,12 +1914,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
-                      <div className={
-                        "absolute left-2 bottom-2 w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] " +
-                        (Number(c.vpDelta || 0) < 0 ? "bg-red-700/90 border-red-200/30" : "bg-emerald-700/90 border-emerald-200/30")
-                      }>
-                        {c.vpDelta}
-                      </div>
+                      <TokenPips delta={c.vpDelta} />
                     )}
                     {(c.shielded || c.blockedAbilities) && (
                       <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
