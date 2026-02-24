@@ -186,9 +186,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
     return (
       <div
         className={
-          "absolute bottom-2 flex items-center gap-1 " +
+          "absolute bottom-2 z-20 flex items-center gap-1 " +
           (right ? "right-2" : "left-2") +
-          (compact ? " scale-[0.9]" : "") +
+          (compact ? " scale-[1.0]" : "") +
           (dim ? " opacity-80" : "")
         }
         style={{ pointerEvents: 'none' }}
@@ -197,8 +197,8 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           <div
             key={i}
             className={
-              "w-2.5 h-2.5 rounded-full border shadow " +
-              (isNeg ? "bg-red-700/90 border-red-200/40" : "bg-emerald-700/90 border-emerald-200/40")
+              "w-3.5 h-3.5 rounded-full border shadow-[0_2px_6px_rgba(0,0,0,0.6)] " +
+              (isNeg ? "bg-red-700/95 border-red-200/50" : "bg-emerald-700/95 border-emerald-200/50")
             }
           />
         ))}
