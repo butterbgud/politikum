@@ -353,6 +353,21 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     if (cur.startsWith('[H] Seat')) return '';
     return cur;
   });
+
+  // Auto-apply saved alias into the match lobby (seat name) on first load.
+  useEffect(() => {
+    try {
+      const cur = String(me?.name || '').trim();
+      if (cur && !cur.startsWith('[H] Seat') && cur !== 'You') return;
+      const saved = String(window.localStorage.getItem('politikum.playerName') || '').trim();
+      if (!saved) return;
+      if (saved.startsWith('[H] Seat')) return;
+      // Only auto-set for your own seat.
+      if (String(playerID) !== String(me?.id ?? playerID)) return;
+      try { moves.setPlayerName(saved); } catch {}
+      setName(saved);
+    } catch {}
+  }, [me?.name, playerID]);
   const [chatInput, setChatInput] = useState('');
   const [top10, setTop10] = useState([]);
   const [top10Err, setTop10Err] = useState('');
