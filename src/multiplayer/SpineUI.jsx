@@ -2015,7 +2015,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className={"fixed bottom-6 left-1/2 -translate-x-1/2 z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
+      <div className={"fixed bottom-6 left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
         style={{ transform: 'translateX(calc(-50% - 300px))' }}>
 
         {(() => {
