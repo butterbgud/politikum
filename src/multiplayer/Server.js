@@ -43,11 +43,10 @@ function requireAdmin(ctx) {
 async function syncFinishedGames(db) {
   // Pragmatic: whenever an admin endpoint is hit, scan finished matches
   // from the boardgame.io storage and persist them idempotently.
+  // NOTE: some storage backends don't implement listMatches(where:{isGameover:true}) reliably,
+  // so we list all and filter ourselves.
   const gameName = CitadelGame?.name ?? 'politikum';
-  const matchIds = await db.listMatches({
-    gameName,
-    where: { isGameover: true },
-  });
+  const matchIds = await db.listMatches({ gameName });
 
   for (const matchId of matchIds) {
     const { state, metadata, initialState } = await db.fetch(matchId, {
@@ -56,13 +55,16 @@ async function syncFinishedGames(db) {
       initialState: true,
     });
 
-    if (!state || !metadata) continue;
+    if (!metadata) continue;
+
+    const isGameover = Boolean(metadata.gameover || state?.ctx?.gameover);
+    if (!isGameover) continue;
 
     const finishedAt = metadata.gameover?.finishedAt ?? metadata.updatedAt ?? Date.now();
     const createdAt = metadata.createdAt ?? initialState?.ctx?.turnStart ?? finishedAt;
 
-    const winnerPlayerId = state.ctx?.gameover?.winnerPlayerId ?? metadata.gameover?.winnerPlayerId;
-    const winnerName = state.ctx?.gameover?.winnerName ?? metadata.gameover?.winnerName;
+    const winnerPlayerId = state?.ctx?.gameover?.winnerPlayerId ?? metadata.gameover?.winnerPlayerId;
+    const winnerName = state?.ctx?.gameover?.winnerName ?? metadata.gameover?.winnerName;
 
     const players = Array.isArray(metadata.players)
       ? metadata.players
@@ -88,11 +90,31 @@ async function syncFinishedGames(db) {
       winnerName: winnerName ?? null,
       resultJson: JSON.stringify({
         metadata,
-        gameover: state.ctx?.gameover ?? null,
+        gameover: state?.ctx?.gameover ?? null,
       }),
     });
   }
   lastAdminSyncAt = Date.now();
+}
+
+async function getStorageStats(db) {
+  const gameName = CitadelGame?.name ?? 'politikum';
+  const matchIds = await db.listMatches({ gameName });
+  let finished = 0;
+  let inProgress = 0;
+  for (const matchId of matchIds) {
+    try {
+      const { metadata, state } = await db.fetch(matchId, { metadata: true, state: true });
+      const isGameover = Boolean(metadata?.gameover || state?.ctx?.gameover);
+      if (isGameover) finished++;
+      else inProgress++;
+    } catch {}
+  }
+  return {
+    storageTotal: matchIds.length,
+    storageFinished: finished,
+    storageInProgress: inProgress,
+  };
 }
 
 async function listInProgressMatches(db, limit = 20) {
@@ -139,8 +161,10 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);
       const live = await listInProgressMatches(ctx.db, 20);
+      const storage = await getStorageStats(ctx.db);
       ctx.body = {
         ...getSummary(),
+        ...storage,
         liveInProgressTotal: live.total,
         lastAdminSyncAt,
       };
