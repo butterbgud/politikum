@@ -148,18 +148,37 @@ async function listInProgressMatches(db, limit = 20) {
       totalInProgress++;
       if (items.length >= limit) continue;
 
-      const players = Array.isArray(metadata.players)
-        ? metadata.players
-        : Object.values(metadata.players || {});
+      // Prefer live state for active filtering (metadata often includes all seats).
+      const statePlayers = Array.isArray(state?.G?.players) ? state.G.players : [];
+      const activeIds = new Set((state?.G?.activePlayerIds || []).map(String));
+
+      const players = (statePlayers.length ? statePlayers : (
+        Array.isArray(metadata.players) ? metadata.players : Object.values(metadata.players || {})
+      ))
+        .map((p, index) => ({
+          seatId: String(p?.id ?? String(index)),
+          name: p?.name ?? p?.displayName ?? null,
+          isBot: Boolean(p?.isBot || p?.bot || String(p?.name || '').startsWith('[B]')),
+          active: Boolean(p?.active) || activeIds.has(String(p?.id ?? String(index))),
+        }))
+        .filter((p) => p.active)
+        .filter((p) => {
+          const n = String(p.name || '').trim();
+          if (!n) return false;
+          if (n.startsWith('[H] Seat')) return false;
+          return true;
+        })
+        .map((p) => ({
+          playerId: p.seatId,
+          name: p.name,
+          isBot: p.isBot,
+        }));
+
       items.push({
         matchId,
         createdAt: metadata.createdAt ?? null,
         updatedAt: metadata.updatedAt ?? null,
-        players: players.map((p, index) => ({
-          playerId: p.id ?? String(index),
-          name: p.name ?? p.displayName ?? null,
-          isBot: Boolean(p.isBot || p.bot),
-        })),
+        players,
       });
     } catch {}
   }
