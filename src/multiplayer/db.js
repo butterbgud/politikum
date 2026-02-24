@@ -150,6 +150,41 @@ export function getSummary() {
   };
 }
 
+export function getLeaderboard({ limit = 20 }) {
+  const db = sqlite;
+  const lim = Math.min(200, Math.max(1, Number(limit) || 20));
+
+  // MVP identity = player name string (no accounts yet).
+  const rows = db.prepare(`
+    WITH humans AS (
+      SELECT gp.name AS name
+      FROM game_players gp
+      WHERE gp.is_bot = 0 AND gp.name IS NOT NULL AND TRIM(gp.name) <> ''
+    )
+    SELECT
+      h.name AS name,
+      COUNT(*) AS games,
+      SUM(CASE WHEN g.winner_name = h.name THEN 1 ELSE 0 END) AS wins,
+      MAX(g.finished_at) AS lastFinishedAt
+    FROM humans h
+    JOIN game_players gp ON gp.name = h.name AND gp.is_bot = 0
+    JOIN games g ON g.id = gp.game_id
+    WHERE g.finished_at IS NOT NULL
+    GROUP BY h.name
+    ORDER BY wins DESC, games DESC, lastFinishedAt DESC
+    LIMIT @limit;
+  `).all({ limit: lim });
+
+  return {
+    items: rows.map((r) => ({
+      name: r.name,
+      games: Number(r.games || 0),
+      wins: Number(r.wins || 0),
+      lastFinishedAt: r.lastFinishedAt ?? null,
+    })),
+  };
+}
+
 export function getGames({ limit, offset }) {
   const db = sqlite;
   const totalRow = db.prepare('SELECT COUNT(*) AS total FROM games').get();

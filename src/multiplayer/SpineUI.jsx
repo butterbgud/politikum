@@ -24,6 +24,7 @@ function AdminPage() {
   const [games, setGames] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
   const [liveTotal, setLiveTotal] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,21 +44,25 @@ function AdminPage() {
     setError('');
     try {
       const headers = { 'X-Admin-Token': token };
-      const [summaryRes, gamesRes, matchesRes] = await Promise.all([
+      const [summaryRes, gamesRes, matchesRes, lbRes] = await Promise.all([
         fetch(`${SERVER}/admin/summary`, { headers }),
         fetch(`${SERVER}/admin/games?limit=50&offset=0`, { headers }),
         fetch(`${SERVER}/admin/matches?limit=20`, { headers }),
+        fetch(`${SERVER}/admin/leaderboard?limit=20`, { headers }),
       ]);
       if (!summaryRes.ok) throw new Error(`summary: HTTP ${summaryRes.status}`);
       if (!gamesRes.ok) throw new Error(`games: HTTP ${gamesRes.status}`);
       if (!matchesRes.ok) throw new Error(`matches: HTTP ${matchesRes.status}`);
+      if (!lbRes.ok) throw new Error(`leaderboard: HTTP ${lbRes.status}`);
       const summaryJson = await summaryRes.json();
       const gamesJson = await gamesRes.json();
       const matchesJson = await matchesRes.json();
+      const lbJson = await lbRes.json();
       setSummary(summaryJson);
       setGames(gamesJson.items || []);
       setLiveMatches(matchesJson.items || []);
       setLiveTotal(matchesJson.total ?? null);
+      setLeaderboard(lbJson.items || []);
     } catch (e) {
       setError(e?.message || String(e));
     } finally {
@@ -151,6 +156,39 @@ function AdminPage() {
         )}
 
         <div className="mt-2">
+          <div className="flex items-baseline justify-between mb-2">
+            <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Leaderboard (MVP)</div>
+          </div>
+          <div className="overflow-x-auto -mx-2 mb-6">
+            <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+              <thead>
+                <tr className="border-b border-amber-900/40">
+                  <th className="px-2 py-2 whitespace-nowrap">Player</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Wins</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Games</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Last win</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((r, i) => (
+                  <tr key={i} className="border-b border-amber-900/20">
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{r.name || '(anon)'}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap text-emerald-300 font-black">{r.wins}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{r.games}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(r.lastFinishedAt)}</td>
+                  </tr>
+                ))}
+                {leaderboard.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-2 py-4 text-center text-amber-300/60 text-xs">
+                      No finished games recorded yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Live matches</div>
             <div className="text-[11px] font-mono text-amber-200/60">{liveTotal == null ? '' : `total ${liveTotal}`}</div>

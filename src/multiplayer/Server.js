@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard } from './db.js';
 
 let lastAdminSyncAt = null;
 
@@ -165,6 +165,14 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       requireAdmin(ctx);
       const limit = Math.min(50, Number.parseInt(ctx.query.limit ?? '20', 10) || 20);
       ctx.body = await listInProgressMatches(ctx.db, limit);
+      return;
+    }
+
+    if (ctx.path === '/admin/leaderboard' && ctx.method === 'GET') {
+      requireAdmin(ctx);
+      await syncFinishedGames(ctx.db);
+      const limit = Math.min(200, Number.parseInt(ctx.query.limit ?? '20', 10) || 20);
+      ctx.body = getLeaderboard({ limit });
       return;
     }
 
