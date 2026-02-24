@@ -800,6 +800,19 @@ function ActionBoard({ G, ctx, moves, playerID }) {
     return () => clearInterval(t);
   }, [moves, currentIsBot, G?.gameOver, playerID]);
 
+  // Human-side tick: clears expired response windows + auto-ends stuck turns once response closes.
+  useEffect(() => {
+    if (G?.gameOver) return;
+    if (String(playerID) !== '0') return; // single driver
+    const needTick = !!G.response || String(G.pending?.kind || '') === 'resolve_persona_after_response';
+    if (!needTick) return;
+
+    const t = setInterval(() => {
+      try { moves.tick(); } catch {}
+    }, 500);
+    return () => clearInterval(t);
+  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, playerID]);
+
   // Keep event card visible while the event is still being resolved.
   useEffect(() => {
     const id = G.lastEvent?.id;
