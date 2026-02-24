@@ -1995,6 +1995,16 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       {/* Game over overlay */}
       {G.gameOver && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto">
+          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => { try { window.location.hash = ''; } catch {} }}
+              className="px-4 py-2 rounded-full bg-black/60 border border-amber-900/30 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
+              title="Back to lobby"
+            >
+              Back to lobby
+            </button>
+          </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Game over</div>
             <div className="mt-2 text-amber-100 font-serif text-2xl font-bold">
