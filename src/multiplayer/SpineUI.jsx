@@ -12,6 +12,191 @@ const NAMES = [
   'Beatrix', 'Lambert', 'Maude', 'Odilia', 'Viggo', 'Sibylla', 'Katarina', 'Norbert', 'Quintus',
 ];
 
+function AdminPage() {
+  const [token, setToken] = useState(() => {
+    try {
+      return window.localStorage.getItem('politikum.adminToken') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [summary, setSummary] = useState(null);
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const saveToken = (value) => {
+    setToken(value);
+    try {
+      window.localStorage.setItem('politikum.adminToken', value);
+    } catch {}
+  };
+
+  const fetchAdmin = async () => {
+    if (!token) {
+      setError('Set X-Admin-Token first.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const headers = { 'X-Admin-Token': token };
+      const [summaryRes, gamesRes] = await Promise.all([
+        fetch('/admin/summary', { headers }),
+        fetch('/admin/games?limit=50&offset=0', { headers }),
+      ]);
+      if (!summaryRes.ok) throw new Error(`summary: HTTP ${summaryRes.status}`);
+      if (!gamesRes.ok) throw new Error(`games: HTTP ${gamesRes.status}`);
+      const summaryJson = await summaryRes.json();
+      const gamesJson = await gamesRes.json();
+      setSummary(summaryJson);
+      setGames(gamesJson.items || []);
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (ms) => {
+    if (!ms) return '—';
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
+
+  const formatDuration = (ms) => {
+    if (!ms || ms <= 0) return '—';
+    const minutes = Math.round(ms / 60000);
+    if (minutes < 1) return '<1 min';
+    return `${minutes} min`;
+  };
+
+  return (
+    <div className="min-h-screen w-screen bg-black text-amber-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Admin / stats (MVP)</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => { window.location.hash = ''; }}
+            className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+          >
+            Exit
+          </button>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black block mb-1">
+              X-Admin-Token
+            </label>
+            <input
+              type="password"
+              value={token}
+              onChange={(e) => saveToken(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono"
+              placeholder="Paste shared secret"
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={fetchAdmin}
+              disabled={loading}
+              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest"
+            >
+              {loading ? 'Loading…' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">
+            Error: {error}
+          </div>
+        )}
+
+        {summary && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-center">
+            <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Total games</div>
+              <div className="text-xl font-mono font-bold text-amber-50">{summary.gamesTotal}</div>
+            </div>
+            <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
+              <div className="text-[10px] uppercase tracking-widest text-emerald-300/70 font-black mb-1">Finished</div>
+              <div className="text-xl font-mono font-bold text-emerald-300">{summary.gamesFinished}</div>
+            </div>
+            <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">In progress</div>
+              <div className="text-xl font-mono font-bold text-amber-300">{summary.gamesInProgress}</div>
+            </div>
+            <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Last finished</div>
+              <div className="text-[11px] font-mono text-amber-100/80 leading-tight">
+                {summary.lastFinishedAt ? formatTime(summary.lastFinishedAt) : '—'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4">
+          <div className="flex items-baseline justify-between mb-2">
+            <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Last games</div>
+          </div>
+          <div className="overflow-x-auto -mx-2">
+            <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+              <thead>
+                <tr className="border-b border-amber-900/40">
+                  <th className="px-2 py-2 whitespace-nowrap">Finished</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Players</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Winner</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {games.map((g) => (
+                  <tr key={g.matchId} className="border-b border-amber-900/20">
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(g.finishedAt || g.createdAt)}</td>
+                    <td className="px-2 py-2 align-top">
+                      <div className="flex flex-wrap gap-1">
+                        {(g.players || []).map((p, idx) => (
+                          <div
+                            key={idx}
+                            className={
+                              'px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 ' +
+                              (p.isBot ? 'bg-slate-800/80 text-amber-200/80 border border-amber-900/50' : 'bg-amber-700/25 text-amber-50 border border-amber-500/20')
+                            }
+                          >
+                            <span>{p.name || '(anon)'}</span>
+                            {p.isBot && <span className="text-[9px] uppercase tracking-widest">BOT</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{g.winnerName || '—'}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{formatDuration(g.durationMs)}</td>
+                  </tr>
+                ))}
+                {games.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">
+                      {summary ? 'No recorded games yet.' : 'Set token and refresh to load stats.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Card({ card, onClick, disabled, showCheck }) {
   return (
     <button
@@ -2368,6 +2553,17 @@ export default function SpineUI() {
   const [matchID, setMatchID] = useState(null);
   const [playerID, setPlayerID] = useState(null);
   const [credentials, setCredentials] = useState(null);
+  const [hash, setHash] = useState(() => window.location.hash || '');
+
+  useEffect(() => {
+    const onHashChange = () => setHash(window.location.hash || '');
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  if (hash.startsWith('#/admin')) {
+    return <AdminPage />;
+  }
 
   if (!matchID) {
     return (

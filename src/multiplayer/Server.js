@@ -1,5 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
+import { recordGameFinished, getSummary, getGames } from './db.js';
 
 const server = Server({
   games: [CitadelGame],
@@ -25,7 +26,101 @@ const server = Server({
   ],
 });
 
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+
+function requireAdmin(ctx) {
+  if (!ADMIN_TOKEN) {
+    ctx.throw(500, 'ADMIN_TOKEN is not configured');
+  }
+  const header = ctx.request.headers['x-admin-token'];
+  if (!header || header !== ADMIN_TOKEN) {
+    ctx.throw(401, 'Unauthorized');
+  }
+}
+
+async function syncFinishedGames(db) {
+  // Pragmatic: whenever an admin endpoint is hit, scan finished matches
+  // from the boardgame.io storage and persist them idempotently.
+  const gameName = CitadelGame?.name ?? 'politikum';
+  const matchIds = await db.listMatches({
+    gameName,
+    where: { isGameover: true },
+  });
+
+  for (const matchId of matchIds) {
+    const { state, metadata, initialState } = await db.fetch(matchId, {
+      state: true,
+      metadata: true,
+      initialState: true,
+    });
+
+    if (!state || !metadata) continue;
+
+    const finishedAt = metadata.gameover?.finishedAt ?? metadata.updatedAt ?? Date.now();
+    const createdAt = metadata.createdAt ?? initialState?.ctx?.turnStart ?? finishedAt;
+
+    const winnerPlayerId = state.ctx?.gameover?.winnerPlayerId ?? metadata.gameover?.winnerPlayerId;
+    const winnerName = state.ctx?.gameover?.winnerName ?? metadata.gameover?.winnerName;
+
+    const players = Array.isArray(metadata.players)
+      ? metadata.players
+      : Object.values(metadata.players || {});
+
+    const playerSummaries = players.map((p, index) => ({
+      playerId: p.id ?? String(index),
+      name: p.name ?? p.displayName ?? null,
+      isBot: Boolean(p.isBot || p.bot),
+    }));
+
+    const durationMs = finishedAt && createdAt ? finishedAt - createdAt : null;
+
+    recordGameFinished({
+      matchId,
+      createdAt,
+      finishedAt,
+      durationMs,
+      appVersion: process.env.APP_VERSION || null,
+      engineVersion: process.env.ENGINE_VERSION || null,
+      players: playerSummaries,
+      winnerPlayerId: winnerPlayerId ?? null,
+      winnerName: winnerName ?? null,
+      resultJson: JSON.stringify({
+        metadata,
+        gameover: state.ctx?.gameover ?? null,
+      }),
+    });
+  }
+}
+
 const PORT = 8001;
+
 server.run({ port: PORT, host: '0.0.0.0' }, () => {
-    console.log(`READY_ON_${PORT}`);
+  const { app } = server;
+
+  app.use(async (ctx, next) => {
+    if (ctx.path === '/admin/summary' && ctx.method === 'GET') {
+      requireAdmin(ctx);
+      await syncFinishedGames(ctx.db);
+      ctx.body = getSummary();
+      return;
+    }
+
+    if (ctx.path === '/admin/games' && ctx.method === 'GET') {
+      requireAdmin(ctx);
+      await syncFinishedGames(ctx.db);
+
+      const limit = Math.min(
+        200,
+        Number.parseInt(ctx.query.limit ?? '50', 10) || 50,
+      );
+      const offset = Number.parseInt(ctx.query.offset ?? '0', 10) || 0;
+
+      ctx.body = getGames({ limit, offset });
+      return;
+    }
+
+    await next();
+  });
+
+  console.log(`READY_ON_${PORT}`);
 });

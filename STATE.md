@@ -21,6 +21,8 @@
   - Fix: `cd ~/citadel/citadel-engine && npm run build` then restart Vite.
 - **Server does NOT hot-reload engine dist.** Any engine change requires `npm run build` in engine + restart `Server.js`.
 - We agreed: **batch log-only tweaks** and restart server only when explicitly requested or a rules/softlock fix demands it.
+- On the VPS, the multiplayer server runs under **pm2** (see deploy scripts). After shipping server changes (stats DB, admin API, etc.) restart with e.g.:
+  - `pm2 restart politikum-server` (or the actual process name)
 
 ## Lobby
 - In-engine lobby phase (add/remove bots, set player name, start game).
