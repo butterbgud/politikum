@@ -448,11 +448,11 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
           {/* Main column */}
-          <div className="grid gap-4">
+          <div className="flex flex-col gap-4 min-h-[520px]">
             {/* Lobby chat */}
-            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
-              <div className="mt-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar space-y-2">
+              <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                 {(G.chat || []).map((m, i) => (
                   <div key={i} className="text-sm font-serif">
                     <span className="text-amber-200/60 font-mono text-[11px] mr-2">{m.sender}:</span>
@@ -486,6 +486,35 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
               </form>
             </div>
 
+          </div>
+
+          {/* Side panel */}
+          <div className="grid gap-4">
+            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={betaPassword}
+                  onChange={(e) => setBetaPassword(e.target.value)}
+                  placeholder="beta password"
+                  type="password"
+                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={doBetaLogin}
+                  className="px-4 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
+                >
+                  Login
+                </button>
+              </div>
+              <div className="mt-2 text-[10px] font-mono text-amber-200/50">
+                {authToken ? 'Logged in (token saved).' : 'Not logged in.'}
+                {authStatus ? ` · ${authStatus}` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
             {/* Seats */}
             <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
@@ -534,35 +563,6 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Side panel */}
-          <div className="grid gap-4">
-            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={betaPassword}
-                  onChange={(e) => setBetaPassword(e.target.value)}
-                  placeholder="beta password"
-                  type="password"
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={doBetaLogin}
-                  className="px-4 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
-                >
-                  Login
-                </button>
-              </div>
-              <div className="mt-2 text-[10px] font-mono text-amber-200/50">
-                {authToken ? 'Logged in (token saved).' : 'Not logged in.'}
-                {authStatus ? ` · ${authStatus}` : ''}
-              </div>
-            </div>
-          </div>
-        </div>
         <div className="mt-5 text-[11px] text-amber-200/40 font-mono">phase: {String(ctx.phase || '')}</div>
       </div>
     </div>
