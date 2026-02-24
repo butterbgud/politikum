@@ -157,6 +157,42 @@ export function authGetSession(token) {
   return row;
 }
 
+// Admin tool: merge historical identity ids.
+// Rewrites existing recorded games and auth tables so Elo/leaderboard show a single identity.
+export function adminMergePlayerIds({ fromPlayerId, intoPlayerId }) {
+  const db = sqlite;
+  const fromId = String(fromPlayerId || '').trim();
+  const intoId = String(intoPlayerId || '').trim();
+  if (!fromId || !intoId) throw new Error('fromPlayerId and intoPlayerId are required');
+  if (fromId === intoId) throw new Error('fromPlayerId and intoPlayerId must differ');
+
+  const txn = db.transaction(() => {
+    const r1 = db.prepare('UPDATE game_players SET player_id = ? WHERE player_id = ?').run(intoId, fromId);
+    const r2 = db.prepare('UPDATE games SET winner_player_id = ? WHERE winner_player_id = ?').run(intoId, fromId);
+    const r3 = db.prepare('UPDATE sessions SET player_id = ? WHERE player_id = ?').run(intoId, fromId);
+    const r4 = db.prepare('UPDATE devices SET player_id = ? WHERE player_id = ?').run(intoId, fromId);
+
+    // Elo cache becomes invalid after any identity rewrite.
+    const r5 = db.prepare('DELETE FROM ratings').run();
+    const r6 = db.prepare('UPDATE games SET elo_applied = 0').run();
+
+    return {
+      ok: true,
+      fromPlayerId: fromId,
+      intoPlayerId: intoId,
+      updated: {
+        gamePlayers: r1.changes,
+        gamesWinner: r2.changes,
+        sessions: r3.changes,
+        devices: r4.changes,
+        ratingsDeleted: r5.changes,
+        gamesResetEloApplied: r6.changes,
+      },
+    };
+  });
+
+  return txn();
+}
 
 function getRating(playerId) {
   const db = sqlite;

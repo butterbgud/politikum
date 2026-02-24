@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -253,6 +253,17 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         ...storage,
         lastAdminSyncAt,
       };
+      return;
+    }
+
+    if (ctx.path === '/admin/players/merge' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      const body = ctx.request.body || {};
+      const res = adminMergePlayerIds({
+        fromPlayerId: body.fromPlayerId,
+        intoPlayerId: body.intoPlayerId,
+      });
+      ctx.body = res;
       return;
     }
 
