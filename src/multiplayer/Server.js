@@ -2,6 +2,8 @@ import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
 import { recordGameFinished, getSummary, getGames } from './db.js';
 
+let lastAdminSyncAt = null;
+
 const server = Server({
   games: [CitadelGame],
   origins: [
@@ -90,6 +92,41 @@ async function syncFinishedGames(db) {
       }),
     });
   }
+  lastAdminSyncAt = Date.now();
+}
+
+async function listInProgressMatches(db, limit = 20) {
+  const gameName = CitadelGame?.name ?? 'politikum';
+  const matchIds = await db.listMatches({
+    gameName,
+    where: { isGameover: false },
+  });
+
+  const items = [];
+  for (const matchId of matchIds.slice(0, limit)) {
+    try {
+      const { metadata } = await db.fetch(matchId, { metadata: true });
+      if (!metadata) continue;
+      const players = Array.isArray(metadata.players)
+        ? metadata.players
+        : Object.values(metadata.players || {});
+      items.push({
+        matchId,
+        createdAt: metadata.createdAt ?? null,
+        updatedAt: metadata.updatedAt ?? null,
+        players: players.map((p, index) => ({
+          playerId: p.id ?? String(index),
+          name: p.name ?? p.displayName ?? null,
+          isBot: Boolean(p.isBot || p.bot),
+        })),
+      });
+    } catch {}
+  }
+
+  return {
+    total: matchIds.length,
+    items,
+  };
 }
 
 const PORT = Number.parseInt(process.env.PORT || '8000', 10);
@@ -101,7 +138,12 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     if (ctx.path === '/admin/summary' && ctx.method === 'GET') {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);
-      ctx.body = getSummary();
+      const live = await listInProgressMatches(ctx.db, 20);
+      ctx.body = {
+        ...getSummary(),
+        liveInProgressTotal: live.total,
+        lastAdminSyncAt,
+      };
       return;
     }
 
@@ -116,6 +158,13 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const offset = Number.parseInt(ctx.query.offset ?? '0', 10) || 0;
 
       ctx.body = getGames({ limit, offset });
+      return;
+    }
+
+    if (ctx.path === '/admin/matches' && ctx.method === 'GET') {
+      requireAdmin(ctx);
+      const limit = Math.min(50, Number.parseInt(ctx.query.limit ?? '20', 10) || 20);
+      ctx.body = await listInProgressMatches(ctx.db, limit);
       return;
     }
 

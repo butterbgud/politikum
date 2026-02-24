@@ -22,6 +22,8 @@ function AdminPage() {
   });
   const [summary, setSummary] = useState(null);
   const [games, setGames] = useState([]);
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [liveTotal, setLiveTotal] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,16 +43,21 @@ function AdminPage() {
     setError('');
     try {
       const headers = { 'X-Admin-Token': token };
-      const [summaryRes, gamesRes] = await Promise.all([
+      const [summaryRes, gamesRes, matchesRes] = await Promise.all([
         fetch(`${SERVER}/admin/summary`, { headers }),
         fetch(`${SERVER}/admin/games?limit=50&offset=0`, { headers }),
+        fetch(`${SERVER}/admin/matches?limit=20`, { headers }),
       ]);
       if (!summaryRes.ok) throw new Error(`summary: HTTP ${summaryRes.status}`);
       if (!gamesRes.ok) throw new Error(`games: HTTP ${gamesRes.status}`);
+      if (!matchesRes.ok) throw new Error(`matches: HTTP ${matchesRes.status}`);
       const summaryJson = await summaryRes.json();
       const gamesJson = await gamesRes.json();
+      const matchesJson = await matchesRes.json();
       setSummary(summaryJson);
       setGames(gamesJson.items || []);
+      setLiveMatches(matchesJson.items || []);
+      setLiveTotal(matchesJson.total ?? null);
     } catch (e) {
       setError(e?.message || String(e));
     } finally {
@@ -121,7 +128,7 @@ function AdminPage() {
         )}
 
         {summary && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-center">
             <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
               <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Total games</div>
               <div className="text-xl font-mono font-bold text-amber-50">{summary.gamesTotal}</div>
@@ -132,7 +139,7 @@ function AdminPage() {
             </div>
             <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
               <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">In progress</div>
-              <div className="text-xl font-mono font-bold text-amber-300">{summary.gamesInProgress}</div>
+              <div className="text-xl font-mono font-bold text-amber-300">{summary.liveInProgressTotal ?? summary.gamesInProgress}</div>
             </div>
             <div className="bg-black/50 border border-amber-900/40 rounded-2xl p-3">
               <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Last finished</div>
@@ -142,6 +149,55 @@ function AdminPage() {
             </div>
           </div>
         )}
+
+        <div className="mt-2">
+          <div className="flex items-baseline justify-between mb-2">
+            <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Live matches</div>
+            <div className="text-[11px] font-mono text-amber-200/60">{liveTotal == null ? '' : `total ${liveTotal}`}</div>
+          </div>
+          <div className="overflow-x-auto -mx-2 mb-6">
+            <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+              <thead>
+                <tr className="border-b border-amber-900/40">
+                  <th className="px-2 py-2 whitespace-nowrap">Updated</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Players</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Match</th>
+                </tr>
+              </thead>
+              <tbody>
+                {liveMatches.map((m) => (
+                  <tr key={m.matchId} className="border-b border-amber-900/20">
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(m.updatedAt || m.createdAt)}</td>
+                    <td className="px-2 py-2 align-top">
+                      <div className="flex flex-wrap gap-1">
+                        {(m.players || []).map((p, idx) => (
+                          <div
+                            key={idx}
+                            className={
+                              'px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 ' +
+                              (p.isBot ? 'bg-slate-800/80 text-amber-200/80 border border-amber-900/50' : 'bg-amber-700/25 text-amber-50 border border-amber-500/20')
+                            }
+                          >
+                            <span>{p.name || '(anon)'}</span>
+                            {p.isBot && <span className="text-[9px] uppercase tracking-widest">BOT</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap text-amber-200/70">{String(m.matchId).slice(0, 8)}</td>
+                  </tr>
+                ))}
+                {liveMatches.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="px-2 py-4 text-center text-amber-300/60 text-xs">
+                      No active matches.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         <div className="mt-4">
           <div className="flex items-baseline justify-between mb-2">
