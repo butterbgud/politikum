@@ -1063,6 +1063,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
       <div className="fixed top-3 left-3 z-[2000] select-none">
+        <div className="mb-1 pointer-events-none select-none text-amber-200/70 font-black tracking-[0.35em] uppercase text-[10px]">Politikum</div>
         <button
           type="button"
           onClick={() => {
@@ -2802,6 +2803,10 @@ function PolitikumWelcome({ onJoin }) {
 }
 
 export default function SpineUI() {
+  useEffect(() => {
+    try { document.title = 'Politikum'; } catch {}
+  }, []);
+
   const [matchID, setMatchID] = useState(null);
   const [playerID, setPlayerID] = useState(null);
   const [credentials, setCredentials] = useState(null);
