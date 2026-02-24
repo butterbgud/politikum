@@ -399,6 +399,20 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
       if (!tok) throw new Error('No token returned');
       setAuthToken(tok);
       try { window.localStorage.setItem('politikum.authToken', tok); } catch {}
+
+      // Bind stable player identity into match state (for Elo/rankings).
+      try {
+        const meRes = await fetch(`${SERVER}/auth/me`, { headers: { Authorization: `Bearer ${tok}` } });
+        if (meRes.ok) {
+          const meJson = await meRes.json();
+          const pid = meJson?.session?.playerId;
+          const email = meJson?.session?.email || null;
+          if (pid) {
+            try { moves.setPlayerIdentity({ playerId: pid, email }); } catch {}
+          }
+        }
+      } catch {}
+
       setAuthStatus('Logged in');
     } catch (e) {
       setAuthStatus(`Login failed: ${e?.message || String(e)}`);
