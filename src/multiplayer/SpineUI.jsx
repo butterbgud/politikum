@@ -757,7 +757,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const pendingP33Source = pendingP33 ? String(pending?.sourceCardId || '') : '';
   const pendingP34 = pending?.kind === 'persona_34_guess_topdeck' && String(pending?.playerId) === String(playerID);
   const pendingP34Source = pendingP34 ? String(pending?.sourceCardId || '') : '';
-  const canUseP39 = isMyTurn && !!G.hasDrawn && !G.pending && (me?.coalition || []).some((c) => String(c.id).split('#')[0] === 'persona_39');
+  const canUseP39 = isMyTurn && !G.pending && !G.response && (me?.coalition || []).some((c) => String(c.id).split('#')[0] === 'persona_39');
 
   const pendingP16 = pending?.kind === 'persona_16_discard3_from_hand' && String(pending?.playerId) === String(playerID);
   const pendingP16Source = pendingP16 ? String(pending?.sourceCardId || '') : '';
@@ -2323,7 +2323,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         ? "border-emerald-300/80 ring-4 ring-emerald-400/25 shadow-[0_0_50px_rgba(16,185,129,0.35)] cursor-pointer"
                         : (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
                           ? (canUseP39Here
-                            ? "border-emerald-300/70 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30"
+                            ? "border-emerald-300/80 hover:border-emerald-200 cursor-pointer ring-4 ring-emerald-400/25 shadow-[0_0_45px_rgba(16,185,129,0.28)]"
                             : (pendingP14Here ? "border-emerald-400/60 hover:border-emerald-300 cursor-pointer" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer"))
                           : "border-black/40 cursor-default"))
                     }
