@@ -484,7 +484,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   const canPersona8Swap = !!p8SwapSpec && String(p8SwapSpec.playerId || '') === String(playerID);
   const [showEventSplash, setShowEventSplash] = useState(false);
   const [showActionSplash, setShowActionSplash] = useState(false);
-  const ENABLE_EVENT_SPLASH = true;
+  const ENABLE_EVENT_SPLASH = false;
   const ENABLE_ACTION_SPLASH = false;
 
   const [logCollapsed, setLogCollapsed] = useState(false);
@@ -993,8 +993,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                   const canClickFaceForP14 = pending?.kind === 'discard_one_persona_from_any_coalition' && String(pending?.playerId) === String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP11 = pendingP11Pick && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP13 = pendingP13 && String(p.id) === String(pendingP13AttackerId) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const canClickFaceForP5 = G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && String(p.id) !== String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card) && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:liberal');
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11 || canClickFaceForP13;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11 || canClickFaceForP13 || canClickFaceForP5;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -1052,6 +1053,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                         }
                         if (canClickFaceForP13) {
                           try { playSfx('ui', 0.35); moves.persona13PickTarget(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForP5) {
+                          try { playSfx('ui', 0.35); moves.persona5PickLiberal(String(p.id), it.card.id); } catch {}
                           return;
                         }
                       }}
@@ -1493,29 +1498,9 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 
       {/* Persona_5 target prompt */}
       {G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Pevchih (p5)</div>
-            <div className="mt-2 text-amber-100/80 text-sm">Discard a liberal persona from an opponent’s coalition; steal all its tokens.</div>
-            <div className="mt-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-              {(G.players || []).filter((p) => String(p.id) !== String(playerID)).map((p) => (
-                <div key={p.id}>
-                  <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">{p.name}</div>
-                  <div className="mt-2 flex gap-3 flex-wrap">
-                    {(p.coalition || []).filter((c) => c.type === 'persona' && !c.shielded && Array.isArray(c.tags) && c.tags.includes('faction:liberal')).map((c) => (
-                      <button
-                        key={c.id}
-                        className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
-                        onClick={() => moves.persona5PickLiberal(String(p.id), c.id)}
-                        title={c.name || c.id}
-                      >
-                        <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            p5: click a LIBERAL persona in an opponent’s coalition
           </div>
         </div>
       )}
