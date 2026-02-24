@@ -131,17 +131,23 @@ async function getStorageStats(db) {
 }
 
 async function listInProgressMatches(db, limit = 20) {
+  // Some storage backends don't implement where:{isGameover:false} reliably.
   const gameName = CitadelGame?.name ?? 'politikum';
-  const matchIds = await db.listMatches({
-    gameName,
-    where: { isGameover: false },
-  });
+  const matchIds = await db.listMatches({ gameName });
 
   const items = [];
-  for (const matchId of matchIds.slice(0, limit)) {
+  let totalInProgress = 0;
+
+  for (const matchId of matchIds) {
     try {
-      const { metadata } = await db.fetch(matchId, { metadata: true });
+      const { metadata, state } = await db.fetch(matchId, { metadata: true, state: true });
       if (!metadata) continue;
+      const isGameover = Boolean(metadata.gameover || state?.ctx?.gameover);
+      if (isGameover) continue;
+
+      totalInProgress++;
+      if (items.length >= limit) continue;
+
       const players = Array.isArray(metadata.players)
         ? metadata.players
         : Object.values(metadata.players || {});
@@ -159,7 +165,7 @@ async function listInProgressMatches(db, limit = 20) {
   }
 
   return {
-    total: matchIds.length,
+    total: totalInProgress,
     items,
   };
 }
