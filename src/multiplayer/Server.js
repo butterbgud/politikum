@@ -304,9 +304,10 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const body = ctx.request.body || {};
       const password = String(body.password || '');
       const email = (body.email == null) ? null : String(body.email || '').trim();
+      const deviceId = (body.deviceId == null) ? null : String(body.deviceId || '').trim();
       if (!BETA_PASSWORD) ctx.throw(500, 'BETA_PASSWORD is not configured');
       if (!password || password !== BETA_PASSWORD) ctx.throw(401, 'Invalid password');
-      const sess = authCreateSession({ email });
+      const sess = authCreateSession({ email, deviceId });
       ctx.body = { ok: true, ...sess };
       return;
     }

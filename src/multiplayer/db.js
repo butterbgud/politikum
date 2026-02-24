@@ -25,15 +25,23 @@ function openDatabase() {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS devices (
+      device_id TEXT PRIMARY KEY,
+      player_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS sessions (
       token TEXT PRIMARY KEY,
       account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+      device_id TEXT,
       player_id TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       last_seen_at INTEGER
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_account_id ON sessions(account_id);
+    CREATE INDEX IF NOT EXISTS idx_sessions_device_id ON sessions(device_id);
 
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY,
@@ -80,6 +88,9 @@ function openDatabase() {
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_games_elo_applied ON games(elo_applied)').run(); } catch {}
   try { db.prepare('CREATE TABLE IF NOT EXISTS ratings (player_id TEXT PRIMARY KEY, rating INTEGER NOT NULL, games_played INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run(); } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_ratings_updated_at ON ratings(updated_at)').run(); } catch {}
+  try { db.prepare('CREATE TABLE IF NOT EXISTS devices (device_id TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_at INTEGER NOT NULL)').run(); } catch {}
+  try { db.prepare('ALTER TABLE sessions ADD COLUMN device_id TEXT').run(); } catch {}
+  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_device_id ON sessions(device_id)').run(); } catch {}
 
   return db;
 }
@@ -95,11 +106,19 @@ function randToken() {
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
-export function authCreateSession({ email }) {
+export function authCreateSession({ email, deviceId }) {
   const db = sqlite;
   const createdAt = nowMs();
   const token = randToken();
-  const playerId = randToken(); // not pretty but stable; can swap to uuid later.
+
+  // Stable playerId per device (MVP). If deviceId is missing, fall back to per-login playerId.
+  const devId = deviceId ? String(deviceId).trim() : '';
+  let playerId = randToken();
+  if (devId) {
+    const row = db.prepare('SELECT player_id AS playerId FROM devices WHERE device_id = ?').get(devId);
+    if (row?.playerId) playerId = String(row.playerId);
+    else db.prepare('INSERT INTO devices (device_id, player_id, created_at) VALUES (?, ?, ?)').run(devId, playerId, createdAt);
+  }
 
   const txn = db.transaction(() => {
     let accountId = null;
@@ -113,9 +132,9 @@ export function authCreateSession({ email }) {
     }
 
     db.prepare(`
-      INSERT INTO sessions (token, account_id, player_id, created_at, last_seen_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(token, accountId, playerId, createdAt, createdAt);
+      INSERT INTO sessions (token, account_id, device_id, player_id, created_at, last_seen_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(token, accountId, devId || null, playerId, createdAt, createdAt);
   });
 
   txn();

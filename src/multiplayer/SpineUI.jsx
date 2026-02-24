@@ -391,7 +391,22 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
       const res = await fetch(`${SERVER}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: betaPassword, email: String(name || '').trim() || null }),
+        body: JSON.stringify({
+          password: betaPassword,
+          email: String(name || '').trim() || null,
+          deviceId: (() => {
+            try {
+              let id = window.localStorage.getItem('politikum.deviceId');
+              if (!id) {
+                id = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+                window.localStorage.setItem('politikum.deviceId', id);
+              }
+              return id;
+            } catch {
+              return null;
+            }
+          })(),
+        }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
