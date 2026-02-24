@@ -369,8 +369,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     } catch {}
   }, [me?.name, playerID]);
   const [chatInput, setChatInput] = useState('');
-  const [top10, setTop10] = useState([]);
-  const [top10Err, setTop10Err] = useState('');
+  // (Top10 moved to the Guest List screen; keep lobby light.)
 
   const [betaPassword, setBetaPassword] = useState('');
   const [authToken, setAuthToken] = useState(() => {
@@ -380,25 +379,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
   const activeCount = (G.activePlayerIds || []).length;
 
-  useEffect(() => {
-    let alive = true;
-    const run = async () => {
-      try {
-        const res = await fetch(`${SERVER}/public/leaderboard?limit=10`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!alive) return;
-        setTop10(Array.isArray(json.items) ? json.items : []);
-        setTop10Err('');
-      } catch (e) {
-        if (!alive) return;
-        setTop10Err(e?.message || String(e));
-      }
-    };
-    run();
-    const t = setInterval(run, 30000);
-    return () => { alive = false; clearInterval(t); };
-  }, []);
+  // Top10 moved to Guest List screen.
 
   const doBetaLogin = async () => {
     try {
@@ -489,26 +470,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
             </div>
           </div>
 
-          {/* Top 10 leaderboard (optional) */}
-          {(top10 && top10.length > 0) && (
-            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Top 10 (wins)</div>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {top10.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="text-[11px] font-mono text-amber-200/60 w-6">#{i + 1}</div>
-                      <div className="font-serif text-sm truncate">{r.name || '(anon)'}</div>
-                    </div>
-                    <div className="text-xs font-mono text-emerald-300 font-black">{r.wins}W</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {(top10Err && !top10.length) && (
-            <div className="text-[10px] font-mono text-amber-200/40">Leaderboard unavailable: {top10Err}</div>
-          )}
+          {/* Top 10 moved to Guest List screen. */}
           <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
             <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
             <div className="mt-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar space-y-2">
@@ -2187,27 +2149,21 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      {/* Event card: pinned while resolving (dismissable) */}
+      {/* Event card: big centered while resolving */}
       {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && (
-        <div className="fixed top-14 right-4 z-[2500] pointer-events-none select-none">
-          <div className="pointer-events-auto flex items-end gap-3 bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl p-3">
-            <button
-              type="button"
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-black/70 border border-amber-900/20 text-amber-200/70 text-[12px] font-black"
-              onClick={() => setShowEventSplash(false)}
-              title="Hide"
-            >
-              ×
-            </button>
-            <div className="w-24 aspect-[2/3] rounded-xl overflow-hidden border border-black/50">
-              <img src={G.lastEvent.img} alt={G.lastEvent.id} className="w-full h-full object-cover" draggable={false} />
-            </div>
-            <div className="max-w-[260px]">
-              <div className="text-amber-200/70 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
-              <div className="mt-1 text-amber-100 font-serif text-[16px] font-bold leading-tight">{G.lastEvent.id}</div>
-              {G.pending && (
-                <div className="mt-1 text-amber-100/70 text-[11px]">resolving…</div>
-              )}
+        <div className="fixed inset-0 z-[2500] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+            <div className="flex items-end gap-6 bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-3xl shadow-2xl p-5">
+              <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
+                <img src={G.lastEvent.img} alt={G.lastEvent.id} className="w-full h-full object-cover" draggable={false} />
+              </div>
+              <div className="max-w-[360px]">
+                <div className="text-amber-200/70 text-[10px] uppercase tracking-[0.3em] font-black">Event</div>
+                <div className="mt-2 text-amber-100 font-serif text-xl font-bold">{G.lastEvent.id}</div>
+                <div className="mt-2 text-amber-100/70 text-sm">
+                  {G.pending ? 'resolving…' : 'resolved'}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2641,6 +2597,8 @@ function PolitikumWelcome({ onJoin }) {
     const base = NAMES[Math.floor(Math.random() * NAMES.length)];
     return `[H] ${base}`;
   });
+  const [top10, setTop10] = useState([]);
+  const [top10Err, setTop10Err] = useState('');
   const [loading, setLoading] = useState(false);
 
   const refreshMatches = async () => {
@@ -2652,6 +2610,33 @@ function PolitikumWelcome({ onJoin }) {
     refreshMatches().catch(() => {});
     const interval = setInterval(() => refreshMatches().catch(() => {}), 4000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      try {
+        const res = await fetch(`${SERVER}/public/leaderboard?limit=10`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!alive) return;
+        const items = Array.isArray(json.items) ? json.items : [];
+        const clean = items.filter((r) => {
+          const n = String(r?.name || '').trim();
+          if (!n) return false;
+          if (n.startsWith('[H] Seat')) return false;
+          return true;
+        });
+        setTop10(clean);
+        setTop10Err('');
+      } catch (e) {
+        if (!alive) return;
+        setTop10Err(e?.message || String(e));
+      }
+    };
+    run();
+    const t = setInterval(run, 30000);
+    return () => { alive = false; clearInterval(t); };
   }, []);
 
   useEffect(() => {
@@ -2759,6 +2744,26 @@ function PolitikumWelcome({ onJoin }) {
                   })}
                 {(!matches || matches.length === 0) && <div className="text-center py-8 text-amber-900/40 italic text-sm font-serif">Awaiting realms...</div>}
               </div>
+
+              {(top10 && top10.length > 0) && (
+                <div className="mb-6">
+                  <h3 className="text-[10px] uppercase tracking-widest text-amber-900/60 mb-2 border-b border-amber-900/10 pb-1">Top 10</h3>
+                  <div className="space-y-2">
+                    {top10.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-amber-900/20">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
+                          <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
+                        </div>
+                        <span className="text-xs font-mono text-emerald-300 font-black">{r.wins}W</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(top10Err && !top10.length) && (
+                <div className="mb-4 text-[10px] font-mono text-amber-200/30">Top10 unavailable: {top10Err}</div>
+              )}
 
               <button onClick={createMatch} disabled={loading} className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60">
                 Host New Realm
