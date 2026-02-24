@@ -76,11 +76,18 @@ async function syncFinishedGames(db) {
       ? metadata.players
       : Object.values(metadata.players || {});
 
-    const playerSummaries = players.map((p, index) => ({
-      playerId: p.id ?? String(index),
-      name: p.name ?? p.displayName ?? null,
-      isBot: Boolean(p.isBot || p.bot),
-    }));
+    const statePlayers = Array.isArray(state?.G?.players) ? state.G.players : [];
+
+    const playerSummaries = players.map((p, index) => {
+      const seatId = String(p.id ?? String(index));
+      const sp = statePlayers.find((x) => String(x?.id) === seatId);
+      const stable = sp?.identity?.playerId;
+      return {
+        playerId: stable || seatId,
+        name: p.name ?? p.displayName ?? sp?.name ?? null,
+        isBot: Boolean(p.isBot || p.bot || sp?.isBot || String(sp?.name || '').startsWith('[B]')),
+      };
+    });
 
     const durationMs = finishedAt && createdAt ? finishedAt - createdAt : null;
 
