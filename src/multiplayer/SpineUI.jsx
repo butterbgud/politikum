@@ -42,8 +42,8 @@ function AdminPage() {
     try {
       const headers = { 'X-Admin-Token': token };
       const [summaryRes, gamesRes] = await Promise.all([
-        fetch('/admin/summary', { headers }),
-        fetch('/admin/games?limit=50&offset=0', { headers }),
+        fetch(`${SERVER}/admin/summary`, { headers }),
+        fetch(`${SERVER}/admin/games?limit=50&offset=0`, { headers }),
       ]);
       if (!summaryRes.ok) throw new Error(`summary: HTTP ${summaryRes.status}`);
       if (!gamesRes.ok) throw new Error(`games: HTTP ${gamesRes.status}`);
