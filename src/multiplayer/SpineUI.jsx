@@ -1998,7 +1998,11 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
               type="button"
-              onClick={() => { try { window.location.hash = ''; } catch {} }}
+              onClick={() => {
+                // Leave match state (client-side) — simplest reliable way is full reload.
+                try { window.location.hash = ''; } catch {}
+                try { window.location.reload(); } catch {}
+              }}
               className="px-4 py-2 rounded-full bg-black/60 border border-amber-900/30 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
               title="Back to lobby"
             >
