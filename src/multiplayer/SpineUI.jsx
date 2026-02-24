@@ -1022,14 +1022,22 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                       title={id}
-                      onClick={() => {
+                      onClick={(e) => {
                         if (!canClickFace) return;
                         if (canClickFaceForP8Swap) {
                           try { playSfx('ui', 0.35); moves.persona8SwapWithPlayedPersona(); } catch {}
                           return;
                         }
                         if (canClickFaceForOppPlace) {
-                          setPlacementModeOpp((m) => ({ ...(m || {}), neighborId: it.card.id }));
+                          // Click left/right half of card to place before/after it.
+                          try {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const side = (x < rect.width / 2) ? 'left' : 'right';
+                            playSfx('play');
+                            moves.playPersona(placementModeOpp.cardId, it.card.id, side, placementModeOpp.targetId);
+                          } catch {}
+                          setPlacementModeOpp(null);
                           return;
                         }
                         if (canClickFaceForP21) {
@@ -2075,20 +2083,14 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${finalScale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
-                    onClick={() => {
+                    onClick={(e) => {
                       if (placementMode) {
-                        // If click is on far-left or far-right card, treat as placement side.
-                        if (i === 0) {
-                          try { playSfx('play'); moves.playPersona(placementMode.cardId, c.id, 'left'); } catch {}
-                          setPlacementMode(null);
-                          return;
-                        }
-                        if (i === (coal.length - 1)) {
-                          try { playSfx('play'); moves.playPersona(placementMode.cardId, c.id, 'right'); } catch {}
-                          setPlacementMode(null);
-                          return;
-                        }
-                        setPlacementMode((m) => ({ ...(m || {}), neighborId: c.id }));
+                        // Click left/right half of a coalition card to place before/after it.
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const side = (x < rect.width / 2) ? 'left' : 'right';
+                        try { playSfx('play'); moves.playPersona(placementMode.cardId, c.id, side); } catch {}
+                        setPlacementMode(null);
                         return;
                       }
                       if (pendingEvent16) {
@@ -2172,106 +2174,21 @@ function ActionBoard({ G, ctx, moves, playerID }) {
         })()}
       </div>
 
-      {/* Placement mode prompt */}
+      {/* Placement mode prompt (no modal) */}
       {!!placementMode && (
-        <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
-          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Place persona</div>
-            <div className="mt-2 flex items-center gap-4">
-              {(() => {
-                const pc = (me?.hand || []).find((c) => String(c.id) === String(placementMode?.cardId));
-                if (!pc?.img) return null;
-                return (
-                  <div className="w-16 aspect-[2/3] rounded-xl overflow-hidden border border-black/40 opacity-60">
-                    <img src={pc.img} alt={pc.id} className="w-full h-full object-cover" draggable={false} />
-                  </div>
-                );
-              })()}
-              <div className="text-amber-100/85 text-sm font-mono whitespace-pre">
-                {`Click a neighbor in your coalition, then choose LEFT/RIGHT.`}
-              </div>
-            </div>
-            <div className="mt-3 flex gap-2 pointer-events-auto">
-              <button
-                type="button"
-                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-                onClick={() => {
-                  if (!placementMode?.neighborId) return;
-                  try { playSfx('play'); moves.playPersona(placementMode.cardId, placementMode.neighborId, 'left'); } catch {}
-                  setPlacementMode(null);
-                }}
-                disabled={!placementMode?.neighborId}
-                title="Place to the LEFT of selected card"
-              >
-                LEFT
-              </button>
-              <button
-                type="button"
-                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-                onClick={() => {
-                  if (!placementMode?.neighborId) return;
-                  try { playSfx('play'); moves.playPersona(placementMode.cardId, placementMode.neighborId, 'right'); } catch {}
-                  setPlacementMode(null);
-                }}
-                disabled={!placementMode?.neighborId}
-                title="Place to the RIGHT of selected card"
-              >
-                RIGHT
-              </button>
-              <button
-                type="button"
-                className="ml-auto px-3 py-1 rounded-full bg-black/40 border border-amber-900/20 text-amber-200/70 font-mono font-black text-[12px] hover:bg-black/60"
-                onClick={() => setPlacementMode(null)}
-              >
-                Cancel
-              </button>
-            </div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
+            <span>Place persona: click LEFT/RIGHT half of a coalition card to insert before/after</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setPlacementMode(null)}>Cancel</button>
           </div>
         </div>
       )}
 
       {!!placementModeOpp && (
-        <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
-          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Place persona into opponent</div>
-            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
-              {`Click a persona in their coalition, then choose side.`}
-            </div>
-            <div className="mt-3 flex gap-2 pointer-events-auto">
-              <button
-                type="button"
-                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-                onClick={() => {
-                  if (!placementModeOpp?.neighborId) return;
-                  try { playSfx('play'); moves.playPersona(placementModeOpp.cardId, placementModeOpp.neighborId, 'left', placementModeOpp.targetId); } catch {}
-                  setPlacementModeOpp(null);
-                }}
-                disabled={!placementModeOpp?.neighborId}
-                title="Place to the LEFT of selected card"
-              >
-                LEFT
-              </button>
-              <button
-                type="button"
-                className="px-3 py-1 rounded-full bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-                onClick={() => {
-                  if (!placementModeOpp?.neighborId) return;
-                  try { playSfx('play'); moves.playPersona(placementModeOpp.cardId, placementModeOpp.neighborId, 'right', placementModeOpp.targetId); } catch {}
-                  setPlacementModeOpp(null);
-                }}
-                disabled={!placementModeOpp?.neighborId}
-                title="Place to the RIGHT of selected card"
-              >
-                RIGHT
-              </button>
-              <button
-                type="button"
-                className="ml-auto px-3 py-1 rounded-full bg-black/40 border border-amber-900/20 text-amber-200/70 font-mono font-black text-[12px] hover:bg-black/60"
-                onClick={() => setPlacementModeOpp(null)}
-              >
-                Cancel
-              </button>
-            </div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
+            <span>Place into opponent: click LEFT/RIGHT half of their coalition card to insert</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setPlacementModeOpp(null)}>Cancel</button>
           </div>
         </div>
       )}
