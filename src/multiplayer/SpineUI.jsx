@@ -833,7 +833,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }}
                     >
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
-                        <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute inset-0 w-full h-full object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                        <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
@@ -1884,7 +1884,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     }}
                   >
                     {String(c?.shieldedBy || '') === 'action_13' && (
-                      <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute inset-0 w-full h-full object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                      <img src={'/cards/action_13.jpg'} alt={'action_13'} className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
