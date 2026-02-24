@@ -876,7 +876,12 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
-                        <TokenPips delta={it.card.vpDelta} compact />
+                        <div className={
+                          "absolute left-2 bottom-2 z-20 w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] " +
+                          (Number(it.card?.vpDelta || 0) < 0 ? "bg-red-700/95 border-red-200/50" : "bg-emerald-700/95 border-emerald-200/50")
+                        }>
+                          {it.card.vpDelta}
+                        </div>
                       )}
                       {(it.kind === 'face' && Number(it.card?.passiveVpDelta || 0) !== 0) && (
                         <TokenPips delta={it.card.passiveVpDelta} compact right dim />
@@ -1925,7 +1930,12 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
-                      <TokenPips delta={c.vpDelta} />
+                      <div className={
+                        "absolute left-2 bottom-2 z-20 w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] " +
+                        (Number(c.vpDelta || 0) < 0 ? "bg-red-700/95 border-red-200/50" : "bg-emerald-700/95 border-emerald-200/50")
+                      }>
+                        {c.vpDelta}
+                      </div>
                     )}
                     {(Number(c.passiveVpDelta || 0) !== 0) && (
                       <TokenPips delta={c.passiveVpDelta} right dim />
