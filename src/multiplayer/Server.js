@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -34,6 +34,7 @@ const server = Server({
 });
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+const BETA_PASSWORD = process.env.BETA_PASSWORD || '';
 
 function requireAdmin(ctx) {
   if (!ADMIN_TOKEN) {
@@ -161,6 +162,24 @@ const PORT = Number.parseInt(process.env.PORT || '8000', 10);
 server.run({ port: PORT, host: '0.0.0.0' }, () => {
   const { app } = server;
 
+  // JSON body parsing for auth endpoints.
+  app.use(async (ctx, next) => {
+    try {
+      if (ctx.method === 'POST') {
+        const ct = String(ctx.request.headers['content-type'] || '');
+        if (ct.includes('application/json')) {
+          const chunks = [];
+          for await (const ch of ctx.req) chunks.push(ch);
+          const raw = Buffer.concat(chunks).toString('utf8') || '{}';
+          ctx.request.body = JSON.parse(raw);
+        }
+      }
+    } catch {
+      ctx.throw(400, 'Invalid JSON');
+    }
+    await next();
+  });
+
   app.use(async (ctx, next) => {
     if (ctx.path === '/admin/summary' && ctx.method === 'GET') {
       requireAdmin(ctx);
@@ -222,6 +241,27 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
       const limit = clampLimit(ctx.query.limit, 10, 50);
       ctx.body = getLeaderboard({ limit });
+      return;
+    }
+
+    // Closed beta auth: shared password -> session token (stored in localStorage).
+    if (ctx.path === '/auth/login' && ctx.method === 'POST') {
+      const body = ctx.request.body || {};
+      const password = String(body.password || '');
+      const email = (body.email == null) ? null : String(body.email || '').trim();
+      if (!BETA_PASSWORD) ctx.throw(500, 'BETA_PASSWORD is not configured');
+      if (!password || password !== BETA_PASSWORD) ctx.throw(401, 'Invalid password');
+      const sess = authCreateSession({ email });
+      ctx.body = { ok: true, ...sess };
+      return;
+    }
+
+    if (ctx.path === '/auth/me' && ctx.method === 'GET') {
+      const auth = String(ctx.request.headers['authorization'] || '');
+      const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+      const sess = authGetSession(token);
+      if (!sess) ctx.throw(401, 'Unauthorized');
+      ctx.body = { ok: true, session: sess };
       return;
     }
 

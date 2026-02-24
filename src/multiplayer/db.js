@@ -19,6 +19,22 @@ function openDatabase() {
   db.pragma('journal_mode = WAL');
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS accounts (
+      id INTEGER PRIMARY KEY,
+      email TEXT UNIQUE,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+      player_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_seen_at INTEGER
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_account_id ON sessions(account_id);
+
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY,
       match_id TEXT UNIQUE NOT NULL,
@@ -50,6 +66,60 @@ function openDatabase() {
 }
 
 export const sqlite = openDatabase();
+
+function nowMs() {
+  return Date.now();
+}
+
+function randToken() {
+  // URL-safe enough for MVP
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+export function authCreateSession({ email }) {
+  const db = sqlite;
+  const createdAt = nowMs();
+  const token = randToken();
+  const playerId = randToken(); // not pretty but stable; can swap to uuid later.
+
+  const txn = db.transaction(() => {
+    let accountId = null;
+    if (email) {
+      const em = String(email).trim().toLowerCase();
+      if (em) {
+        db.prepare(`INSERT OR IGNORE INTO accounts (email, created_at) VALUES (?, ?)`).run(em, createdAt);
+        const row = db.prepare(`SELECT id FROM accounts WHERE email = ?`).get(em);
+        if (row?.id != null) accountId = row.id;
+      }
+    }
+
+    db.prepare(`
+      INSERT INTO sessions (token, account_id, player_id, created_at, last_seen_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(token, accountId, playerId, createdAt, createdAt);
+  });
+
+  txn();
+  return { token, playerId, createdAt };
+}
+
+export function authGetSession(token) {
+  if (!token) return null;
+  const db = sqlite;
+  const row = db.prepare(`
+    SELECT s.token, s.player_id AS playerId, s.created_at AS createdAt, s.last_seen_at AS lastSeenAt,
+           a.email AS email
+    FROM sessions s
+    LEFT JOIN accounts a ON a.id = s.account_id
+    WHERE s.token = ?
+  `).get(String(token));
+  if (!row) return null;
+  try {
+    db.prepare(`UPDATE sessions SET last_seen_at = ? WHERE token = ?`).run(nowMs(), String(token));
+  } catch {}
+  return row;
+}
+
 
 export function recordGameFinished({
   matchId,
