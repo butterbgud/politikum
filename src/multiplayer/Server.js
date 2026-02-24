@@ -17,7 +17,11 @@ const server = Server({
     "http://192.168.0.11:5176",
 
     "http://localhost:5175",
-    "http://localhost:5176"
+    "http://localhost:5176",
+
+    // Public VPS (IP-only)
+    "http://89.167.103.6",
+    "http://89.167.103.6:80"
   ],
 });
 
