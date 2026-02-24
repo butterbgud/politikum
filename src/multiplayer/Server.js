@@ -2,6 +2,11 @@ import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
 import { recordGameFinished, getSummary, getGames, getLeaderboard } from './db.js';
 
+function clampLimit(v, dflt, max) {
+  const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
+  return Math.min(max, Math.max(1, n));
+}
+
 let lastAdminSyncAt = null;
 
 const server = Server({
@@ -195,7 +200,14 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     if (ctx.path === '/admin/leaderboard' && ctx.method === 'GET') {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);
-      const limit = Math.min(200, Number.parseInt(ctx.query.limit ?? '20', 10) || 20);
+      const limit = clampLimit(ctx.query.limit, 20, 200);
+      ctx.body = getLeaderboard({ limit });
+      return;
+    }
+
+    // Public leaderboard: safe to embed in lobby screen (no token).
+    if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
+      const limit = clampLimit(ctx.query.limit, 10, 50);
       ctx.body = getLeaderboard({ limit });
       return;
     }

@@ -332,9 +332,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     let alive = true;
     const run = async () => {
       try {
-        const token = window.localStorage.getItem('politikum.adminToken') || '';
-        if (!token) return;
-        const res = await fetch(`${SERVER}/admin/leaderboard?limit=10`, { headers: { 'X-Admin-Token': token } });
+        const res = await fetch(`${SERVER}/public/leaderboard?limit=10`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!alive) return;
