@@ -107,6 +107,7 @@ function openDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_tournament_players_tid ON tournament_players(tournament_id);
+    CREATE INDEX IF NOT EXISTS idx_tournament_players_player_id ON tournament_players(player_id);
 
     CREATE TABLE IF NOT EXISTS tournament_rounds (
       id INTEGER PRIMARY KEY,
