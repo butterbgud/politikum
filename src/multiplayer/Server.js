@@ -37,13 +37,9 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "12qw12";
 const BETA_PASSWORD = process.env.BETA_PASSWORD || '';
 
 function requireAdmin(ctx) {
-  if (!ADMIN_TOKEN) {
-    ctx.throw(500, 'ADMIN_TOKEN is not configured');
-  }
+  if (!ADMIN_TOKEN) ctx.throw(401, 'Unauthorized');
   const header = ctx.request.headers['x-admin-token'];
-  if (!header || header !== ADMIN_TOKEN) {
-    ctx.throw(401, 'Unauthorized');
-  }
+  if (!header || header !== ADMIN_TOKEN) ctx.throw(401, 'Unauthorized');
 }
 
 async function syncFinishedGames(db) {
