@@ -131,14 +131,27 @@ async function syncFinishedGames(db) {
       const tid = tmeta?.id == null ? null : String(tmeta.id || '').trim();
       const tableId = tmeta?.tableId;
       if (tid && tableId != null) {
+        // If winnerPlayerId is still a seat id, map it to the reserved stable playerId from the tournament table seats.
+        let winnerStable = winnerPlayerId ?? null;
+        try {
+          const tb = tournamentTableGet({ tournamentId: tid, tableId });
+          const seats = Array.isArray(tb?.seats) ? tb.seats : [];
+          const sid = String(winnerStable ?? '').trim();
+          const n = Number.parseInt(sid, 10);
+          if (Number.isFinite(n)) {
+            const seat = seats.find((s) => Number(s?.seat) === n);
+            if (seat?.playerId) winnerStable = String(seat.playerId);
+          }
+        } catch {}
+
         tournamentTableSetResult({
           tournamentId: tid,
           tableId,
-          winnerPlayerId: winnerPlayerId ?? null,
+          winnerPlayerId: winnerStable,
           result: {
             matchId,
             finishedAt,
-            winnerPlayerId: winnerPlayerId ?? null,
+            winnerPlayerId: winnerStable,
             winnerName: winnerName ?? null,
           },
         });

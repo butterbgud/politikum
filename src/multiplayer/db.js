@@ -805,7 +805,7 @@ export function tournamentTableSetResult({ tournamentId, tableId, winnerPlayerId
   if (!tid || !Number.isFinite(id)) return { ok: false, error: 'bad_args' };
 
   const res = db.prepare(
-    'UPDATE tournament_tables SET status=@s, winner_player_id=@w, result_json=COALESCE(@r, result_json) WHERE tournament_id=@t AND id=@id'
+    'UPDATE tournament_tables SET status=@s, winner_player_id=@w, result_json=@r WHERE tournament_id=@t AND id=@id'
   ).run({ t: tid, id, s: 'finished', w: winner, r: resultJson, id });
 
   if (!res.changes) return { ok: false, error: 'not_found' };
