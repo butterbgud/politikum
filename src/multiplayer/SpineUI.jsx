@@ -261,6 +261,9 @@ function TournamentDetailPage({ tournamentId }) {
                       <div className="font-black text-amber-50 text-xs uppercase tracking-widest">Table {tb.tableIndex}</div>
                       <div className="flex items-center gap-2">
                         <div className="text-[10px] font-mono text-amber-200/60">{tb.status || 'pending'}</div>
+                        {tb.winnerPlayerId && (
+                          <div className="text-[10px] font-mono text-emerald-300/80">winner: {tb.winnerPlayerId}</div>
+                        )}
                         {tb.matchId && (
                           <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50">Open match</button>
                         )}
