@@ -795,6 +795,23 @@ export function tournamentTableSetMatch({ tournamentId, tableId, matchId, status
   return { ok: true };
 }
 
+export function tournamentTableSetResult({ tournamentId, tableId, winnerPlayerId, result } = {}) {
+  const db = sqlite;
+  const tid = String(tournamentId || '').trim();
+  const id = Number(tableId);
+  const winner = winnerPlayerId == null ? null : String(winnerPlayerId || '').trim() || null;
+  let resultJson = null;
+  try { resultJson = result == null ? null : JSON.stringify(result); } catch { resultJson = null; }
+  if (!tid || !Number.isFinite(id)) return { ok: false, error: 'bad_args' };
+
+  const res = db.prepare(
+    'UPDATE tournament_tables SET status=@s, winner_player_id=@w, result_json=COALESCE(@r, result_json) WHERE tournament_id=@t AND id=@id'
+  ).run({ t: tid, id, s: 'finished', w: winner, r: resultJson, id });
+
+  if (!res.changes) return { ok: false, error: 'not_found' };
+  return { ok: true };
+}
+
 export function tournamentCreate(body = {}) {
   const db = sqlite;
   const id = tournamentId();

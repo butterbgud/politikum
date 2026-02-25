@@ -1,7 +1,7 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -124,6 +124,27 @@ async function syncFinishedGames(db) {
         gameover: state?.ctx?.gameover ?? null,
       }),
     });
+
+    // If this match belongs to a tournament table, persist the result back into tournament_tables.
+    try {
+      const tmeta = metadata?.tournament;
+      const tid = tmeta?.id == null ? null : String(tmeta.id || '').trim();
+      const tableId = tmeta?.tableId;
+      if (tid && tableId != null) {
+        tournamentTableSetResult({
+          tournamentId: tid,
+          tableId,
+          winnerPlayerId: winnerPlayerId ?? null,
+          result: {
+            matchId,
+            finishedAt,
+            winnerPlayerId: winnerPlayerId ?? null,
+            winnerName: winnerName ?? null,
+          },
+        });
+      }
+    } catch {}
+
   }
   lastAdminSyncAt = Date.now();
 }
@@ -328,6 +349,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/tables$/);
       if (m && ctx.method === 'GET') {
         const round = Number.parseInt(String(ctx.query.round || '1'), 10) || 1;
+        try { await syncFinishedGames(ctx.db); } catch {}
         const res = tournamentTablesList({ id: m[1], roundIndex: round });
         if (!res.ok) ctx.throw(404, res.error || 'Not found');
         ctx.body = res;
