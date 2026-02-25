@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const DEFAULT_DB_PATH = process.env.POLITIKUM_DB_PATH || path.resolve('var', 'politikum.sqlite');
 
@@ -553,7 +554,9 @@ export function getGames({ limit, offset }) {
 // -----------------------
 
 function tournamentId() {
-  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+  // Use crypto for lower collision risk vs Math.random.
+  // Keep it short-ish for URLs/logs.
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
 }
 
 export function tournamentsList({ includeFinished } = {}) {
