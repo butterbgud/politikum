@@ -126,6 +126,30 @@ function TournamentDetailPage({ tournamentId }) {
 
   useEffect(() => { load(); }, [tournamentId]);
 
+  const adminCreateMatch = async (tableId) => {
+    setLoading(true);
+    setErr('');
+    try {
+      const tok = String(window.localStorage.getItem('politikum.adminToken') || '');
+      if (!tok) throw new Error('Admin token missing');
+      const res = await fetch(`${SERVER}/admin/tournament/${tournamentId}/table/${tableId}/create_match`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': tok },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await load();
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openMatch = (matchId) => {
+    try { window.localStorage.setItem('politikum.prejoinMatchId', String(matchId || '')); } catch {}
+    window.location.hash = '';
+  };
+
   return (
     <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
       <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
@@ -200,7 +224,15 @@ function TournamentDetailPage({ tournamentId }) {
                   <div key={tb.id || String(tb.tableIndex)} className="rounded-xl border border-amber-900/20 bg-black/30 px-3 py-2">
                     <div className="flex items-baseline justify-between gap-3">
                       <div className="font-black text-amber-50 text-xs uppercase tracking-widest">Table {tb.tableIndex}</div>
-                      <div className="text-[10px] font-mono text-amber-200/60">{tb.status || 'pending'}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-[10px] font-mono text-amber-200/60">{tb.status || 'pending'}</div>
+                        {tb.matchId && (
+                          <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50">Open match</button>
+                        )}
+                        {(!tb.matchId && hasAdminToken) && (
+                          <button type="button" disabled={loading} onClick={() => adminCreateMatch(tb.id)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Create match</button>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-1 grid gap-0.5 text-sm font-serif">
                       {(tb.seats || []).map((s) => (
@@ -3141,6 +3173,15 @@ function PolitikumWelcome({ onJoin }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let mid = '';
+    try { mid = String(window.localStorage.getItem('politikum.prejoinMatchId') || ''); } catch {}
+    mid = String(mid || '').trim();
+    if (!mid) return;
+    try { window.localStorage.removeItem('politikum.prejoinMatchId'); } catch {}
+    joinMatch(mid).catch(() => {});
+  }, []);
 
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
