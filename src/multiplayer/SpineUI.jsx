@@ -2820,6 +2820,11 @@ export default function SpineUI() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
+
+  if (hash.startsWith('#/tournament')) {
+    return <div className="min-h-screen w-screen bg-black text-amber-50 p-6">Tournament (WIP)</div>;
+  }
+
   if (hash.startsWith('#/admin')) {
     return <AdminPage />;
   }
