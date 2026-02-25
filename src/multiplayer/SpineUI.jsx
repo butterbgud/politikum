@@ -1870,7 +1870,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       }}
                     >
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
-                        <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                        <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] object-cover opacity-80 -z-10" style={{ transform: 'translateY(10px) rotate(-2deg)' }} draggable={false} />
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
@@ -2137,10 +2137,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           {/* cancel_action stays as a compact pill */}
           {responseKind === 'cancel_action' && (
             <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/70 border border-amber-900/30 rounded-full px-5 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-4 pointer-events-auto">
-              <div>
-                {haveAction6 && 'Action played — respond with Action 6 to cancel'}
-                {!haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
-                <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+              <div className="flex items-center gap-3">
+                <div>
+                  {haveAction6 && 'Action played — respond with Action 6 to cancel'}
+                  {!haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
+                  <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+                </div>
+                {haveAction6 && (() => {
+                  const c6 = (me?.hand || []).find((c) => c?.type === 'action' && String(c.id).split('#')[0] === 'action_6');
+                  if (!c6) return null;
+                  return (
+                    <button type="button" onClick={() => { try { moves.playAction(c6.id); } catch {} }} className="px-3 py-1 rounded-full bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[11px]">
+                      Play A6
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -2960,7 +2971,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     }}
                   >
                     {String(c?.shieldedBy || '') === 'action_13' && (
-                      <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                      <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] object-cover opacity-80 -z-10" style={{ transform: 'translateY(10px) rotate(-2deg)' }} draggable={false} />
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
