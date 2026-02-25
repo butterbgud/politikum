@@ -12,6 +12,132 @@ const NAMES = [
   'Beatrix', 'Lambert', 'Maude', 'Odilia', 'Viggo', 'Sibylla', 'Katarina', 'Norbert', 'Quintus',
 ];
 
+
+
+function TournamentPage() {
+  const [items, setItems] = useState([]);
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/tournaments`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setItems(json.items || []);
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  return (
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+      <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Tournament</div>
+          </div>
+          <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+          {err && <div className="text-xs font-mono text-red-300">Error: {err}</div>}
+        </div>
+
+        <div className="grid gap-3">
+          {items.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => { window.location.hash = `#/tournament/${t.id}`; }}
+              className="text-left w-full bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="font-black text-amber-50">{t.name || t.id}</div>
+                <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
+              </div>
+              <div className="mt-1 text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize}</div>
+            </button>
+          ))}
+          {(!items.length && !loading) && (
+            <div className="text-xs font-mono text-amber-200/50">No tournaments yet.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TournamentDetailPage({ tournamentId }) {
+  const [t, setT] = useState(null);
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/tournament/${tournamentId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setT(json.tournament || null);
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [tournamentId]);
+
+  return (
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+      <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Tournament</div>
+            <div className="text-amber-100/70 font-serif mt-1">{t?.name || tournamentId}</div>
+          </div>
+          <button type="button" onClick={() => { window.location.hash = '#/tournament'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Back</button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+          {err && <div className="text-xs font-mono text-red-300">Error: {err}</div>}
+        </div>
+
+        {t && (
+          <div className="grid gap-3">
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · {t.status}</div>
+            </div>
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Players</div>
+              <div className="mt-2 grid gap-1 text-sm font-serif">
+                {(t.players || []).map((p) => (
+                  <div key={p.playerId} className="text-amber-100/90">{p.name || p.playerId}</div>
+                ))}
+                {(!(t.players || []).length) && <div className="text-amber-200/40 italic">No players yet.</div>}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 function AdminPage() {
   const [token, setToken] = useState(() => {
     try {
@@ -2821,10 +2947,14 @@ export default function SpineUI() {
   }, []);
 
 
-  if (hash.startsWith('#/tournament')) {
-    return <div className="min-h-screen w-screen bg-black text-amber-50 p-6">Tournament (WIP)</div>;
+  if (hash.startsWith('#/tournament/')) {
+    const tid = hash.slice('#/tournament/'.length).split('?')[0];
+    return <TournamentDetailPage tournamentId={tid} />;
   }
 
+  if (hash.startsWith('#/tournament')) {
+    return <TournamentPage />;
+  }
   if (hash.startsWith('#/admin')) {
     return <AdminPage />;
   }
