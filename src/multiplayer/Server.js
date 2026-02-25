@@ -133,28 +133,24 @@ async function syncFinishedGames(db) {
     });
 
     // If this match belongs to a tournament table, persist the result back into tournament_tables.
+    // This makes tournament results appear automatically whenever we run syncFinishedGames().
     try {
       const tmeta = metadata?.tournament;
       const tid = tmeta?.id == null ? null : String(tmeta.id || '').trim();
       const tableId = tmeta?.tableId;
       if (tid && tableId != null) {
-        // If winnerPlayerId is still a seat id, map it to the reserved stable playerId from the tournament table seats.
+        const tb = tournamentTableGet({ tournamentId: tid, tableId });
+        const seats = Array.isArray(tb?.seats) ? tb.seats : [];
+
+        // If winnerPlayerId is still a seat id, map it to stable playerId from table seats.
         let winnerStable = winnerPlayerId ?? null;
         try {
-          const tb = tournamentTableGet({ tournamentId: tid, tableId });
-          const seats = Array.isArray(tb?.seats) ? tb.seats : [];
           const sid = String(winnerStable ?? '').trim();
           const n = Number.parseInt(sid, 10);
           if (Number.isFinite(n)) {
             const seat = seats.find((s) => Number(s?.seat) === n);
             if (seat?.playerId) winnerStable = String(seat.playerId);
           }
-        } catch {}
-
-        let seatsForResult = null;
-        try {
-          const tb = tournamentTableGet({ tournamentId: tid, tableId });
-          seatsForResult = Array.isArray(tb?.seats) ? tb.seats : null;
         } catch {}
 
         tournamentTableSetResult({
@@ -166,7 +162,8 @@ async function syncFinishedGames(db) {
             finishedAt,
             winnerPlayerId: winnerStable,
             winnerName: winnerName ?? null,
-            seats: seatsForResult,
+            seats: seats.length ? seats : null,
+            autoSynced: true,
           },
         });
       }
