@@ -1270,7 +1270,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   };
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
   const current = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
-  const currentIsBot = String(current?.name || '').startsWith('[B]');
+  const currentIsBot = String(current?.name || '').startsWith('[B]') || !!current?.isBot;
   const response = G.response || null;
   const pending = G.pending || null;
   const responseKind = response?.kind || null;
@@ -1960,6 +1960,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             )}
           </div>
         </button>
+
+        {/* Bot rescue: nudge bot tick */}
+        {currentIsBot && !isMyTurn && !G.gameOver && (
+          <button
+            type="button"
+            onClick={() => { try { moves.tickBot(); } catch {} }}
+            className="fixed pointer-events-auto select-none outline-none px-3 py-2 rounded-xl bg-red-950/55 hover:bg-red-950/70 border border-red-300/20 text-red-100 text-[11px] font-black"
+            style={{ right: 'calc(2% + 6px)', top: 'calc(3% + 168px)' }}
+            title="Nudge bot / unstuck"
+          >
+            NU DGE BOT
+          </button>
+        )}
 
         {/* Cookies (End Turn) */}
         <button
