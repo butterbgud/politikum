@@ -33,7 +33,7 @@ const server = Server({
   ],
 });
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "12qw12";
 const BETA_PASSWORD = process.env.BETA_PASSWORD || '';
 
 function requireAdmin(ctx) {
