@@ -26,6 +26,10 @@
 - [ ] Show round1 tables count + quick view
 - [ ] Button per table: create match
 
+## Recent shipped (notes)
+- [x] Admin UI: Generate R1 wired to backend + better error reporting
+- [x] DB: added indexes for tournament tables/rounds/players (performance groundwork)
+
 ## Auth/ops
 - [x] Beta login works (BETA_PASSWORDS: polarbearorchard,11,22,33,44)
 - [ ] Document canonical ports/URLs (UI 5176, API 8000)
