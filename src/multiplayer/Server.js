@@ -419,9 +419,10 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         for (let i = 0; i < numPlayers; i++) {
           const seat = seats[i];
           const name = seat?.name == null ? null : String(seat.name || '').trim();
-          if (name) metadata.players[i].name = name;
           const playerId = seat?.playerId == null ? null : String(seat.playerId || '').trim();
-          if (playerId) metadata.players[i].data = { playerId };
+          // IMPORTANT: do NOT prefill metadata.players[i].name — LobbyClient.joinMatch treats named seats as taken.
+          // Keep the intended identity in metadata.players[i].data so the UI can claim the reserved seat.
+          if (playerId || name) metadata.players[i].data = { playerId: playerId || null, name: name || null };
         }
         metadata.tournament = { id: tid, tableId };
 

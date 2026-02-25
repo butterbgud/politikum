@@ -3184,7 +3184,7 @@ function PolitikumWelcome({ onJoin }) {
       let sessionPlayerId = '';
       try { sessionPlayerId = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim(); } catch {}
       const reservedSeat = sessionPlayerId
-        ? match.players.find((p) => String(p?.data?.playerId || '') === sessionPlayerId && !p.isConnected)
+        ? match.players.find((p) => String(p?.data?.playerId || '') === sessionPlayerId)
         : null;
       const freeSeat = reservedSeat || match.players.find((p) => !p.name && !p.isConnected);
       if (!freeSeat) {
