@@ -265,7 +265,8 @@ function AdminTournamentPage() {
     setLoading(true);
     setError('');
     try {
-      await adminPost(`/admin/tournament/${id}/generate_round1`, {});
+      // Backend endpoint doesn't require a JSON body; keep this as a plain POST.
+      await adminPost(`/admin/tournament/${id}/generate_round1`, null);
       await load();
     } catch (e) {
       setError(e?.message || String(e));
