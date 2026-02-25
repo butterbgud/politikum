@@ -18,12 +18,14 @@ function TournamentPage() {
   const [items, setItems] = useState([]);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [includeFinished, setIncludeFinished] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
     setErr('');
     try {
-      const res = await fetch(`${SERVER}/public/tournaments`);
+      const res = await fetch(`${SERVER}/public/tournaments?includeFinished=${includeFinished ? '1' : '0'}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setItems(json.items || []);
@@ -34,7 +36,7 @@ function TournamentPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [includeFinished]);
 
   return (
     <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
@@ -51,6 +53,10 @@ function TournamentPage() {
           <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">
             {loading ? 'Loading…' : 'Refresh'}
           </button>
+          <label className="flex items-center gap-2 text-xs font-mono text-amber-200/60 select-none">
+            <input type="checkbox" className="accent-amber-500" checked={includeFinished} onChange={(e) => { setIncludeFinished(e.target.checked); }} />
+            <span>Show finished</span>
+          </label>
           {err && <div className="text-xs font-mono text-red-300">Error: {err}</div>}
         </div>
 
