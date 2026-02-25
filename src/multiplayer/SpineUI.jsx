@@ -513,6 +513,54 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                 {authStatus ? ` · ${authStatus}` : ''}
               </div>
             </div>
+
+            {/* Seats */}
+            <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
+              <div className="mt-3 grid gap-2">
+                {(G.players || []).filter((p) => !!p?.active).map((p) => {
+                  const active = !!p.active;
+                  const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                  return (
+                    <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                      <div className="flex items-center gap-2">
+                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
+                          {p.name || `Seat ${p.id}`}
+                        </div>
+                        <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
+                        {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                      </div>
+
+                      {isHost && String(p.id) !== '0' && active && bot && (
+                        <button
+                          onClick={() => moves.removePlayer(String(p.id))}
+                          className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {isHost && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => moves.addBot()}
+                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                  >
+                    Add bot
+                  </button>
+                  <button
+                    onClick={() => moves.startGame()}
+                    className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                  >
+                    Start game
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="mt-5 text-[11px] text-amber-200/40 font-mono">phase: {String(ctx.phase || '')}</div>
