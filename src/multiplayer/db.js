@@ -809,6 +809,28 @@ export function tournamentTableSetResult({ tournamentId, tableId, winnerPlayerId
   ).run({ t: tid, id, s: 'finished', w: winner, r: resultJson, id });
 
   if (!res.changes) return { ok: false, error: 'not_found' };
+
+  // Auto-finish 2-player single_elim tournaments: Round 1 is the final.
+  try {
+    const t = db.prepare('SELECT type, table_size AS tableSize, status, config_json AS cfg FROM tournaments WHERE id=?').get(tid);
+    if (t && String(t.status) !== 'finished') {
+      const type = String(t.type || '');
+      const tableSize = Math.max(2, Number(t.tableSize) || 2);
+      const activePlayers = Number(db.prepare('SELECT COUNT(1) AS n FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL').get(tid)?.n || 0) || 0;
+      const finishedTables = Number(db.prepare("SELECT COUNT(1) AS n FROM tournament_tables tt JOIN tournament_rounds tr ON tr.id=tt.round_id WHERE tr.tournament_id=? AND tr.round_index=1 AND tt.status='finished'").get(tid)?.n || 0) || 0;
+      if (type === 'single_elim' && tableSize === 2 && activePlayers === 2 && finishedTables >= 1) {
+        const winnerName = winner ? (db.prepare('SELECT name FROM tournament_players WHERE tournament_id=? AND player_id=?').get(tid, winner)?.name || null) : null;
+        db.prepare('UPDATE tournaments SET status=@s, finished_at=@f WHERE id=@id').run({ id: tid, s: 'finished', f: nowMs() });
+        // Store winner summary in config_json (lightweight MVP)
+        try {
+          const cfg = t.cfg ? JSON.parse(String(t.cfg)) : {};
+          cfg.winner = { playerId: winner || null, name: winnerName };
+          db.prepare('UPDATE tournaments SET config_json=@c WHERE id=@id').run({ id: tid, c: JSON.stringify(cfg) });
+        } catch {}
+      }
+    }
+  } catch {}
+
   return { ok: true };
 }
 

@@ -182,6 +182,9 @@ function TournamentDetailPage({ tournamentId }) {
           <div className="grid gap-3">
             <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
               <div className="text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · {t.status}</div>
+              {t?.config?.winner?.name && (
+                <div className="mt-1 text-sm font-serif text-emerald-200/90">Winner: {t.config.winner.name}</div>
+              )}
             </div>
             <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Actions</div>
