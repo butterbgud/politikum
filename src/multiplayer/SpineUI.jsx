@@ -211,7 +211,15 @@ function AdminTournamentPage() {
 
     const res = await fetch(`${SERVER}${path}`, opts);
     if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
-    return await res.json();
+
+    // Some admin endpoints may intentionally return 204 No Content.
+    if (res.status === 204) return null;
+
+    const ct = String(res.headers.get('content-type') || '');
+    if (ct.includes('application/json')) return await res.json();
+
+    const text = await res.text();
+    return text ? { ok: true, text } : null;
   };
 
   const create = async () => {
