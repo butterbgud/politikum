@@ -91,6 +91,10 @@ function TournamentDetailPage({ tournamentId }) {
   const [tablesErr, setTablesErr] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const hasAdminToken = (() => {
+    try { return !!window.localStorage.getItem('politikum.adminToken'); } catch { return false; }
+  })();
+
   const load = async () => {
     setLoading(true);
     setErr('');
@@ -183,7 +187,12 @@ function TournamentDetailPage({ tournamentId }) {
             <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Round 1 tables</div>
-                {tablesErr && <div className="text-[10px] font-mono text-amber-200/50">{tablesErr}</div>}
+                <div className="flex items-center gap-2">
+                  {tablesErr && <div className="text-[10px] font-mono text-amber-200/50">{tablesErr}</div>}
+                  {(tablesErr && hasAdminToken) && (
+                    <button type="button" onClick={() => { window.location.hash = '#/admin/tournament'; }} className="text-[10px] font-mono text-amber-200/60 hover:text-amber-50">Admin</button>
+                  )}
+                </div>
               </div>
 
               <div className="mt-2 grid gap-2">
