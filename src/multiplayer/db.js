@@ -585,7 +585,7 @@ export function tournamentGet({ id }) {
   if (!t) return null;
   let cfg=null;
   try { cfg = t.configJson ? JSON.parse(t.configJson) : null; } catch {}
-  const players = db.prepare('SELECT player_id AS playerId, name, joined_at AS joinedAt, dropped_at AS droppedAt FROM tournament_players WHERE tournament_id=? ORDER BY joined_at ASC;').all(tid);
+  const players = db.prepare('SELECT player_id AS playerId, name, joined_at AS joinedAt, dropped_at AS droppedAt FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC;').all(tid);
   return { id: t.id, name: t.name, type: t.type, tableSize: Number(t.tableSize)||2, status: t.status, createdAt: t.createdAt, startedAt: t.startedAt, finishedAt: t.finishedAt, config: cfg, players: players.map((p)=>({playerId:p.playerId,name:p.name,joinedAt:p.joinedAt,droppedAt:p.droppedAt})), rounds: [], tables: [] };
 }
 
