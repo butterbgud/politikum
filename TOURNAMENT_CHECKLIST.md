@@ -32,7 +32,9 @@
 
 ## Auth/ops
 - [x] Beta login works (BETA_PASSWORDS: polarbearorchard,11,22,33,44)
-- [ ] Document canonical ports/URLs (UI 5176, API 8000)
+- [x] Document canonical ports/URLs
+  - UI (vite dev): http://localhost:5176/ (LAN: http://192.168.8.14:5176/)
+  - API: http://localhost:8000/
 
 ## Progress formula
 Progress% = checked_items / total_items.
