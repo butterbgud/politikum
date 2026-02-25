@@ -8,3 +8,6 @@ node_modules/
 
 # local sqlite db
 /var/*.sqlite*
+
+# boardgame.io FlatFile storage (runtime)
+var/bgio/
