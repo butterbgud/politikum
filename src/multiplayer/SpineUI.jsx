@@ -70,7 +70,7 @@ function TournamentPage() {
             </button>
           ))}
           {(!items.length && !loading) && (
-            <div className="text-xs font-mono text-amber-200/50">No tournaments yet.</div>
+            <div className="text-xs font-mono text-amber-200/50">No tournaments yet. Ask an admin to create one.</div>
           )}
         </div>
       </div>
@@ -370,7 +370,7 @@ function AdminTournamentPage() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">No tournaments yet.</td>
+                  <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">No tournaments yet. Ask an admin to create one.</td>
                 </tr>
               )}
             </tbody>
