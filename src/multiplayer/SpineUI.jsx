@@ -198,13 +198,18 @@ function AdminTournamentPage() {
 
   useEffect(() => { load(); }, [includeFinished]);
 
-  const adminPost = async (path, body) => {
+  const adminPost = async (path, body = null) => {
     if (!token) throw new Error('Set X-Admin-Token first.');
-    const res = await fetch(`${SERVER}${path}`, {
-      method: 'POST',
-      headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {}),
-    });
+
+    const headers = { 'X-Admin-Token': token };
+    const opts = { method: 'POST', headers };
+
+    if (body !== null && body !== undefined) {
+      opts.headers = { ...headers, 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(`${SERVER}${path}`, opts);
     if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
     return await res.json();
   };
