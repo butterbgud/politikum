@@ -625,6 +625,52 @@ export function tournamentTablesList({ id, roundIndex } = {}) {
   return { ok: true, tournamentId: tid, round: { id: round.id, roundIndex: round.roundIndex, status: round.status }, tables };
 }
 
+export function tournamentTableGet({ tournamentId, tableId } = {}) {
+  const db = sqlite;
+  const tid = String(tournamentId || '').trim();
+  const id = Number(tableId);
+  if (!tid || !Number.isFinite(id)) return null;
+
+  const row = db.prepare(
+    'SELECT id, tournament_id AS tournamentId, table_index AS tableIndex, match_id AS matchId, status, result_json AS resultJson\n' +
+    'FROM tournament_tables\n' +
+    'WHERE tournament_id=? AND id=?'
+  ).get(tid, id);
+
+  if (!row) return null;
+
+  let seats = [];
+  try {
+    const res = row.resultJson ? JSON.parse(row.resultJson) : null;
+    seats = Array.isArray(res?.seats) ? res.seats : [];
+  } catch {}
+
+  return {
+    id: row.id,
+    tournamentId: row.tournamentId,
+    tableIndex: Number(row.tableIndex) || 0,
+    matchId: row.matchId || null,
+    status: row.status || null,
+    seats,
+  };
+}
+
+export function tournamentTableSetMatch({ tournamentId, tableId, matchId, status } = {}) {
+  const db = sqlite;
+  const tid = String(tournamentId || '').trim();
+  const id = Number(tableId);
+  const mid = matchId == null ? null : String(matchId);
+  const st = status == null ? null : String(status);
+  if (!tid || !Number.isFinite(id) || !mid) return { ok: false, error: 'bad_args' };
+
+  const res = db.prepare(
+    'UPDATE tournament_tables SET match_id=@m, status=@s WHERE tournament_id=@t AND id=@id'
+  ).run({ t: tid, id, m: mid, s: st });
+
+  if (!res.changes) return { ok: false, error: 'not_found' };
+  return { ok: true };
+}
+
 export function tournamentCreate(body = {}) {
   const db = sqlite;
   const id = tournamentId();

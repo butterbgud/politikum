@@ -1,6 +1,7 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
+import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentTableGet, tournamentTableSetMatch, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -390,6 +391,50 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         return;
       }
     }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/table\/(\d+)\/create_match$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const tid = m[1];
+        const tableId = Number(m[2]);
+
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        if (table.matchId) ctx.throw(409, 'match_exists');
+
+        const seats = Array.isArray(table.seats) ? table.seats : [];
+        const numPlayers = Math.max(2, seats.length || 0);
+        const matchId = `t_${tid}_${tableId}_${Date.now().toString(36)}`;
+
+        const match = createBgioMatch({
+          game: CitadelGame,
+          unlisted: true,
+          numPlayers,
+          setupData: undefined,
+        });
+        if ('setupDataError' in match) ctx.throw(400, 'setupData_required');
+
+        const { metadata, initialState } = match;
+        for (let i = 0; i < numPlayers; i++) {
+          const seat = seats[i];
+          const name = seat?.name == null ? null : String(seat.name || '').trim();
+          if (name) metadata.players[i].name = name;
+          const playerId = seat?.playerId == null ? null : String(seat.playerId || '').trim();
+          if (playerId) metadata.players[i].data = { playerId };
+        }
+        metadata.tournament = { id: tid, tableId };
+
+        await ctx.db.createMatch(matchId, { initialState, metadata });
+
+        const res = tournamentTableSetMatch({ tournamentId: tid, tableId, matchId, status: 'ready' });
+        if (!res.ok) ctx.throw(404, res.error || 'not_found');
+
+        ctx.body = { ok: true, matchId };
+        return;
+      }
+    }
+
     // Public leaderboard: safe to embed in lobby screen (no token).
     if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
       const limit = clampLimit(ctx.query.limit, 10, 50);
