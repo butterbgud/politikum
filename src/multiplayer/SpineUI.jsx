@@ -210,7 +210,12 @@ function AdminTournamentPage() {
     }
 
     const res = await fetch(`${SERVER}${path}`, opts);
-    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+    if (!res.ok) {
+      let details = '';
+      try { details = await res.text(); } catch {}
+      details = String(details || '').trim();
+      throw new Error(`${path}: HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+    }
 
     // Some admin endpoints may intentionally return 204 No Content.
     if (res.status === 204) return null;
