@@ -626,3 +626,57 @@ export function tournamentLeave({ id, playerId }) {
   db.prepare('UPDATE tournament_players SET dropped_at=@d WHERE tournament_id=@t AND player_id=@p').run({ t: tid, p: pid, d: nowMs() });
   return { ok:true, tournament: tournamentGet({ id: tid }) };
 }
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr;
+}
+
+export function tournamentGenerateRound1({ id }) {
+  const db = sqlite;
+  const tid = String(id||'').trim();
+  if (!tid) return { ok:false, error:'bad_args' };
+
+  const t = db.prepare('SELECT id, table_size AS tableSize, status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok:false, error:'not_found' };
+  if (String(t.status) !== 'registering') return { ok:false, error:'not_registering' };
+
+  // prevent duplicates
+  const existing = db.prepare('SELECT id FROM tournament_rounds WHERE tournament_id=? AND round_index=1').get(tid);
+  if (existing) return { ok:false, error:'round_exists' };
+
+  const tableSize = Math.max(2, Number(t.tableSize) || 2);
+
+  const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC').all(tid);
+  const ids = players.map((p) => ({ playerId: String(p.playerId), name: p.name || null }));
+  if (ids.length < 2) return { ok:false, error:'not_enough_players' };
+
+  shuffleInPlace(ids);
+
+  const now = nowMs();
+  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: 1, s: 'pending', c: now });
+  const roundId = round?.id;
+
+  const tables = [];
+  let tableIndex = 1;
+  for (let i = 0; i < ids.length; i += tableSize) {
+    const slice = ids.slice(i, i + tableSize);
+    // allow last table smaller (MVP)
+    const row = db.prepare('INSERT INTO tournament_tables (tournament_id, round_id, table_index, match_id, status, winner_player_id, result_json) VALUES (@t,@rid,@ti,NULL,@s,NULL,@rj) RETURNING id').get({
+      t: tid,
+      rid: roundId,
+      ti: tableIndex,
+      s: 'pending',
+      rj: JSON.stringify({ seats: slice.map((p, idx) => ({ seat: idx, playerId: p.playerId, name: p.name })) }),
+    });
+    tables.push({ id: row?.id, tableIndex, seats: slice });
+    tableIndex++;
+  }
+
+  return { ok:true, round: { id: roundId, roundIndex: 1 }, tables, tournament: tournamentGet({ id: tid }) };
+}

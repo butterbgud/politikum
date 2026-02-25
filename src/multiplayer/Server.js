@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -359,11 +359,19 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     }
 
     {
-      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/(open_registration|close_registration|cancel)$/);
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/(open_registration|close_registration|cancel|generate_round1)$/);
       if (m && ctx.method === 'POST') {
         requireAdmin(ctx);
         const tid = m[1];
         const action = m[2];
+
+        if (action === 'generate_round1') {
+          const res = tournamentGenerateRound1({ id: tid });
+          if (!res.ok) ctx.throw(409, res.error || 'generate_failed');
+          ctx.body = res;
+          return;
+        }
+
         const status = action === 'open_registration' ? 'registering' : action === 'close_registration' ? 'running' : 'canceled';
         const res = tournamentSetStatus({ id: tid, status });
         if (!res.ok) ctx.throw(404, res.error || 'not_found');
