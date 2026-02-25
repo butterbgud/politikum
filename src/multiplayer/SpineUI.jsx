@@ -904,6 +904,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           const pid = meJson?.session?.playerId;
           const email = meJson?.session?.email || null;
           if (pid) {
+            try { window.localStorage.setItem('politikum.sessionPlayerId', String(pid)); } catch {}
             try { moves.setPlayerIdentity({ playerId: pid, email }); } catch {}
           }
         }
@@ -3177,8 +3178,15 @@ function PolitikumWelcome({ onJoin }) {
       const match = response.match || response;
       if (!match || !match.players) throw new Error('Match not found');
 
-      // seat selection: first empty seat
-      const freeSeat = match.players.find((p) => !p.name && !p.isConnected);
+      // seat selection:
+      // 1) if match has reserved seats with stable playerId, take your reserved seat
+      // 2) else: first empty seat
+      let sessionPlayerId = '';
+      try { sessionPlayerId = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim(); } catch {}
+      const reservedSeat = sessionPlayerId
+        ? match.players.find((p) => String(p?.data?.playerId || '') === sessionPlayerId && !p.isConnected)
+        : null;
+      const freeSeat = reservedSeat || match.players.find((p) => !p.name && !p.isConnected);
       if (!freeSeat) {
         alert('Match is full!');
         setLoading(false);
