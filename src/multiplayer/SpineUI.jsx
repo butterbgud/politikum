@@ -648,6 +648,27 @@ function AdminPage() {
     }
   };
 
+  const killMatch = async (matchId) => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    const mid = String(matchId || '').trim();
+    if (!mid) return;
+    if (!confirm(`Kill match ${mid}? This deletes it from server storage.`)) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/match/${encodeURIComponent(mid)}/kill`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token },
+      });
+      if (!res.ok) throw new Error(`kill: HTTP ${res.status}`);
+      await fetchAdmin();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatTime = (ms) => {
     if (!ms) return '—';
     const d = new Date(ms);
@@ -792,6 +813,7 @@ function AdminPage() {
                   <th className="px-2 py-2 whitespace-nowrap">Updated</th>
                   <th className="px-2 py-2 whitespace-nowrap">Players</th>
                   <th className="px-2 py-2 whitespace-nowrap">Match</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -815,6 +837,17 @@ function AdminPage() {
                       </div>
                     </td>
                     <td className="px-2 py-2 align-top whitespace-nowrap text-amber-200/70">{String(m.matchId).slice(0, 8)}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => killMatch(m.matchId)}
+                        className="px-2 py-1 rounded-lg bg-red-900/40 hover:bg-red-900/60 border border-red-400/20 text-red-200/90 text-[11px] font-black"
+                        title={String(m.matchId)}
+                      >
+                        Kill
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {liveMatches.length === 0 && (

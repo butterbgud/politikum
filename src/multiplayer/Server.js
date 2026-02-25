@@ -252,6 +252,35 @@ async function listInProgressMatches(db, limit = 20) {
   };
 }
 
+const fs = require('fs');
+const path = require('path');
+
+function killMatchFlatFile(matchId) {
+  const dir = path.join(process.cwd(), 'var', 'bgio');
+  let removed = 0;
+  let errors = 0;
+  try {
+    const files = fs.readdirSync(dir);
+    for (const f of files) {
+      const fp = path.join(dir, f);
+      try {
+        const raw = fs.readFileSync(fp, 'utf8');
+        const j = JSON.parse(raw);
+        const k = String(j?.key || '');
+        if (k.startsWith(String(matchId) + ':')) {
+          fs.unlinkSync(fp);
+          removed++;
+        }
+      } catch {
+        errors++;
+      }
+    }
+  } catch {
+    // no dir, nothing to delete
+  }
+  return { removed, errors };
+}
+
 const PORT = Number.parseInt(process.env.PORT || '8000', 10);
 
 server.run({ port: PORT, host: '0.0.0.0' }, () => {
@@ -340,6 +369,17 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const limit = Math.min(50, Number.parseInt(ctx.query.limit ?? '20', 10) || 20);
       ctx.body = await listInProgressMatches(ctx.db, limit);
       return;
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/match\/([^\/]+)\/kill$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const matchId = m[1];
+        const r = killMatchFlatFile(matchId);
+        ctx.body = { ok: true, matchId, ...r };
+        return;
+      }
     }
 
     if (ctx.path === '/admin/leaderboard' && ctx.method === 'GET') {
