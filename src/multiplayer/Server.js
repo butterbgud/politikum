@@ -144,6 +144,12 @@ async function syncFinishedGames(db) {
           }
         } catch {}
 
+        let seatsForResult = null;
+        try {
+          const tb = tournamentTableGet({ tournamentId: tid, tableId });
+          seatsForResult = Array.isArray(tb?.seats) ? tb.seats : null;
+        } catch {}
+
         tournamentTableSetResult({
           tournamentId: tid,
           tableId,
@@ -153,6 +159,7 @@ async function syncFinishedGames(db) {
             finishedAt,
             winnerPlayerId: winnerStable,
             winnerName: winnerName ?? null,
+            seats: seatsForResult,
           },
         });
       }
