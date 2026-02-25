@@ -162,6 +162,191 @@ function TournamentDetailPage({ tournamentId }) {
     </div>
   );
 }
+function AdminTournamentPage() {
+  const [token, setToken] = useState(() => {
+    try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [items, setItems] = useState([]);
+  const [includeFinished, setIncludeFinished] = useState(false);
+
+  const [name, setName] = useState('');
+  const [type, setType] = useState('single_elim');
+  const [tableSize, setTableSize] = useState(4);
+  const [maxPlayers, setMaxPlayers] = useState('');
+
+  const saveToken = (value) => {
+    setToken(value);
+    try { window.localStorage.setItem('politikum.adminToken', value); } catch {}
+  };
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/public/tournaments?includeFinished=${includeFinished ? '1' : '0'}`);
+      if (!res.ok) throw new Error(`list: HTTP ${res.status}`);
+      const json = await res.json();
+      setItems(json.items || []);
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [includeFinished]);
+
+  const adminPost = async (path, body) => {
+    if (!token) throw new Error('Set X-Admin-Token first.');
+    const res = await fetch(`${SERVER}${path}`, {
+      method: 'POST',
+      headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    });
+    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+    return await res.json();
+  };
+
+  const create = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const mp = String(maxPlayers || '').trim();
+      await adminPost('/admin/tournament/create', {
+        name: String(name || '').trim(),
+        type,
+        tableSize: Number(tableSize) || 2,
+        maxPlayers: mp ? (Number(mp) || null) : null,
+      });
+      setName('');
+      setMaxPlayers('');
+      await load();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setStatus = async (id, action) => {
+    setLoading(true);
+    setError('');
+    try {
+      await adminPost(`/admin/tournament/${id}/${action}`);
+      await load();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fmt = (ms) => {
+    if (!ms) return '—';
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
+
+  return (
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+      <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Admin / tournaments (v1)</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
+            <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black block mb-1">X-Admin-Token</label>
+            <input type="password" value={token} onChange={(e) => saveToken(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
+          </div>
+          <div className="flex items-end gap-2">
+            <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
+            <label className="flex items-center gap-2 text-xs font-mono text-amber-200/70">
+              <input type="checkbox" checked={includeFinished} onChange={(e) => setIncludeFinished(e.target.checked)} />
+              include finished
+            </label>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-black/40 border border-amber-900/20 rounded-2xl p-4">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Create tournament</div>
+            <div className="mt-3 grid gap-2">
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+              <div className="grid grid-cols-3 gap-2">
+                <select value={type} onChange={(e) => setType(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono">
+                  <option value="single_elim">single_elim</option>
+                </select>
+                <input value={String(tableSize)} onChange={(e) => setTableSize(e.target.value)} placeholder="tableSize" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+                <input value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} placeholder="maxPlayers" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+              </div>
+              <button type="button" onClick={create} disabled={loading} className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Create</button>
+            </div>
+          </div>
+
+          <div className="bg-black/40 border border-amber-900/20 rounded-2xl p-4">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Notes</div>
+            <div className="mt-2 text-xs font-mono text-amber-100/70 leading-relaxed">v1: create/open/close/cancel + join/leave on public page. No brackets yet.</div>
+          </div>
+        </div>
+
+        <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Tournaments</div>
+        <div className="overflow-x-auto -mx-2">
+          <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+            <thead>
+              <tr className="border-b border-amber-900/40">
+                <th className="px-2 py-2 whitespace-nowrap">Created</th>
+                <th className="px-2 py-2 whitespace-nowrap">Name</th>
+                <th className="px-2 py-2 whitespace-nowrap">Status</th>
+                <th className="px-2 py-2 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((t) => (
+                <tr key={t.id} className="border-b border-amber-900/20">
+                  <td className="px-2 py-2 align-top whitespace-nowrap">{fmt(t.createdAt)}</td>
+                  <td className="px-2 py-2 align-top">
+                    <div className="font-black">{t.name}</div>
+                    <div className="text-[10px] text-amber-200/40">{t.id} · table {t.tableSize}</div>
+                    <button type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="mt-1 text-[10px] uppercase tracking-widest text-amber-200/70 hover:text-amber-50 font-black">Open public page</button>
+                  </td>
+                  <td className="px-2 py-2 align-top whitespace-nowrap">{t.status}</td>
+                  <td className="px-2 py-2 align-top whitespace-nowrap">
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'open_registration')} className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Open reg</button>
+                      <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'close_registration')} className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Close reg</button>
+                      <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'cancel')} className="px-2 py-1 rounded-lg bg-red-900/60 hover:bg-red-900/80 disabled:opacity-60 text-red-100 font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">No tournaments yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminPage() {
   const [token, setToken] = useState(() => {
     try {
@@ -2978,6 +3163,9 @@ export default function SpineUI() {
 
   if (hash.startsWith('#/tournament')) {
     return <TournamentPage />;
+  }
+  if (hash.startsWith('#/admin/tournament')) {
+    return <AdminTournamentPage />;
   }
   if (hash.startsWith('#/admin')) {
     return <AdminPage />;
