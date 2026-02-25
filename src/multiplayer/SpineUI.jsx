@@ -265,7 +265,7 @@ function AdminTournamentPage() {
     setLoading(true);
     setError('');
     try {
-      await adminPost(`/admin/tournament/${id}/generate_round1`);
+      await adminPost(`/admin/tournament/${id}/generate_round1`, {});
       await load();
     } catch (e) {
       setError(e?.message || String(e));
