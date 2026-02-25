@@ -124,6 +124,30 @@ function TournamentDetailPage({ tournamentId }) {
               <div className="text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · {t.status}</div>
             </div>
             <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Actions</div>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={async () => {
+                  try {
+                    const tok = String(window.localStorage.getItem('politikum.authToken') || '');
+                    if (!tok) throw new Error('Not logged in (beta token missing)');
+                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/join`, { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    await load();
+                  } catch (e) { setErr(e?.message || String(e)); }
+                }} className="flex-1 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest">Join tournament</button>
+                <button type="button" onClick={async () => {
+                  try {
+                    const tok = String(window.localStorage.getItem('politikum.authToken') || '');
+                    if (!tok) throw new Error('Not logged in (beta token missing)');
+                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/leave`, { method: 'POST', headers: { Authorization: `Bearer ${tok}` } });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    await load();
+                  } catch (e) { setErr(e?.message || String(e)); }
+                }} className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest">Leave</button>
+              </div>
+            </div>
+
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Players</div>
               <div className="mt-2 grid gap-1 text-sm font-serif">
                 {(t.players || []).map((p) => (
