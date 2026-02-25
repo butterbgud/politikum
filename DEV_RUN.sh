@@ -24,6 +24,9 @@ run_loop() {
 }
 
 run_loop vite npm run dev -- --host 0.0.0.0 --port 5176 --strictPort &
-run_loop server node src/multiplayer/Server.js &
+run_loop server env \
+  BETA_PASSWORDS="${BETA_PASSWORDS:-${BETA_PASSWORD:-polarbearorchard,11,22,33,44}}" \
+  ADMIN_TOKEN="${ADMIN_TOKEN:-12qw12}" \
+  node src/multiplayer/Server.js &
 
 wait
