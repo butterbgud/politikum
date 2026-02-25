@@ -589,6 +589,42 @@ export function tournamentGet({ id }) {
   return { id: t.id, name: t.name, type: t.type, tableSize: Number(t.tableSize)||2, status: t.status, createdAt: t.createdAt, startedAt: t.startedAt, finishedAt: t.finishedAt, config: cfg, players: players.map((p)=>({playerId:p.playerId,name:p.name,joinedAt:p.joinedAt,droppedAt:p.droppedAt})), rounds: [], tables: [] };
 }
 
+export function tournamentTablesList({ id, roundIndex } = {}) {
+  const db = sqlite;
+  const tid = String(id || '').trim();
+  const ri = Number(roundIndex);
+  const rIndex = Number.isFinite(ri) ? ri : 1;
+  if (!tid || rIndex < 1) return { ok: false, error: 'bad_args' };
+
+  const round = db.prepare('SELECT id, round_index AS roundIndex, status FROM tournament_rounds WHERE tournament_id=? AND round_index=?').get(tid, rIndex);
+  if (!round) return { ok: false, error: 'round_not_found' };
+
+  const rows = db.prepare(
+    'SELECT id, table_index AS tableIndex, match_id AS matchId, status, winner_player_id AS winnerPlayerId, result_json AS resultJson\n' +
+    'FROM tournament_tables\n' +
+    'WHERE tournament_id=? AND round_id=?\n' +
+    'ORDER BY table_index ASC;'
+  ).all(tid, round.id);
+
+  const tables = rows.map((r) => {
+    let seats = [];
+    try {
+      const res = r.resultJson ? JSON.parse(r.resultJson) : null;
+      seats = Array.isArray(res?.seats) ? res.seats : [];
+    } catch {}
+    return {
+      id: r.id,
+      tableIndex: Number(r.tableIndex) || 0,
+      matchId: r.matchId || null,
+      status: r.status || null,
+      winnerPlayerId: r.winnerPlayerId || null,
+      seats,
+    };
+  });
+
+  return { ok: true, tournamentId: tid, round: { id: round.id, roundIndex: round.roundIndex, status: round.status }, tables };
+}
+
 export function tournamentCreate(body = {}) {
   const db = sqlite;
   const id = tournamentId();

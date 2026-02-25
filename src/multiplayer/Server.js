@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -319,6 +319,17 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         const t = tournamentGet({ id: m[1] });
         if (!t) ctx.throw(404, 'Not found');
         ctx.body = { ok: true, tournament: t };
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/tables$/);
+      if (m && ctx.method === 'GET') {
+        const round = Number.parseInt(String(ctx.query.round || '1'), 10) || 1;
+        const res = tournamentTablesList({ id: m[1], roundIndex: round });
+        if (!res.ok) ctx.throw(404, res.error || 'Not found');
+        ctx.body = res;
         return;
       }
     }
