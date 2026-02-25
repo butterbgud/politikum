@@ -2525,10 +2525,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
               type="button"
-              onClick={() => {
-                const m = String(matchID || '').match(/^t_([^_]+)_/);
+              onClick={async () => {
+                const m = String(matchID || '').match(/^t_([^_]+)_(\d+)_/);
                 const tid = m ? m[1] : null;
-                if (tid) {
+                const tableId = m ? m[2] : null;
+                if (tid && tableId) {
+                  try {
+                    await fetch(`${SERVER}/public/tournament/${tid}/table/${tableId}/sync_result`, { method: 'POST' });
+                  } catch {}
                   try { window.location.hash = `#/tournament/${tid}`; } catch {}
                 } else {
                   // Leave match state (client-side) — simplest reliable way is full reload.

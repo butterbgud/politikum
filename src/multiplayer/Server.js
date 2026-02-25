@@ -378,6 +378,49 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     }
 
     {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/table\/(\d+)\/sync_result$/);
+      if (m && ctx.method === 'POST') {
+        const tid = String(m[1]);
+        const tableId = Number(m[2]);
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        const matchId = table.matchId;
+        if (!matchId) ctx.throw(409, 'no_match');
+
+        const { metadata, state } = await ctx.db.fetch(matchId, { metadata: true, state: true });
+        const isGameover = Boolean(metadata?.gameover || state?.ctx?.gameover);
+        if (!isGameover) ctx.throw(409, 'not_finished');
+
+        const seatWinner = state?.ctx?.gameover?.winnerPlayerId ?? metadata?.gameover?.winnerPlayerId;
+        let winnerStable = seatWinner == null ? null : String(seatWinner);
+        try {
+          const n = Number.parseInt(String(winnerStable || ''), 10);
+          if (Number.isFinite(n)) {
+            const seat = (table.seats || []).find((s) => Number(s?.seat) === n);
+            if (seat?.playerId) winnerStable = String(seat.playerId);
+          }
+        } catch {}
+
+        const finishedAt = metadata?.gameover?.finishedAt ?? metadata?.updatedAt ?? Date.now();
+        tournamentTableSetResult({
+          tournamentId: tid,
+          tableId,
+          winnerPlayerId: winnerStable,
+          result: {
+            matchId,
+            finishedAt,
+            winnerPlayerId: winnerStable,
+            winnerName: metadata?.gameover?.winnerName ?? null,
+            seats: table.seats || null,
+          },
+        });
+
+        ctx.body = { ok: true, matchId, winnerPlayerId: winnerStable };
+        return;
+      }
+    }
+
+    {
       const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/bracket$/);
       if (m && ctx.method === 'GET') {
         const res = tournamentBracketGet({ id: m[1] });
