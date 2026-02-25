@@ -270,6 +270,24 @@ function TournamentDetailPage({ tournamentId }) {
                         {(!tb.matchId && hasAdminToken) && (
                           <button type="button" disabled={loading} onClick={() => adminCreateMatch(tb.id)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Create match</button>
                         )}
+                        {(tb.matchId && !tb.winnerPlayerId && hasAdminToken) && (
+                          <button type="button" disabled={loading} onClick={async () => {
+                            try {
+                              const tok = String(window.localStorage.getItem('politikum.adminToken') || '');
+                              if (!tok) throw new Error('Admin token missing');
+                              const seatStr = window.prompt('Winner seat number (1..N):');
+                              if (!seatStr) return;
+                              const seat = Math.max(1, Number.parseInt(String(seatStr), 10) || 0) - 1;
+                              const res = await fetch(`${SERVER}/admin/tournament/${tournamentId}/table/${tb.id}/set_winner`, {
+                                method: 'POST',
+                                headers: { 'X-Admin-Token': tok, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ seat }),
+                              });
+                              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                              await load();
+                            } catch (e) { setErr(e?.message || String(e)); }
+                          }} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Set winner</button>
+                        )}
                       </div>
                     </div>
                     <div className="mt-1 grid gap-0.5 text-sm font-serif">

@@ -387,6 +387,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         const matchId = table.matchId;
         if (!matchId) ctx.throw(409, 'no_match');
 
+        // NOTE: boardgame.io default storage is in-memory; if the server restarted, the match may be gone.
+        // In that case, we can't sync from server state.
         const { metadata, state } = await ctx.db.fetch(matchId, { metadata: true, state: true });
         const isGameover = Boolean(metadata?.gameover || state?.ctx?.gameover);
         if (!isGameover) ctx.throw(409, 'not_finished');
@@ -416,6 +418,37 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         });
 
         ctx.body = { ok: true, matchId, winnerPlayerId: winnerStable };
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/table\/(\d+)\/set_winner$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const tid = String(m[1]);
+        const tableId = Number(m[2]);
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        const body = ctx.request.body || {};
+        const seatIdx = body.seat == null ? null : Number(body.seat);
+        if (seatIdx == null || !Number.isFinite(seatIdx)) ctx.throw(400, 'bad_seat');
+        const seat = (table.seats || []).find((s) => Number(s?.seat) === seatIdx);
+        if (!seat?.playerId) ctx.throw(400, 'seat_missing_player');
+        tournamentTableSetResult({
+          tournamentId: tid,
+          tableId,
+          winnerPlayerId: String(seat.playerId),
+          result: {
+            matchId: table.matchId || null,
+            finishedAt: Date.now(),
+            winnerPlayerId: String(seat.playerId),
+            winnerName: seat.name || null,
+            seats: table.seats || null,
+            manual: true,
+          },
+        });
+        ctx.body = { ok: true };
         return;
       }
     }
