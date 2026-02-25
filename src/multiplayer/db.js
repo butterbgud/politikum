@@ -130,6 +130,7 @@ function openDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_tournament_tables_tid ON tournament_tables(tournament_id);
+    CREATE INDEX IF NOT EXISTS idx_tournament_tables_round_id ON tournament_tables(round_id);
   `);
 
   // Migrate older DBs (best effort)
