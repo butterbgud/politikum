@@ -252,11 +252,8 @@ async function listInProgressMatches(db, limit = 20) {
   };
 }
 
-const fs = require('fs');
-const path = require('path');
-
 function killMatchFlatFile(matchId) {
-  const dir = path.join(process.cwd(), 'var', 'bgio');
+  const dir = FLATFILE_DIR;
   let removed = 0;
   let errors = 0;
   try {
