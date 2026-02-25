@@ -1,7 +1,7 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentTableGet, tournamentTableSetMatch, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -329,6 +329,16 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       if (m && ctx.method === 'GET') {
         const round = Number.parseInt(String(ctx.query.round || '1'), 10) || 1;
         const res = tournamentTablesList({ id: m[1], roundIndex: round });
+        if (!res.ok) ctx.throw(404, res.error || 'Not found');
+        ctx.body = res;
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/bracket$/);
+      if (m && ctx.method === 'GET') {
+        const res = tournamentBracketGet({ id: m[1] });
         if (!res.ok) ctx.throw(404, res.error || 'Not found');
         ctx.body = res;
         return;

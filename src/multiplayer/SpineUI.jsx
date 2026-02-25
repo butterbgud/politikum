@@ -87,6 +87,7 @@ function TournamentPage() {
 function TournamentDetailPage({ tournamentId }) {
   const [t, setT] = useState(null);
   const [tables, setTables] = useState([]);
+  const [bracket, setBracket] = useState(null);
   const [err, setErr] = useState('');
   const [tablesErr, setTablesErr] = useState('');
   const [loading, setLoading] = useState(false);
@@ -116,6 +117,15 @@ function TournamentDetailPage({ tournamentId }) {
       } else {
         const json2 = await res2.json();
         setTables(json2.tables || []);
+      }
+
+      // Load full bracket (all rounds) for single_elim.
+      const res3 = await fetch(`${SERVER}/public/tournament/${tournamentId}/bracket`);
+      if (res3.ok) {
+        const json3 = await res3.json();
+        setBracket(json3.rounds || json3.bracket || null);
+      } else if (res3.status === 404) {
+        setBracket(null);
       }
     } catch (e) {
       setErr(e?.message || String(e));
@@ -271,6 +281,48 @@ function TournamentDetailPage({ tournamentId }) {
                 {(!tables.length && !tablesErr) && <div className="text-amber-200/40 italic">No tables yet.</div>}
               </div>
             </div>
+
+            {Array.isArray(bracket) && bracket.length > 0 && (
+              <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black mb-2">Bracket (MVP)</div>
+                <div className="overflow-x-auto">
+                  <div className="flex gap-4 min-w-full">
+                    {bracket.map((round) => (
+                      <div key={round.id || round.roundIndex} className="min-w-[180px]">
+                        <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black mb-2">
+                          Round {round.roundIndex}
+                        </div>
+                        <div className="grid gap-2">
+                          {(round.tables || []).map((tb) => (
+                            <div key={tb.id || tb.tableIndex} className="rounded-xl border border-amber-900/30 bg-black/40 px-3 py-2">
+                              <div className="flex items-baseline justify-between gap-2 mb-1">
+                                <div className="text-[10px] font-mono text-amber-200/70">Table {tb.tableIndex}</div>
+                                <div className="text-[10px] font-mono text-amber-200/50">{tb.status || 'pending'}</div>
+                              </div>
+                              <div className="grid gap-0.5 text-xs font-serif">
+                                {(tb.seats || []).map((s) => (
+                                  <div key={String(s.seat)} className="text-amber-100/90">
+                                    {s.name || s.playerId}
+                                  </div>
+                                ))}
+                                {tb.winnerPlayerId && (
+                                  <div className="mt-1 text-[10px] font-mono text-emerald-300">
+                                    Winner: {tb.result?.winnerName || tb.winnerPlayerId}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {!(round.tables || []).length && (
+                            <div className="text-[10px] font-mono text-amber-200/40 italic">No tables.</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -831,7 +883,7 @@ function Card({ card, onClick, disabled, showCheck }) {
 
 function LobbyBoard({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
-  const isHost = String(playerID) === '0';
+  const isHost = String(playerID) === '0' || String(me?.name || '') === 'You';
   const [name, setName] = useState(() => {
     const cur = String(me?.name || '').trim();
     if (!cur) return '';
@@ -1053,7 +1105,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
   );
 }
 
-function ActionBoard({ G, ctx, moves, playerID }) {
+function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const isHost = String(playerID) === '0';
   // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
 
@@ -2471,14 +2523,20 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             <button
               type="button"
               onClick={() => {
-                // Leave match state (client-side) — simplest reliable way is full reload.
-                try { window.location.hash = ''; } catch {}
-                try { window.location.reload(); } catch {}
+                const m = String(matchID || '').match(/^t_([^_]+)_/);
+                const tid = m ? m[1] : null;
+                if (tid) {
+                  try { window.location.hash = `#/tournament/${tid}`; } catch {}
+                } else {
+                  // Leave match state (client-side) — simplest reliable way is full reload.
+                  try { window.location.hash = ''; } catch {}
+                  try { window.location.reload(); } catch {}
+                }
               }}
               className="px-4 py-2 rounded-full bg-black/60 border border-amber-900/30 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-              title="Back to lobby"
+              title={String(matchID || '').startsWith('t_') ? 'Back to tournament' : 'Back to lobby'}
             >
-              Back to lobby
+              {String(matchID || '').startsWith('t_') ? 'Back to tournament' : 'Back to lobby'}
             </button>
           </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
@@ -3080,7 +3138,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 function Board(props) {
   const phase = String(props?.ctx?.phase || '');
   if (phase === 'lobby') return <LobbyBoard {...props} />;
-  return <ActionBoard {...props} />;
+  return <ActionBoard {...props} matchID={props.matchID} />;
 }
 
 const GameClient = Client({
