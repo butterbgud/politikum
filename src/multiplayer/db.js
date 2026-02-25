@@ -574,7 +574,13 @@ export function tournamentsList({ includeFinished } = {}) {
   return { items: rows.map((r) => {
     let cfg = null;
     try { cfg = r.configJson ? JSON.parse(r.configJson) : null; } catch {}
-    return { id: r.id, name: r.name, type: r.type, tableSize: Number(r.tableSize)||2, status: r.status, createdAt: r.createdAt, startedAt: r.startedAt, finishedAt: r.finishedAt, config: cfg };
+    const tid = String(r.id);
+    let playersCount = 0;
+    try {
+      const row = db.prepare('SELECT COUNT(1) AS n FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL').get(tid);
+      playersCount = Number(row?.n || 0) || 0;
+    } catch {}
+    return { id: r.id, name: r.name, type: r.type, tableSize: Number(r.tableSize)||2, status: r.status, createdAt: r.createdAt, startedAt: r.startedAt, finishedAt: r.finishedAt, config: cfg, playersCount };
   }) };
 }
 
