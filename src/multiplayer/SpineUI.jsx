@@ -177,22 +177,47 @@ function TournamentDetailPage({ tournamentId }) {
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Actions</div>
               <div className="mt-2 flex gap-2">
                 <button type="button" disabled={loading} onClick={async () => {
+                  setLoading(true);
+                  setErr('');
                   try {
                     const tok = String(window.localStorage.getItem('politikum.authToken') || '');
                     if (!tok) throw new Error('Not logged in (beta token missing)');
-                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/join`, { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    let name = '';
+                    try { name = String(window.localStorage.getItem('politikum.playerName') || '').trim(); } catch {}
+                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/join`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ name: name || null }),
+                    });
+                    if (!res.ok) {
+                      let details = '';
+                      try { details = await res.text(); } catch {}
+                      details = String(details || '').trim();
+                      throw new Error(`HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+                    }
                     await load();
                   } catch (e) { setErr(e?.message || String(e)); }
+                  finally { setLoading(false); }
                 }} className="flex-1 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Join tournament</button>
                 <button type="button" disabled={loading} onClick={async () => {
+                  setLoading(true);
+                  setErr('');
                   try {
                     const tok = String(window.localStorage.getItem('politikum.authToken') || '');
                     if (!tok) throw new Error('Not logged in (beta token missing)');
-                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/leave`, { method: 'POST', headers: { Authorization: `Bearer ${tok}` } });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/leave`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${tok}` },
+                    });
+                    if (!res.ok) {
+                      let details = '';
+                      try { details = await res.text(); } catch {}
+                      details = String(details || '').trim();
+                      throw new Error(`HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+                    }
                     await load();
                   } catch (e) { setErr(e?.message || String(e)); }
+                  finally { setLoading(false); }
                 }} className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-xs uppercase tracking-widest">Leave</button>
               </div>
               <div className="mt-2 text-[10px] font-mono text-amber-200/50">Tip: if Join/Leave errors with “Not logged in”, open /#/beta and log in first.</div>
