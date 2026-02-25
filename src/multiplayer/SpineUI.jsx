@@ -126,7 +126,7 @@ function TournamentDetailPage({ tournamentId }) {
             <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Actions</div>
               <div className="mt-2 flex gap-2">
-                <button type="button" onClick={async () => {
+                <button type="button" disabled={loading} onClick={async () => {
                   try {
                     const tok = String(window.localStorage.getItem('politikum.authToken') || '');
                     if (!tok) throw new Error('Not logged in (beta token missing)');
@@ -134,8 +134,8 @@ function TournamentDetailPage({ tournamentId }) {
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     await load();
                   } catch (e) { setErr(e?.message || String(e)); }
-                }} className="flex-1 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest">Join tournament</button>
-                <button type="button" onClick={async () => {
+                }} className="flex-1 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Join tournament</button>
+                <button type="button" disabled={loading} onClick={async () => {
                   try {
                     const tok = String(window.localStorage.getItem('politikum.authToken') || '');
                     if (!tok) throw new Error('Not logged in (beta token missing)');
@@ -143,8 +143,9 @@ function TournamentDetailPage({ tournamentId }) {
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     await load();
                   } catch (e) { setErr(e?.message || String(e)); }
-                }} className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest">Leave</button>
+                }} className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-xs uppercase tracking-widest">Leave</button>
               </div>
+              <div className="mt-2 text-[10px] font-mono text-amber-200/50">Tip: if Join/Leave errors with “Not logged in”, open /#/beta and log in first.</div>
             </div>
 
             <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
