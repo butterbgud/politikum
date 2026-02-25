@@ -1,4 +1,6 @@
-import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
+import { Server, Origins, FlatFile } from 'boardgame.io/dist/cjs/server.js';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
 import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
@@ -10,8 +12,13 @@ function clampLimit(v, dflt, max) {
 
 let lastAdminSyncAt = null;
 
+// Persist boardgame.io matches across restarts (required for tournament result sync).
+const FLATFILE_DIR = process.env.FLATFILE_DIR || path.join(process.cwd(), 'var', 'bgio');
+try { fs.mkdirSync(FLATFILE_DIR, { recursive: true }); } catch {}
+
 const server = Server({
   games: [CitadelGame],
+  db: new FlatFile({ dir: FLATFILE_DIR }),
   origins: [
     Origins.LOCALHOST_IN_DEVELOPMENT,
     // Current LAN (router reshuffle)
