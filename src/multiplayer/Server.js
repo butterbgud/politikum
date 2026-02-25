@@ -1,6 +1,6 @@
 import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -303,6 +303,73 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       return;
     }
 
+
+
+    // Tournaments (public)
+    if (ctx.path === '/public/tournaments' && ctx.method === 'GET') {
+      const includeFinished = String(ctx.query.includeFinished || '') === '1';
+      ctx.body = tournamentsList({ includeFinished });
+      return;
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)$/);
+      if (m && ctx.method === 'GET') {
+        const t = tournamentGet({ id: m[1] });
+        if (!t) ctx.throw(404, 'Not found');
+        ctx.body = { ok: true, tournament: t };
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/(join|leave)$/);
+      if (m && ctx.method === 'POST') {
+        const tid = m[1];
+        const action = m[2];
+        const auth = String(ctx.request.headers['authorization'] || '');
+        const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+        const sess = authGetSession(token);
+        if (!sess) ctx.throw(401, 'Unauthorized');
+
+        if (action === 'join') {
+          const body = ctx.request.body || {};
+          const name = (body.name == null) ? null : String(body.name || '').trim();
+          const res = tournamentJoin({ id: tid, playerId: sess.playerId, name: name || sess.email || null });
+          if (!res.ok) ctx.throw(409, res.error || 'join_failed');
+          ctx.body = res;
+          return;
+        }
+        if (action === 'leave') {
+          const res = tournamentLeave({ id: tid, playerId: sess.playerId });
+          if (!res.ok) ctx.throw(409, res.error || 'leave_failed');
+          ctx.body = res;
+          return;
+        }
+      }
+    }
+
+    // Tournaments (admin)
+    if (ctx.path === '/admin/tournament/create' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      const body = ctx.request.body || {};
+      ctx.body = tournamentCreate(body);
+      return;
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/(open_registration|close_registration|cancel)$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const tid = m[1];
+        const action = m[2];
+        const status = action === 'open_registration' ? 'registering' : action === 'close_registration' ? 'running' : 'canceled';
+        const res = tournamentSetStatus({ id: tid, status });
+        if (!res.ok) ctx.throw(404, res.error || 'not_found');
+        ctx.body = res;
+        return;
+      }
+    }
     // Public leaderboard: safe to embed in lobby screen (no token).
     if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
       const limit = clampLimit(ctx.query.limit, 10, 50);

@@ -80,6 +80,56 @@ function openDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_games_finished_at ON games(finished_at);
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
+
+    -- tournaments (MVP)
+    CREATE TABLE IF NOT EXISTS tournaments (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      type TEXT,
+      table_size INTEGER,
+      status TEXT,
+      created_at INTEGER NOT NULL,
+      started_at INTEGER,
+      finished_at INTEGER,
+      config_json TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournaments_created_at ON tournaments(created_at);
+    CREATE INDEX IF NOT EXISTS idx_tournaments_status ON tournaments(status);
+
+    CREATE TABLE IF NOT EXISTS tournament_players (
+      tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      player_id TEXT NOT NULL,
+      name TEXT,
+      joined_at INTEGER NOT NULL,
+      dropped_at INTEGER,
+      UNIQUE(tournament_id, player_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournament_players_tid ON tournament_players(tournament_id);
+
+    CREATE TABLE IF NOT EXISTS tournament_rounds (
+      id INTEGER PRIMARY KEY,
+      tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      round_index INTEGER NOT NULL,
+      status TEXT,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournament_rounds_tid ON tournament_rounds(tournament_id);
+
+    CREATE TABLE IF NOT EXISTS tournament_tables (
+      id INTEGER PRIMARY KEY,
+      tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      round_id INTEGER REFERENCES tournament_rounds(id) ON DELETE CASCADE,
+      table_index INTEGER NOT NULL,
+      match_id TEXT,
+      status TEXT,
+      winner_player_id TEXT,
+      result_json TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournament_tables_tid ON tournament_tables(tournament_id);
   `);
 
   // Migrate older DBs (best effort)
@@ -489,4 +539,90 @@ export function getGames({ limit, offset }) {
     items: withPlayers,
     total: totalRow.total ?? 0,
   };
+}
+
+
+// -----------------------
+// Tournaments (MVP)
+// -----------------------
+
+function tournamentId() {
+  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+}
+
+export function tournamentsList({ includeFinished } = {}) {
+  const db = sqlite;
+  const inc = Boolean(includeFinished);
+  const where = inc ? '' : "WHERE status IN ('registering','running')";
+  const sql =
+    'SELECT id, name, type, table_size AS tableSize, status, created_at AS createdAt, started_at AS startedAt, finished_at AS finishedAt, config_json AS configJson\n' +
+    'FROM tournaments\n' +
+    (where ? (where + '\n') : '') +
+    'ORDER BY created_at DESC\n' +
+    'LIMIT 100;';
+
+  const rows = db.prepare(sql).all();
+  return { items: rows.map((r) => {
+    let cfg = null;
+    try { cfg = r.configJson ? JSON.parse(r.configJson) : null; } catch {}
+    return { id: r.id, name: r.name, type: r.type, tableSize: Number(r.tableSize)||2, status: r.status, createdAt: r.createdAt, startedAt: r.startedAt, finishedAt: r.finishedAt, config: cfg };
+  }) };
+}
+
+export function tournamentGet({ id }) {
+  const db = sqlite;
+  const tid = String(id||'').trim();
+  const t = db.prepare('SELECT id, name, type, table_size AS tableSize, status, created_at AS createdAt, started_at AS startedAt, finished_at AS finishedAt, config_json AS configJson FROM tournaments WHERE id=?').get(tid);
+  if (!t) return null;
+  let cfg=null;
+  try { cfg = t.configJson ? JSON.parse(t.configJson) : null; } catch {}
+  const players = db.prepare('SELECT player_id AS playerId, name, joined_at AS joinedAt, dropped_at AS droppedAt FROM tournament_players WHERE tournament_id=? ORDER BY joined_at ASC;').all(tid);
+  return { id: t.id, name: t.name, type: t.type, tableSize: Number(t.tableSize)||2, status: t.status, createdAt: t.createdAt, startedAt: t.startedAt, finishedAt: t.finishedAt, config: cfg, players: players.map((p)=>({playerId:p.playerId,name:p.name,joinedAt:p.joinedAt,droppedAt:p.droppedAt})), rounds: [], tables: [] };
+}
+
+export function tournamentCreate(body = {}) {
+  const db = sqlite;
+  const id = tournamentId();
+  const createdAt = nowMs();
+  const cfg = { name: String(body.name||'').trim()||'Tournament', type: String(body.type||'single_elim'), tableSize: Number(body.tableSize)||2, maxPlayers: body.maxPlayers==null?null:(Number(body.maxPlayers)||null), seeding: String(body.seeding||'random'), allowSpectators: Boolean(body.allowSpectators) };
+  db.prepare('INSERT INTO tournaments (id,name,type,table_size,status,created_at,started_at,finished_at,config_json) VALUES (@id,@name,@type,@table_size,@status,@created_at,NULL,NULL,@config_json)').run({ id, name: cfg.name, type: cfg.type, table_size: cfg.tableSize, status: 'registering', created_at: createdAt, config_json: JSON.stringify(cfg) });
+  return { ok: true, tournament: tournamentGet({ id }) };
+}
+
+export function tournamentSetStatus({ id, status }) {
+  const db = sqlite;
+  const tid = String(id||'').trim();
+  const row = db.prepare('SELECT id FROM tournaments WHERE id=?').get(tid);
+  if (!row) return { ok:false, error:'not_found' };
+  const next = String(status||'').trim();
+  if (!['registering','running','finished','canceled'].includes(next)) return { ok:false, error:'bad_status' };
+  const now = nowMs();
+  const started = next==='running' ? now : null;
+  const finished = (next==='finished'||next==='canceled') ? now : null;
+  db.prepare('UPDATE tournaments SET status=@status, started_at=COALESCE(started_at,@started), finished_at=CASE WHEN @finished IS NULL THEN finished_at ELSE @finished END WHERE id=@id').run({ id: tid, status: next, started, finished });
+  return { ok:true, tournament: tournamentGet({ id: tid }) };
+}
+
+export function tournamentJoin({ id, playerId, name }) {
+  const db = sqlite;
+  const tid=String(id||'').trim();
+  const pid=String(playerId||'').trim();
+  if (!tid||!pid) return { ok:false, error:'bad_args' };
+  const t = db.prepare('SELECT status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok:false, error:'not_found' };
+  if (String(t.status)!=='registering') return { ok:false, error:'not_registering' };
+  db.prepare('INSERT INTO tournament_players (tournament_id,player_id,name,joined_at,dropped_at) VALUES (@t,@p,@n,@j,NULL) ON CONFLICT(tournament_id,player_id) DO UPDATE SET dropped_at=NULL, name=COALESCE(excluded.name,tournament_players.name)').run({ t: tid, p: pid, n: String(name||'').trim()||null, j: nowMs() });
+  return { ok:true, tournament: tournamentGet({ id: tid }) };
+}
+
+export function tournamentLeave({ id, playerId }) {
+  const db = sqlite;
+  const tid=String(id||'').trim();
+  const pid=String(playerId||'').trim();
+  if (!tid||!pid) return { ok:false, error:'bad_args' };
+  const t = db.prepare('SELECT status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok:false, error:'not_found' };
+  if (String(t.status)!=='registering') return { ok:false, error:'not_registering' };
+  db.prepare('UPDATE tournament_players SET dropped_at=@d WHERE tournament_id=@t AND player_id=@p').run({ t: tid, p: pid, d: nowMs() });
+  return { ok:true, tournament: tournamentGet({ id: tid }) };
 }
