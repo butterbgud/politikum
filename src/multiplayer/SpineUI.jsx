@@ -444,7 +444,7 @@ function AdminTournamentPage() {
                   <td className="px-2 py-2 align-top">
                     <div className="font-black">{t.name}</div>
                     <div className="text-[10px] text-amber-200/40">{t.id} · table {t.tableSize}</div>
-                    <button type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="mt-1 text-[10px] uppercase tracking-widest text-amber-200/70 hover:text-amber-50 font-black">Open public page</button>
+                    <a href={`#/tournament/${t.id}`} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10px] uppercase tracking-widest text-amber-200/70 hover:text-amber-50 font-black">Open public page</a>
                   </td>
                   <td className="px-2 py-2 align-top whitespace-nowrap">{t.status}</td>
                   <td className="px-2 py-2 align-top whitespace-nowrap">
