@@ -42,7 +42,7 @@ function TournamentPage() {
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
-            <div className="text-amber-100/70 font-serif mt-1">Tournament</div>
+            <div className="text-amber-100/70 font-serif mt-1">Tournaments</div>
           </div>
           <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
         </div>
