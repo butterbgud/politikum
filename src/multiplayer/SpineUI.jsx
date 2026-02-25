@@ -475,7 +475,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Say something…"
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+                  className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
                 />
                 <button
                   type="submit"
@@ -490,7 +490,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
           {/* Side panel */}
           <div className="grid gap-4">
-            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
+            <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
               <div className="mt-2 flex gap-2">
                 <input
@@ -498,12 +498,12 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                   onChange={(e) => setBetaPassword(e.target.value)}
                   placeholder="beta password"
                   type="password"
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
+                  className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
                 />
                 <button
                   type="button"
                   onClick={doBetaLogin}
-                  className="px-4 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
+                  className="px-4 py-1.5 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
                 >
                   Login
                 </button>
@@ -515,54 +515,6 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
             </div>
           </div>
         </div>
-            {/* Seats */}
-            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
-              <div className="mt-3 grid gap-2">
-                {(G.players || []).filter((p) => !!p?.active).map((p) => {
-                  const active = !!p.active;
-                  const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
-                  return (
-                    <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
-                      <div className="flex items-center gap-2">
-                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
-                          {p.name || `Seat ${p.id}`}
-                        </div>
-                        <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
-                        {!active && <div className="text-[10px] font-mono text-amber-900/50">(empty)</div>}
-                        {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
-                      </div>
-
-                      {isHost && String(p.id) !== '0' && active && bot && (
-                        <button
-                          onClick={() => moves.removePlayer(String(p.id))}
-                          className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {isHost && (
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => moves.addBot()}
-                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
-                  >
-                    Add bot
-                  </button>
-                  <button
-                    onClick={() => moves.startGame()}
-                    className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
-                  >
-                    Start game
-                  </button>
-                </div>
-              )}
-            </div>
         <div className="mt-5 text-[11px] text-amber-200/40 font-mono">phase: {String(ctx.phase || '')}</div>
       </div>
     </div>
@@ -1592,7 +1544,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
               <div className="absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-6 pointer-events-auto">
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[12px] shadow-2xl"
+                  className="px-4 py-1.5 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[12px] shadow-2xl"
                   onClick={() => { try { moves.playAction(c8.id); } catch {} }}
                   title="(1)"
                 >
@@ -2257,6 +2209,54 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           </div>
           <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[168px] overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
+            {/* Seats */}
+            <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
+              <div className="mt-3 grid gap-2">
+                {(G.players || []).filter((p) => !!p?.active).map((p) => {
+                  const active = !!p.active;
+                  const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                  return (
+                    <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                      <div className="flex items-center gap-2">
+                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
+                          {p.name || `Seat ${p.id}`}
+                        </div>
+                        <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
+                        {!active && <div className="text-[10px] font-mono text-amber-900/50">(empty)</div>}
+                        {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                      </div>
+
+                      {isHost && String(p.id) !== '0' && active && bot && (
+                        <button
+                          onClick={() => moves.removePlayer(String(p.id))}
+                          className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {isHost && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => moves.addBot()}
+                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                  >
+                    Add bot
+                  </button>
+                  <button
+                    onClick={() => moves.startGame()}
+                    className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                  >
+                    Start game
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
