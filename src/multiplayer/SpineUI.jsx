@@ -299,7 +299,38 @@ function AdminPage() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-2 py-2 align-top whitespace-nowrap text-amber-200/70">{String(m.matchId).slice(0, 8)}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-200/70">{String(m.matchId).slice(0, 8)}</span>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={async () => {
+                            try {
+                              if (!token) { setError('Set X-Admin-Token first.'); return; }
+                              const ok = window.confirm(`Kill match ${String(m.matchId).slice(0, 8)}?`);
+                              if (!ok) return;
+                              setLoading(true);
+                              setError('');
+                              const res = await fetch(`${SERVER}/admin/match/${m.matchId}/kill`, {
+                                method: 'POST',
+                                headers: { 'X-Admin-Token': token },
+                              });
+                              if (!res.ok) throw new Error(`kill: HTTP ${res.status}`);
+                              await fetchAdmin();
+                            } catch (e) {
+                              setError(e?.message || String(e));
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}
+                          className="px-2 py-0.5 rounded-md border border-red-300/20 bg-red-950/40 hover:bg-red-950/60 text-red-100 text-[10px] font-mono font-black"
+                          title="Delete match state from storage"
+                        >
+                          KILL
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {liveMatches.length === 0 && (
