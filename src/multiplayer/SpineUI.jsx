@@ -1336,6 +1336,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
     );
   };
+  const [goDetails, setGoDetails] = useState(() => ({})); // pid -> bool
+
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
     try { return localStorage.getItem('politikum:soundOn') !== '0'; } catch { return true; }
@@ -3046,25 +3048,35 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       })}
                     </div>
 
-                    {/* Per-card VP breakdown (base + tokens + passives) */}
-                    <div className="w-full max-w-[520px] px-1">
-                      <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
-                        {coal.map((c) => {
-                          const base = Number(c.baseVp ?? 0);
-                          const tok = Number(c.vpDelta || 0);
-                          const pas = Number(c.passiveVpDelta || 0);
-                          const total = Number(c.vp ?? (base + tok + pas));
-                          return (
-                            <div key={c.id} className="flex items-baseline justify-between gap-3">
-                              <span className="truncate">{String(c.name || c.id)}</span>
-                              <span className="shrink-0 tabular-nums">
-                                {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
-                              </span>
-                            </div>
-                          );
-                        })}
+                    <button
+                      type="button"
+                      className="mt-2 text-[11px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-4"
+                      onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
+                    >
+                      Детали
+                    </button>
+
+                    {/* Per-card VP breakdown (hidden by default) */}
+                    {!!goDetails?.[pid] && (
+                      <div className="w-full max-w-[520px] px-1">
+                        <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
+                          {coal.map((c) => {
+                            const base = Number(c.baseVp ?? 0);
+                            const tok = Number(c.vpDelta || 0);
+                            const pas = Number(c.passiveVpDelta || 0);
+                            const total = Number(c.vp ?? (base + tok + pas));
+                            return (
+                              <div key={c.id} className="flex items-baseline justify-between gap-3">
+                                <span className="truncate">{String(c.name || c.id)}</span>
+                                <span className="shrink-0 tabular-nums">
+                                  {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               };
