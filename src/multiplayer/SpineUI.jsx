@@ -4150,9 +4150,22 @@ export default function SpineUI() {
     try { document.title = 'Politikum'; } catch {}
   }, []);
 
-  const [matchID, setMatchID] = useState(null);
-  const [playerID, setPlayerID] = useState(null);
-  const [credentials, setCredentials] = useState(null);
+  const [matchID, setMatchID] = useState(() => {
+    try { return window.localStorage.getItem('politikum.lastMatchID') || null; } catch {}
+    return null;
+  });
+  const [playerID, setPlayerID] = useState(() => {
+    try { return window.localStorage.getItem('politikum.lastPlayerID') || null; } catch {}
+    return null;
+  });
+  const [credentials, setCredentials] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem('politikum.lastCredentials');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [hash, setHash] = useState(() => window.location.hash || '');
 
   useEffect(() => {
@@ -4160,6 +4173,18 @@ export default function SpineUI() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  // Persist last joined match so refresh doesn't "lose" the game.
+  useEffect(() => {
+    try {
+      if (matchID) window.localStorage.setItem('politikum.lastMatchID', String(matchID));
+      else window.localStorage.removeItem('politikum.lastMatchID');
+      if (playerID != null) window.localStorage.setItem('politikum.lastPlayerID', String(playerID));
+      else window.localStorage.removeItem('politikum.lastPlayerID');
+      if (credentials) window.localStorage.setItem('politikum.lastCredentials', JSON.stringify(credentials));
+      else window.localStorage.removeItem('politikum.lastCredentials');
+    } catch {}
+  }, [matchID, playerID, credentials]);
 
 
   if (hash.startsWith('#/tournament/')) {
