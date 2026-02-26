@@ -2346,7 +2346,10 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           </div>
           <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[168px] overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
-            {/* Seats */}
+          </div>
+
+          {/* Seats (kept OUT of the log scroller) */}
+          <div className="px-3 pb-3">
             <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
               <div className="mt-3 grid gap-2">
