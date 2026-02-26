@@ -419,6 +419,12 @@ function AdminTournamentPage() {
     try { window.localStorage.setItem('politikum.adminToken', value); } catch {}
   };
 
+  useEffect(() => {
+    if (!token) return;
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   const load = async () => {
     setLoading(true);
     setError('');
@@ -659,6 +665,12 @@ function AdminPage() {
       window.localStorage.setItem('politikum.adminToken', value);
     } catch {}
   };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchAdmin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const fetchAdmin = async () => {
     if (!token) {
