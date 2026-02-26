@@ -1614,8 +1614,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       // Response hotkeys
       if (responseKind && key === '2') {
-        // skip/decline response window
-        if (responseActive && String(response?.playedBy) !== String(playerID)) {
+        // skip/decline response window (allow actor too)
+        if (responseActive) {
           try { moves.skipResponseWindow(); } catch {}
         }
         return;
@@ -2417,24 +2417,27 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             </div>
           )}
 
-          {/* cancel_persona (Action 8): show the card in the center with left/right options */}
-          {responseKind === 'cancel_persona' && haveAction8 && (() => {
-            const c8 = (me?.hand || []).find((c) => c?.type === 'action' && String(c.id).split('#')[0] === 'action_8');
-            if (!c8) return null;
+          {/* cancel_persona (Action 8): response window UI. Always show SKIP (actor may need it too). */}
+          {responseKind === 'cancel_persona' && (() => {
+            const c8 = (me?.hand || []).find((c) => c?.type === 'action' && String(c.id).split('#')[0] === 'action_8') || null;
             return (
               <div className="absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-6 pointer-events-auto">
-                <button
-                  type="button"
-                  className="px-4 py-1.5 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[12px] shadow-2xl"
-                  onClick={() => { try { moves.playAction(c8.id); } catch {} }}
-                  title="(1)"
-                >
-                  USE ABILITY
-                </button>
+                {c8 && (
+                  <>
+                    <button
+                      type="button"
+                      className="px-4 py-1.5 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[12px] shadow-2xl"
+                      onClick={() => { try { moves.playAction(c8.id); } catch {} }}
+                      title="(1)"
+                    >
+                      USE ABILITY
+                    </button>
 
-                <div className="w-48 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
-                  <img src={c8.img} alt={c8.id} className="w-full h-full object-cover" draggable={false} />
-                </div>
+                    <div className="w-48 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
+                      <img src={c8.img} alt={c8.id} className="w-full h-full object-cover" draggable={false} />
+                    </div>
+                  </>
+                )}
 
                 <button
                   type="button"
