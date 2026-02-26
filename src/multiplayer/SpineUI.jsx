@@ -1828,7 +1828,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   }, [G.lastAction?.id]);
 
   const copyText = (txt) => {
-    try { navigator.clipboard?.writeText?.(String(txt ?? '')); } catch {}
+    const s = String(txt ?? '');
+    try {
+      const fn = navigator.clipboard?.writeText;
+      if (fn) { fn.call(navigator.clipboard, s); return true; }
+    } catch {}
+    try { window.prompt('Copy to clipboard:', s); return false; } catch {}
+    return false;
   };
 
   const buildBugReport = () => {
