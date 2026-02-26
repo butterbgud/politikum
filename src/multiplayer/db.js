@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const DEFAULT_DB_PATH = process.env.POLITIKUM_DB_PATH || path.resolve('var', 'politikum.sqlite');
 
@@ -80,6 +81,62 @@ function openDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_games_finished_at ON games(finished_at);
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
+
+    -- tournaments (MVP)
+    CREATE TABLE IF NOT EXISTS tournaments (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      type TEXT,
+      table_size INTEGER,
+      status TEXT,
+      created_at INTEGER NOT NULL,
+      started_at INTEGER,
+      finished_at INTEGER,
+      config_json TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournaments_created_at ON tournaments(created_at);
+    CREATE INDEX IF NOT EXISTS idx_tournaments_status ON tournaments(status);
+
+    CREATE TABLE IF NOT EXISTS tournament_players (
+      tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      player_id TEXT NOT NULL,
+      name TEXT,
+      joined_at INTEGER NOT NULL,
+      dropped_at INTEGER,
+      UNIQUE(tournament_id, player_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournament_players_tid ON tournament_players(tournament_id);
+    CREATE INDEX IF NOT EXISTS idx_tournament_players_player_id ON tournament_players(player_id);
+
+    CREATE TABLE IF NOT EXISTS tournament_rounds (
+      id INTEGER PRIMARY KEY,
+      tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      round_index INTEGER NOT NULL,
+      status TEXT,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournament_rounds_tid ON tournament_rounds(tournament_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_tournament_rounds_tid_round ON tournament_rounds(tournament_id, round_index);
+
+
+    CREATE TABLE IF NOT EXISTS tournament_tables (
+      id INTEGER PRIMARY KEY,
+      tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      round_id INTEGER REFERENCES tournament_rounds(id) ON DELETE CASCADE,
+      table_index INTEGER NOT NULL,
+      match_id TEXT,
+      status TEXT,
+      winner_player_id TEXT,
+      result_json TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tournament_tables_tid ON tournament_tables(tournament_id);
+    CREATE INDEX IF NOT EXISTS idx_tournament_tables_round_id ON tournament_tables(round_id);
+    CREATE INDEX IF NOT EXISTS idx_tournament_tables_tid_round_id ON tournament_tables(tournament_id, round_id);
+    CREATE INDEX IF NOT EXISTS idx_tournament_tables_match_id ON tournament_tables(match_id);
   `);
 
   // Migrate older DBs (best effort, but avoid throwing during startup)
@@ -374,7 +431,7 @@ export function recordGameFinished({
       app_version: appVersion ?? null,
       engine_version: engineVersion ?? null,
       num_players: players?.length ?? null,
-      num_bots: players?.filter(p => p.isBot).length ?? 0,
+      num_bots: players?.filter((p) => p.isBot).length ?? 0,
       winner_player_id: winnerPlayerId ?? null,
       winner_name: winnerName ?? null,
       result_json: resultJson ?? null,
@@ -396,6 +453,64 @@ export function recordGameFinished({
         });
       }
     }
+
+    // If this match belongs to a tournament table, persist the result there too.
+    try {
+      if (!resultJson) return;
+      let parsed = null;
+      try {
+        parsed = JSON.parse(resultJson);
+      } catch {
+        parsed = null;
+      }
+      const tMeta = parsed?.metadata?.tournament;
+      const tid = tMeta?.id ? String(tMeta.id).trim() : '';
+      const tableIdRaw = tMeta?.tableId;
+      const tableId = Number(tableIdRaw);
+      if (!tid || !Number.isFinite(tableId)) return;
+
+      const table = db
+        .prepare('SELECT id, result_json AS resultJson FROM tournament_tables WHERE tournament_id=? AND id=?')
+        .get(tid, tableId);
+      if (!table) return;
+
+      let existing = {};
+      if (table.resultJson) {
+        try {
+          existing = JSON.parse(table.resultJson) || {};
+        } catch {
+          existing = {};
+        }
+      }
+
+      const resultPayload = {
+        matchId,
+        winnerPlayerId: winnerPlayerId ?? null,
+        winnerName: winnerName ?? null,
+        finishedAt,
+        players: Array.isArray(players)
+          ? players.map((p) => ({
+              playerId: p.playerId ?? null,
+              name: p.name ?? null,
+              isBot: !!p.isBot,
+            }))
+          : [],
+      };
+
+      const merged = {
+        ...existing,
+        result: resultPayload,
+      };
+
+      db.prepare(
+        'UPDATE tournament_tables SET status=@status, winner_player_id=@winner, result_json=@json WHERE id=@id',
+      ).run({
+        status: 'finished',
+        winner: winnerPlayerId ?? null,
+        json: JSON.stringify(merged),
+        id: table.id,
+      });
+    } catch {}
   });
 
   txn();
@@ -403,7 +518,9 @@ export function recordGameFinished({
   // Log once per successful insert.
   const gameRow = db.prepare('SELECT id FROM games WHERE match_id = ?').get(matchId);
   if (gameRow) {
-    try { applyEloForGameId(gameRow.id); } catch {}
+    try {
+      applyEloForGameId(gameRow.id);
+    } catch {}
     console.log(
       `Recorded game matchId=${matchId} winner=${winnerName ?? 'n/a'} finishedAt=${finishedAt}`,
     );
@@ -509,4 +626,331 @@ export function getGames({ limit, offset }) {
     items: withPlayers,
     total: totalRow.total ?? 0,
   };
+}
+
+
+// -----------------------
+// Tournaments (MVP)
+// -----------------------
+
+function tournamentId() {
+  // Use crypto for lower collision risk vs Math.random.
+  // Keep it short-ish for URLs/logs.
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+}
+
+export function tournamentsList({ includeFinished } = {}) {
+  const db = sqlite;
+  const inc = Boolean(includeFinished);
+  const where = inc ? '' : "WHERE status IN ('registering','running')";
+  const sql =
+    'SELECT id, name, type, table_size AS tableSize, status, created_at AS createdAt, started_at AS startedAt, finished_at AS finishedAt, config_json AS configJson\n' +
+    'FROM tournaments\n' +
+    (where ? (where + '\n') : '') +
+    'ORDER BY created_at DESC\n' +
+    'LIMIT 100;';
+
+  const rows = db.prepare(sql).all();
+  return { items: rows.map((r) => {
+    let cfg = null;
+    try { cfg = r.configJson ? JSON.parse(r.configJson) : null; } catch {}
+    const tid = String(r.id);
+    let playersCount = 0;
+    try {
+      const row = db.prepare('SELECT COUNT(1) AS n FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL').get(tid);
+      playersCount = Number(row?.n || 0) || 0;
+    } catch {}
+    return { id: r.id, name: r.name, type: r.type, tableSize: Number(r.tableSize)||2, status: r.status, createdAt: r.createdAt, startedAt: r.startedAt, finishedAt: r.finishedAt, config: cfg, playersCount };
+  }) };
+}
+
+export function tournamentGet({ id }) {
+  const db = sqlite;
+  const tid = String(id||'').trim();
+  const t = db.prepare('SELECT id, name, type, table_size AS tableSize, status, created_at AS createdAt, started_at AS startedAt, finished_at AS finishedAt, config_json AS configJson FROM tournaments WHERE id=?').get(tid);
+  if (!t) return null;
+  let cfg=null;
+  try { cfg = t.configJson ? JSON.parse(t.configJson) : null; } catch {}
+  const players = db.prepare('SELECT player_id AS playerId, name, joined_at AS joinedAt, dropped_at AS droppedAt FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC;').all(tid);
+  return { id: t.id, name: t.name, type: t.type, tableSize: Number(t.tableSize)||2, status: t.status, createdAt: t.createdAt, startedAt: t.startedAt, finishedAt: t.finishedAt, config: cfg, players: players.map((p)=>({playerId:p.playerId,name:p.name,joinedAt:p.joinedAt,droppedAt:p.droppedAt})), rounds: [], tables: [] };
+}
+
+export function tournamentTablesList({ id, roundIndex } = {}) {
+  const db = sqlite;
+  const tid = String(id || '').trim();
+  const ri = Number(roundIndex);
+  const rIndex = Number.isFinite(ri) ? ri : 1;
+  if (!tid || rIndex < 1) return { ok: false, error: 'bad_args' };
+
+  const round = db.prepare('SELECT id, round_index AS roundIndex, status FROM tournament_rounds WHERE tournament_id=? AND round_index=?').get(tid, rIndex);
+  if (!round) return { ok: false, error: 'round_not_found' };
+
+  const rows = db.prepare(
+    'SELECT id, table_index AS tableIndex, match_id AS matchId, status, winner_player_id AS winnerPlayerId, result_json AS resultJson\n' +
+    'FROM tournament_tables\n' +
+    'WHERE tournament_id=? AND round_id=?\n' +
+    'ORDER BY table_index ASC;'
+  ).all(tid, round.id);
+
+  const tables = rows.map((r) => {
+    let seats = [];
+    let result = null;
+    try {
+      const res = r.resultJson ? JSON.parse(r.resultJson) : null;
+      seats = Array.isArray(res?.seats) ? res.seats : [];
+      if (res?.result) result = res.result;
+    } catch {}
+    return {
+      id: r.id,
+      tableIndex: Number(r.tableIndex) || 0,
+      matchId: r.matchId || null,
+      status: r.status || null,
+      winnerPlayerId: r.winnerPlayerId || null,
+      seats,
+      result,
+    };
+  });
+
+  return { ok: true, tournamentId: tid, round: { id: round.id, roundIndex: round.roundIndex, status: round.status }, tables };
+}
+
+export function tournamentBracketGet({ id } = {}) {
+  const db = sqlite;
+  const tid = String(id || '').trim();
+  if (!tid) return { ok: false, error: 'bad_args' };
+
+  const rounds = db
+    .prepare(
+      'SELECT id, round_index AS roundIndex, status, created_at AS createdAt\n' +
+        'FROM tournament_rounds\n' +
+        'WHERE tournament_id=?\n' +
+        'ORDER BY round_index ASC;',
+    )
+    .all(tid);
+
+  const result = rounds.map((r) => {
+    const rows = db
+      .prepare(
+        'SELECT id, table_index AS tableIndex, match_id AS matchId, status, winner_player_id AS winnerPlayerId, result_json AS resultJson\n' +
+          'FROM tournament_tables\n' +
+          'WHERE tournament_id=? AND round_id=?\n' +
+          'ORDER BY table_index ASC;',
+      )
+      .all(tid, r.id);
+
+    const tables = rows.map((tb) => {
+      let seats = [];
+      let resultInfo = null;
+      try {
+        const res = tb.resultJson ? JSON.parse(tb.resultJson) : null;
+        seats = Array.isArray(res?.seats) ? res.seats : [];
+        if (res?.result) resultInfo = res.result;
+      } catch {}
+      return {
+        id: tb.id,
+        tableIndex: Number(tb.tableIndex) || 0,
+        matchId: tb.matchId || null,
+        status: tb.status || null,
+        winnerPlayerId: tb.winnerPlayerId || null,
+        seats,
+        result: resultInfo,
+      };
+    });
+
+    return {
+      id: r.id,
+      roundIndex: Number(r.roundIndex) || 0,
+      status: r.status || null,
+      createdAt: r.createdAt || null,
+      tables,
+    };
+  });
+
+  return { ok: true, tournamentId: tid, rounds: result };
+}
+
+export function tournamentTableGet({ tournamentId, tableId } = {}) {
+  const db = sqlite;
+  const tid = String(tournamentId || '').trim();
+  const id = Number(tableId);
+  if (!tid || !Number.isFinite(id)) return null;
+
+  const row = db.prepare(
+    'SELECT id, tournament_id AS tournamentId, table_index AS tableIndex, match_id AS matchId, status, result_json AS resultJson\n' +
+    'FROM tournament_tables\n' +
+    'WHERE tournament_id=? AND id=?'
+  ).get(tid, id);
+
+  if (!row) return null;
+
+  let seats = [];
+  try {
+    const res = row.resultJson ? JSON.parse(row.resultJson) : null;
+    seats = Array.isArray(res?.seats) ? res.seats : [];
+  } catch {}
+
+  return {
+    id: row.id,
+    tournamentId: row.tournamentId,
+    tableIndex: Number(row.tableIndex) || 0,
+    matchId: row.matchId || null,
+    status: row.status || null,
+    seats,
+  };
+}
+
+export function tournamentTableSetMatch({ tournamentId, tableId, matchId, status } = {}) {
+  const db = sqlite;
+  const tid = String(tournamentId || '').trim();
+  const id = Number(tableId);
+  const mid = matchId == null ? null : String(matchId);
+  const st = status == null ? null : String(status);
+  if (!tid || !Number.isFinite(id) || !mid) return { ok: false, error: 'bad_args' };
+
+  const res = db.prepare(
+    'UPDATE tournament_tables SET match_id=@m, status=@s WHERE tournament_id=@t AND id=@id'
+  ).run({ t: tid, id, m: mid, s: st });
+
+  if (!res.changes) return { ok: false, error: 'not_found' };
+  return { ok: true };
+}
+
+export function tournamentTableSetResult({ tournamentId, tableId, winnerPlayerId, result } = {}) {
+  const db = sqlite;
+  const tid = String(tournamentId || '').trim();
+  const id = Number(tableId);
+  const winner = winnerPlayerId == null ? null : String(winnerPlayerId || '').trim() || null;
+  let resultJson = null;
+  try { resultJson = result == null ? null : JSON.stringify(result); } catch { resultJson = null; }
+  if (!tid || !Number.isFinite(id)) return { ok: false, error: 'bad_args' };
+
+  const res = db.prepare(
+    'UPDATE tournament_tables SET status=@s, winner_player_id=@w, result_json=@r WHERE tournament_id=@t AND id=@id'
+  ).run({ t: tid, id, s: 'finished', w: winner, r: resultJson, id });
+
+  if (!res.changes) return { ok: false, error: 'not_found' };
+
+  // Auto-finish 2-player single_elim tournaments: Round 1 is the final.
+  try {
+    const t = db.prepare('SELECT type, table_size AS tableSize, status, config_json AS cfg FROM tournaments WHERE id=?').get(tid);
+    if (t && String(t.status) !== 'finished') {
+      const type = String(t.type || '');
+      const tableSize = Math.max(2, Number(t.tableSize) || 2);
+      const activePlayers = Number(db.prepare('SELECT COUNT(1) AS n FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL').get(tid)?.n || 0) || 0;
+      const finishedTables = Number(db.prepare("SELECT COUNT(1) AS n FROM tournament_tables tt JOIN tournament_rounds tr ON tr.id=tt.round_id WHERE tr.tournament_id=? AND tr.round_index=1 AND tt.status='finished'").get(tid)?.n || 0) || 0;
+      if (type === 'single_elim' && tableSize === 2 && activePlayers === 2 && finishedTables >= 1) {
+        const winnerName = winner ? (db.prepare('SELECT name FROM tournament_players WHERE tournament_id=? AND player_id=?').get(tid, winner)?.name || null) : null;
+        db.prepare('UPDATE tournaments SET status=@s, finished_at=@f WHERE id=@id').run({ id: tid, s: 'finished', f: nowMs() });
+        // Store winner summary in config_json (lightweight MVP)
+        try {
+          const cfg = t.cfg ? JSON.parse(String(t.cfg)) : {};
+          cfg.winner = { playerId: winner || null, name: winnerName };
+          db.prepare('UPDATE tournaments SET config_json=@c WHERE id=@id').run({ id: tid, c: JSON.stringify(cfg) });
+        } catch {}
+      }
+    }
+  } catch {}
+
+  return { ok: true };
+}
+
+export function tournamentCreate(body = {}) {
+  const db = sqlite;
+  const id = tournamentId();
+  const createdAt = nowMs();
+  const cfg = { name: String(body.name||'').trim()||'Tournament', type: String(body.type||'single_elim'), tableSize: Number(body.tableSize)||2, maxPlayers: body.maxPlayers==null?null:(Number(body.maxPlayers)||null), seeding: String(body.seeding||'random'), allowSpectators: Boolean(body.allowSpectators) };
+  db.prepare('INSERT INTO tournaments (id,name,type,table_size,status,created_at,started_at,finished_at,config_json) VALUES (@id,@name,@type,@table_size,@status,@created_at,NULL,NULL,@config_json)').run({ id, name: cfg.name, type: cfg.type, table_size: cfg.tableSize, status: 'registering', created_at: createdAt, config_json: JSON.stringify(cfg) });
+  return { ok: true, tournament: tournamentGet({ id }) };
+}
+
+export function tournamentSetStatus({ id, status }) {
+  const db = sqlite;
+  const tid = String(id||'').trim();
+  const row = db.prepare('SELECT id FROM tournaments WHERE id=?').get(tid);
+  if (!row) return { ok:false, error:'not_found' };
+  const next = String(status||'').trim();
+  if (!['registering','running','finished','canceled'].includes(next)) return { ok:false, error:'bad_status' };
+  const now = nowMs();
+  const started = next==='running' ? now : null;
+  const finished = (next==='finished'||next==='canceled') ? now : null;
+  db.prepare('UPDATE tournaments SET status=@status, started_at=COALESCE(started_at,@started), finished_at=CASE WHEN @finished IS NULL THEN finished_at ELSE @finished END WHERE id=@id').run({ id: tid, status: next, started, finished });
+  return { ok:true, tournament: tournamentGet({ id: tid }) };
+}
+
+export function tournamentJoin({ id, playerId, name }) {
+  const db = sqlite;
+  const tid=String(id||'').trim();
+  const pid=String(playerId||'').trim();
+  if (!tid||!pid) return { ok:false, error:'bad_args' };
+  const t = db.prepare('SELECT status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok:false, error:'not_found' };
+  if (String(t.status)!=='registering') return { ok:false, error:'not_registering' };
+  db.prepare('INSERT INTO tournament_players (tournament_id,player_id,name,joined_at,dropped_at) VALUES (@t,@p,@n,@j,NULL) ON CONFLICT(tournament_id,player_id) DO UPDATE SET dropped_at=NULL, name=COALESCE(excluded.name,tournament_players.name)').run({ t: tid, p: pid, n: String(name||'').trim()||null, j: nowMs() });
+  return { ok:true, tournament: tournamentGet({ id: tid }) };
+}
+
+export function tournamentLeave({ id, playerId }) {
+  const db = sqlite;
+  const tid=String(id||'').trim();
+  const pid=String(playerId||'').trim();
+  if (!tid||!pid) return { ok:false, error:'bad_args' };
+  const t = db.prepare('SELECT status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok:false, error:'not_found' };
+  if (String(t.status)!=='registering') return { ok:false, error:'not_registering' };
+  db.prepare('UPDATE tournament_players SET dropped_at=@d WHERE tournament_id=@t AND player_id=@p').run({ t: tid, p: pid, d: nowMs() });
+  return { ok:true, tournament: tournamentGet({ id: tid }) };
+}
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr;
+}
+
+export function tournamentGenerateRound1({ id }) {
+  const db = sqlite;
+  const tid = String(id||'').trim();
+  if (!tid) return { ok:false, error:'bad_args' };
+
+  const t = db.prepare('SELECT id, table_size AS tableSize, status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok:false, error:'not_found' };
+  if (String(t.status) !== 'registering') return { ok:false, error:'not_registering' };
+
+  // prevent duplicates
+  const existing = db.prepare('SELECT id FROM tournament_rounds WHERE tournament_id=? AND round_index=1').get(tid);
+  if (existing) return { ok:false, error:'round_exists' };
+
+  const tableSize = Math.max(2, Number(t.tableSize) || 2);
+
+  const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC').all(tid);
+  const ids = players.map((p) => ({ playerId: String(p.playerId), name: p.name || null }));
+  if (ids.length < 2) return { ok:false, error:'not_enough_players' };
+
+  shuffleInPlace(ids);
+
+  const now = nowMs();
+  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: 1, s: 'pending', c: now });
+  const roundId = round?.id;
+
+  const tables = [];
+  let tableIndex = 1;
+  for (let i = 0; i < ids.length; i += tableSize) {
+    const slice = ids.slice(i, i + tableSize);
+    // allow last table smaller (MVP)
+    const row = db.prepare('INSERT INTO tournament_tables (tournament_id, round_id, table_index, match_id, status, winner_player_id, result_json) VALUES (@t,@rid,@ti,NULL,@s,NULL,@rj) RETURNING id').get({
+      t: tid,
+      rid: roundId,
+      ti: tableIndex,
+      s: 'pending',
+      rj: JSON.stringify({ seats: slice.map((p, idx) => ({ seat: idx, playerId: p.playerId, name: p.name })) }),
+    });
+    tables.push({ id: row?.id, tableIndex, seats: slice });
+    tableIndex++;
+  }
+
+  return { ok:true, round: { id: roundId, roundIndex: 1 }, tables, tournament: tournamentGet({ id: tid }) };
 }

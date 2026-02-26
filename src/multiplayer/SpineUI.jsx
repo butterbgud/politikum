@@ -4,13 +4,572 @@ import { SocketIO } from 'boardgame.io/multiplayer';
 import { LobbyClient } from 'boardgame.io/client';
 import { CitadelGame as PolitikumGame } from './Game.js';
 
-const SERVER = `http://${window.location.hostname}:8001`;
+const SERVER = `http://${window.location.hostname}:8000`;
 const lobbyClient = new LobbyClient({ server: SERVER });
 
 const NAMES = [
   'Hakon', 'Rixa', 'Gisela', 'Dunstan', 'Irmgard', 'Cedric', 'Freya', 'Ulric', 'Yolanda', 'Tristan',
   'Beatrix', 'Lambert', 'Maude', 'Odilia', 'Viggo', 'Sibylla', 'Katarina', 'Norbert', 'Quintus',
 ];
+
+
+
+function TournamentPage() {
+  const [items, setItems] = useState([]);
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [includeFinished, setIncludeFinished] = useState(false);
+
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/tournaments?includeFinished=${includeFinished ? '1' : '0'}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setItems(json.items || []);
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [includeFinished]);
+
+  return (
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+      <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Tournaments</div>
+          </div>
+          <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+          <label className="flex items-center gap-2 text-xs font-mono text-amber-200/60 select-none">
+            <input type="checkbox" className="accent-amber-500" checked={includeFinished} onChange={(e) => { setIncludeFinished(e.target.checked); }} />
+            <span>Show finished</span>
+          </label>
+          {err && <div className="text-xs font-mono text-red-300">Error: {err}</div>}
+        </div>
+
+        <div className="grid gap-3">
+          {items.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => { window.location.hash = `#/tournament/${t.id}`; }}
+              className="text-left w-full bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="font-black text-amber-50">{t.name || t.id}</div>
+                <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
+              </div>
+              <div className="mt-1 text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize}</div>
+            </button>
+          ))}
+          {(!items.length && !loading) && (
+            <div className="text-xs font-mono text-amber-200/50">No tournaments yet. Ask an admin to create one.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TournamentDetailPage({ tournamentId }) {
+  const [t, setT] = useState(null);
+  const [tables, setTables] = useState([]);
+  const [bracket, setBracket] = useState(null);
+  const [err, setErr] = useState('');
+  const [tablesErr, setTablesErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const hasAdminToken = (() => {
+    try { return !!window.localStorage.getItem('politikum.adminToken'); } catch { return false; }
+  })();
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    setTablesErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/tournament/${tournamentId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setT(json.tournament || null);
+
+      const res2 = await fetch(`${SERVER}/public/tournament/${tournamentId}/tables?round=1`);
+      if (!res2.ok) {
+        if (res2.status === 404) {
+          setTables([]);
+          setTablesErr('Round 1 not generated yet.');
+        } else {
+          throw new Error(`tables: HTTP ${res2.status}`);
+        }
+      } else {
+        const json2 = await res2.json();
+        setTables(json2.tables || []);
+      }
+
+      // Load full bracket (all rounds) for single_elim.
+      const res3 = await fetch(`${SERVER}/public/tournament/${tournamentId}/bracket`);
+      if (res3.ok) {
+        const json3 = await res3.json();
+        setBracket(json3.rounds || json3.bracket || null);
+      } else if (res3.status === 404) {
+        setBracket(null);
+      }
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [tournamentId]);
+
+  const adminCreateMatch = async (tableId) => {
+    setLoading(true);
+    setErr('');
+    try {
+      const tok = String(window.localStorage.getItem('politikum.adminToken') || '');
+      if (!tok) throw new Error('Admin token missing');
+      const res = await fetch(`${SERVER}/admin/tournament/${tournamentId}/table/${tableId}/create_match`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': tok },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await load();
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openMatch = (matchId) => {
+    try { window.localStorage.setItem('politikum.prejoinMatchId', String(matchId || '')); } catch {}
+    window.location.hash = '';
+  };
+
+  return (
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+      <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Tournament</div>
+            <div className="text-amber-100/70 font-serif mt-1">{t?.name || tournamentId}</div>
+          </div>
+          <button type="button" onClick={() => { window.location.hash = '#/tournament'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Back</button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+          {err && <div className="text-xs font-mono text-red-300">Error: {err}</div>}
+        </div>
+
+        {t && (
+          <div className="grid gap-3">
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · {t.status}</div>
+              {t?.config?.winner?.name && (
+                <div className="mt-1 text-sm font-serif text-emerald-200/90">Winner: {t.config.winner.name}</div>
+              )}
+            </div>
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Actions</div>
+              <div className="mt-2 flex gap-2">
+                <button type="button" disabled={loading} onClick={async () => {
+                  setLoading(true);
+                  setErr('');
+                  try {
+                    const tok = String(window.localStorage.getItem('politikum.authToken') || '');
+                    if (!tok) throw new Error('Not logged in (beta token missing)');
+                    let name = '';
+                    try { name = String(window.localStorage.getItem('politikum.playerName') || '').trim(); } catch {}
+                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/join`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ name: name || null }),
+                    });
+                    if (!res.ok) {
+                      let details = '';
+                      try { details = await res.text(); } catch {}
+                      details = String(details || '').trim();
+                      throw new Error(`HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+                    }
+                    await load();
+                  } catch (e) { setErr(e?.message || String(e)); }
+                  finally { setLoading(false); }
+                }} className="flex-1 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Join tournament</button>
+                <button type="button" disabled={loading} onClick={async () => {
+                  setLoading(true);
+                  setErr('');
+                  try {
+                    const tok = String(window.localStorage.getItem('politikum.authToken') || '');
+                    if (!tok) throw new Error('Not logged in (beta token missing)');
+                    const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/leave`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${tok}` },
+                    });
+                    if (!res.ok) {
+                      let details = '';
+                      try { details = await res.text(); } catch {}
+                      details = String(details || '').trim();
+                      throw new Error(`HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+                    }
+                    await load();
+                  } catch (e) { setErr(e?.message || String(e)); }
+                  finally { setLoading(false); }
+                }} className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-xs uppercase tracking-widest">Leave</button>
+              </div>
+              <div className="mt-2 text-[10px] font-mono text-amber-200/50">Tip: if Join/Leave errors with “Not logged in”, open /#/beta and log in first.</div>
+            </div>
+
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Players</div>
+              <div className="mt-2 grid gap-1 text-sm font-serif">
+                {(t.players || []).map((p) => (
+                  <div key={p.playerId} className="text-amber-100/90">{p.name || p.playerId}</div>
+                ))}
+                {(!(t.players || []).length) && <div className="text-amber-200/40 italic">No players yet.</div>}
+              </div>
+            </div>
+
+            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Round 1 tables</div>
+                <div className="flex items-center gap-2">
+                  {tablesErr && <div className="text-[10px] font-mono text-amber-200/50">{tablesErr}</div>}
+                  {(tablesErr && hasAdminToken) && (
+                    <button type="button" onClick={() => { window.location.hash = '#/admin/tournament'; }} className="text-[10px] font-mono text-amber-200/60 hover:text-amber-50">Admin</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 grid gap-2">
+                {tables.map((tb) => (
+                  <div key={tb.id || String(tb.tableIndex)} className="rounded-xl border border-amber-900/20 bg-black/30 px-3 py-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="font-black text-amber-50 text-xs uppercase tracking-widest">Table {tb.tableIndex}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-[10px] font-mono text-amber-200/60">{tb.status || 'pending'}</div>
+                        {tb.winnerPlayerId && (
+                          <div className="text-[10px] font-mono text-emerald-300/80">winner: {tb.winnerPlayerId}</div>
+                        )}
+                        {tb.matchId && (
+                          <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50">Open match</button>
+                        )}
+                        {(!tb.matchId && hasAdminToken) && (
+                          <button type="button" disabled={loading} onClick={() => adminCreateMatch(tb.id)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Create match</button>
+                        )}
+                        {(tb.matchId && !tb.winnerPlayerId && hasAdminToken) && (
+                          <button type="button" disabled={loading} onClick={async () => {
+                            try {
+                              const tok = String(window.localStorage.getItem('politikum.adminToken') || '');
+                              if (!tok) throw new Error('Admin token missing');
+                              const seatStr = window.prompt('Winner seat number (1..N):');
+                              if (!seatStr) return;
+                              const seat = Math.max(1, Number.parseInt(String(seatStr), 10) || 0) - 1;
+                              const res = await fetch(`${SERVER}/admin/tournament/${tournamentId}/table/${tb.id}/set_winner`, {
+                                method: 'POST',
+                                headers: { 'X-Admin-Token': tok, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ seat }),
+                              });
+                              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                              await load();
+                            } catch (e) { setErr(e?.message || String(e)); }
+                          }} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Set winner</button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-1 grid gap-0.5 text-sm font-serif">
+                      {(tb.seats || []).map((s) => (
+                        <div key={String(s.seat)} className="text-amber-100/90">Seat {Number(s.seat) + 1}: {s.name || s.playerId}</div>
+                      ))}
+                      {(!(tb.seats || []).length) && <div className="text-amber-200/40 italic">No seats.</div>}
+                    </div>
+                  </div>
+                ))}
+
+                {(!tables.length && !tablesErr) && <div className="text-amber-200/40 italic">No tables yet.</div>}
+              </div>
+            </div>
+
+            {Array.isArray(bracket) && bracket.length > 0 && (
+              <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black mb-2">Bracket (MVP)</div>
+                <div className="overflow-x-auto">
+                  <div className="flex gap-4 min-w-full">
+                    {bracket.map((round) => (
+                      <div key={round.id || round.roundIndex} className="min-w-[180px]">
+                        <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black mb-2">
+                          Round {round.roundIndex}
+                        </div>
+                        <div className="grid gap-2">
+                          {(round.tables || []).map((tb) => (
+                            <div key={tb.id || tb.tableIndex} className="rounded-xl border border-amber-900/30 bg-black/40 px-3 py-2">
+                              <div className="flex items-baseline justify-between gap-2 mb-1">
+                                <div className="text-[10px] font-mono text-amber-200/70">Table {tb.tableIndex}</div>
+                                <div className="text-[10px] font-mono text-amber-200/50">{tb.status || 'pending'}</div>
+                              </div>
+                              <div className="grid gap-0.5 text-xs font-serif">
+                                {(tb.seats || []).map((s) => (
+                                  <div key={String(s.seat)} className="text-amber-100/90">
+                                    {s.name || s.playerId}
+                                  </div>
+                                ))}
+                                {tb.winnerPlayerId && (
+                                  <div className="mt-1 text-[10px] font-mono text-emerald-300">
+                                    Winner: {tb.result?.winnerName || tb.winnerPlayerId}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {!(round.tables || []).length && (
+                            <div className="text-[10px] font-mono text-amber-200/40 italic">No tables.</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+function AdminTournamentPage() {
+  const [token, setToken] = useState(() => {
+    try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [items, setItems] = useState([]);
+  const [includeFinished, setIncludeFinished] = useState(false);
+
+  const [name, setName] = useState('');
+  const [type, setType] = useState('single_elim');
+  const [tableSize, setTableSize] = useState(4);
+  const [maxPlayers, setMaxPlayers] = useState('');
+
+  const saveToken = (value) => {
+    setToken(value);
+    try { window.localStorage.setItem('politikum.adminToken', value); } catch {}
+  };
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/public/tournaments?includeFinished=${includeFinished ? '1' : '0'}`);
+      if (!res.ok) throw new Error(`list: HTTP ${res.status}`);
+      const json = await res.json();
+      setItems(json.items || []);
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [includeFinished]);
+
+  const adminPost = async (path, body = null) => {
+    if (!token) throw new Error('Set X-Admin-Token first.');
+
+    const headers = { 'X-Admin-Token': token };
+    const opts = { method: 'POST', headers };
+
+    if (body !== null && body !== undefined) {
+      opts.headers = { ...headers, 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(`${SERVER}${path}`, opts);
+    if (!res.ok) {
+      let details = '';
+      try { details = await res.text(); } catch {}
+      details = String(details || '').trim();
+      throw new Error(`${path}: HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+    }
+
+    // Some admin endpoints may intentionally return 204 No Content.
+    if (res.status === 204) return null;
+
+    const ct = String(res.headers.get('content-type') || '');
+    if (ct.includes('application/json')) return await res.json();
+
+    const text = await res.text();
+    return text ? { ok: true, text } : null;
+  };
+
+  const create = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const mp = String(maxPlayers || '').trim();
+      await adminPost('/admin/tournament/create', {
+        name: String(name || '').trim(),
+        type,
+        tableSize: Number(tableSize) || 2,
+        maxPlayers: mp ? (Number(mp) || null) : null,
+      });
+      setName('');
+      setMaxPlayers('');
+      await load();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setStatus = async (id, action) => {
+    setLoading(true);
+    setError('');
+    try {
+      await adminPost(`/admin/tournament/${id}/${action}`);
+      await load();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateRound1 = async (id) => {
+    setLoading(true);
+    setError('');
+    try {
+      // Backend endpoint doesn't require a JSON body; keep this as a plain POST.
+      await adminPost(`/admin/tournament/${id}/generate_round1`, null);
+      await load();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fmt = (ms) => {
+    if (!ms) return '—';
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
+
+  return (
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+      <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Admin / tournaments (v1)</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
+            <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black block mb-1">X-Admin-Token</label>
+            <input type="password" value={token} onChange={(e) => saveToken(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
+          </div>
+          <div className="flex items-end gap-2">
+            <button type="button" onClick={load} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
+            <label className="flex items-center gap-2 text-xs font-mono text-amber-200/70">
+              <input type="checkbox" checked={includeFinished} onChange={(e) => setIncludeFinished(e.target.checked)} />
+              include finished
+            </label>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-black/40 border border-amber-900/20 rounded-2xl p-4">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Create tournament</div>
+            <div className="mt-3 grid gap-2">
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+              <div className="grid grid-cols-3 gap-2">
+                <select value={type} onChange={(e) => setType(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono">
+                  <option value="single_elim">single_elim</option>
+                </select>
+                <input value={String(tableSize)} onChange={(e) => setTableSize(e.target.value)} placeholder="tableSize" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+                <input value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} placeholder="maxPlayers" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+              </div>
+              <button type="button" onClick={create} disabled={loading} className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Create</button>
+            </div>
+          </div>
+
+          <div className="bg-black/40 border border-amber-900/20 rounded-2xl p-4">
+            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Notes</div>
+            <div className="mt-2 text-xs font-mono text-amber-100/70 leading-relaxed">v1: create/open/close/cancel + join/leave on public page. No brackets yet.</div>
+          </div>
+        </div>
+
+        <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Tournaments</div>
+        <div className="overflow-x-auto -mx-2">
+          <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+            <thead>
+              <tr className="border-b border-amber-900/40">
+                <th className="px-2 py-2 whitespace-nowrap">Created</th>
+                <th className="px-2 py-2 whitespace-nowrap">Name</th>
+                <th className="px-2 py-2 whitespace-nowrap">Status</th>
+                <th className="px-2 py-2 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((t) => (
+                <tr key={t.id} className="border-b border-amber-900/20">
+                  <td className="px-2 py-2 align-top whitespace-nowrap">{fmt(t.createdAt)}</td>
+                  <td className="px-2 py-2 align-top">
+                    <div className="font-black">{t.name}</div>
+                    <div className="text-[10px] text-amber-200/40">{t.id} · table {t.tableSize} · players {(t.playersCount ?? t.playerCount ?? '?')}/{Math.max(2, Number(t.tableSize)||2)}</div>
+                    <a href={`#/tournament/${t.id}`} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10px] uppercase tracking-widest text-amber-200/70 hover:text-amber-50 font-black">Open public page</a>
+                  </td>
+                  <td className="px-2 py-2 align-top whitespace-nowrap">{t.status}</td>
+                  <td className="px-2 py-2 align-top whitespace-nowrap">
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'open_registration')} className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Open reg</button>
+                      <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'close_registration')} className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Close reg</button>
+                      <button type="button" disabled={loading} onClick={() => generateRound1(t.id)} className="px-2 py-1 rounded-lg bg-amber-700/70 hover:bg-amber-600/80 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">Generate R1</button>
+                      <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'cancel')} className="px-2 py-1 rounded-lg bg-red-900/60 hover:bg-red-900/80 disabled:opacity-60 text-red-100 font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">No tournaments yet. Ask an admin to create one.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AdminPage() {
   const [token, setToken] = useState(() => {
@@ -89,6 +648,27 @@ function AdminPage() {
     }
   };
 
+  const killMatch = async (matchId) => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    const mid = String(matchId || '').trim();
+    if (!mid) return;
+    if (!confirm(`Kill match ${mid}? This deletes it from server storage.`)) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/match/${encodeURIComponent(mid)}/kill`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token },
+      });
+      if (!res.ok) throw new Error(`kill: HTTP ${res.status}`);
+      await fetchAdmin();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatTime = (ms) => {
     if (!ms) return '—';
     const d = new Date(ms);
@@ -111,26 +691,13 @@ function AdminPage() {
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Admin / stats (MVP)</div>
           </div>
-          <div className="flex items-center gap-3">
-            {!!token && (
-              <a
-                href="#/admin/tournament"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
-                title="Tournament admin"
-              >
-                Tournament
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={() => { window.location.hash = ''; }}
-              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
-            >
-              Exit
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => { window.location.hash = ''; }}
+            className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+          >
+            Exit
+          </button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -202,50 +769,6 @@ function AdminPage() {
         <div className="mt-2">
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Leaderboard (MVP)</div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={loading || !token}
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError('');
-                    const items = Array.isArray(leaderboard) ? leaderboard : [];
-                    const nameKey = 'konsta';
-                    const dupes = items.filter((r) => String(r?.name || '').trim().toLowerCase() === nameKey);
-                    if (dupes.length <= 1) {
-                      setError('No duplicate konsta entries found (in current leaderboard slice).');
-                      return;
-                    }
-                    const idOf = (r) => String(r?.playerId ?? r?.id ?? '');
-                    const sorted = dupes
-                      .map((r) => ({ ...r, _pid: idOf(r) }))
-                      .filter((r) => r._pid)
-                      .sort((a, b) => (Number(b?.games || 0) - Number(a?.games || 0)) || (Number(b?.wins || 0) - Number(a?.wins || 0)));
-                    const keep = sorted[0];
-                    if (!keep?._pid) throw new Error('Missing playerId for keep target');
-                    const headers = { 'X-Admin-Token': token, 'Content-Type': 'application/json' };
-                    for (const r of sorted.slice(1)) {
-                      const res = await fetch(`${SERVER}/admin/players/merge`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ fromPlayerId: r._pid, intoPlayerId: keep._pid }),
-                      });
-                      if (!res.ok) throw new Error(`merge HTTP ${res.status}`);
-                    }
-                    await fetchAdmin();
-                  } catch (e) {
-                    setError(e?.message || String(e));
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                className="px-2 py-1 rounded-lg bg-black/50 hover:bg-black/70 border border-amber-900/30 text-[10px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50 disabled:opacity-60"
-                title="Merge duplicate 'konsta' users into the one with most games"
-              >
-                DEDUP KONSTA
-              </button>
-            </div>
           </div>
           <div className="overflow-x-auto -mx-2 mb-6">
             <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
@@ -290,6 +813,7 @@ function AdminPage() {
                   <th className="px-2 py-2 whitespace-nowrap">Updated</th>
                   <th className="px-2 py-2 whitespace-nowrap">Players</th>
                   <th className="px-2 py-2 whitespace-nowrap">Match</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -312,37 +836,17 @@ function AdminPage() {
                         ))}
                       </div>
                     </td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap text-amber-200/70">{String(m.matchId).slice(0, 8)}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-amber-200/70">{String(m.matchId).slice(0, 8)}</span>
-                        <button
-                          type="button"
-                          disabled={loading}
-                          onClick={async () => {
-                            try {
-                              if (!token) { setError('Set X-Admin-Token first.'); return; }
-                              const ok = window.confirm(`Kill match ${String(m.matchId).slice(0, 8)}?`);
-                              if (!ok) return;
-                              setLoading(true);
-                              setError('');
-                              const res = await fetch(`${SERVER}/admin/match/${m.matchId}/kill`, {
-                                method: 'POST',
-                                headers: { 'X-Admin-Token': token },
-                              });
-                              if (!res.ok) throw new Error(`kill: HTTP ${res.status}`);
-                              await fetchAdmin();
-                            } catch (e) {
-                              setError(e?.message || String(e));
-                            } finally {
-                              setLoading(false);
-                            }
-                          }}
-                          className="px-2 py-0.5 rounded-md border border-red-300/20 bg-red-950/40 hover:bg-red-950/60 text-red-100 text-[10px] font-mono font-black"
-                          title="Delete match state from storage"
-                        >
-                          KILL
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => killMatch(m.matchId)}
+                        className="px-2 py-1 rounded-lg bg-red-900/40 hover:bg-red-900/60 border border-red-400/20 text-red-200/90 text-[11px] font-black"
+                        title={String(m.matchId)}
+                      >
+                        Kill
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -436,7 +940,7 @@ function Card({ card, onClick, disabled, showCheck }) {
 
 function LobbyBoard({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
-  const isHost = String(playerID) === '0';
+  const isHost = String(playerID) === '0' || String(me?.name || '') === 'You';
   const [name, setName] = useState(() => {
     const cur = String(me?.name || '').trim();
     if (!cur) return '';
@@ -509,6 +1013,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           const pid = meJson?.session?.playerId;
           const email = meJson?.session?.email || null;
           if (pid) {
+            try { window.localStorage.setItem('politikum.sessionPlayerId', String(pid)); } catch {}
             try { moves.setPlayerIdentity({ playerId: pid, email }); } catch {}
           }
         }
@@ -657,9 +1162,9 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
   );
 }
 
-function ActionBoard({ G, ctx, moves, playerID }) {
-  // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
+function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const isHost = String(playerID) === '0';
+  // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
 
   const TokenPips = ({ delta, compact, right, dim }) => {
     const d = Number(delta || 0);
@@ -765,7 +1270,22 @@ function ActionBoard({ G, ctx, moves, playerID }) {
   };
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
   const current = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
-  const currentIsBot = String(current?.name || '').startsWith('[B]');
+  const currentIsBot = String(current?.name || '').startsWith('[B]') || !!current?.isBot;
+
+  // Bot driver election: pick the lowest-id active human seat.
+  // This avoids the old assumption that seat 0 is always present and driving.
+  const botDriverId = useMemo(() => {
+    try {
+      const humans = (G.players || [])
+        .filter((pp) => pp?.active)
+        .filter((pp) => !(String(pp?.name || '').startsWith('[B]') || !!pp?.isBot))
+        .map((pp) => String(pp.id));
+      if (!humans.length) return null;
+      humans.sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
+      return humans[0];
+    } catch { return null; }
+  }, [G.players]);
+  const isBotDriver = botDriverId != null && String(playerID) === String(botDriverId);
   const response = G.response || null;
   const pending = G.pending || null;
   const responseKind = response?.kind || null;
@@ -1094,18 +1614,18 @@ function ActionBoard({ G, ctx, moves, playerID }) {
     if (G?.gameOver) return;
     if (!currentIsBot) return;
     // Only one client should drive bot ticks; otherwise other players spam INVALID_MOVE due to stateID/turn mismatch.
-    if (String(playerID) !== '0') return;
+    if (!isBotDriver) return;
 
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
     }, 900);
     return () => clearInterval(t);
-  }, [moves, currentIsBot, G?.gameOver, playerID]);
+  }, [moves, currentIsBot, G?.gameOver, isBotDriver]);
 
   // Human-side tick: clears expired response windows + auto-ends stuck turns once response closes.
   useEffect(() => {
     if (G?.gameOver) return;
-    if (String(playerID) !== '0') return; // single driver
+    if (!isBotDriver) return; // single driver
     const needTick = !!G.response || String(G.pending?.kind || '') === 'resolve_persona_after_response';
     if (!needTick) return;
 
@@ -1113,7 +1633,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
       try { moves.tick(); } catch {}
     }, 500);
     return () => clearInterval(t);
-  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, playerID]);
+  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, isBotDriver]);
 
   // Keep event card visible while the event is still being resolved.
   useEffect(() => {
@@ -1167,6 +1687,19 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : (typeof __GIT_SHA__ !== 'undefined' ? String(__GIT_SHA__).slice(0,7) : 'nogit')}
           {typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? ` · eng@${__ENGINE_GIT_SHA_SHORT__}` : ''}
         </button>
+      </div>
+
+      {/* Top-right admin panel link (hash route, IP-independent) */}
+      <div className="fixed top-3 right-3 z-[2000] select-none">
+        <a
+          href="#/admin/tournament"
+          target="_blank"
+          rel="noreferrer"
+          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
+          title="Open admin panel"
+        >
+          ADMIN PANEL
+        </a>
       </div>
 
       {/* Opponents */}
@@ -1398,12 +1931,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }}
                     >
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
-                        <img
-                          src={'/cards/action_13.webp'}
-                          alt={'action_13'}
-                          className="absolute left-[-18px] top-2 w-[70%] h-[92%] object-cover opacity-95 z-0 rounded-2xl shadow-2xl border border-black/30"
-                          draggable={false}
-                        />
+                        <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] object-cover opacity-80 -z-10" style={{ transform: 'translateY(10px) rotate(-2deg)' }} draggable={false} />
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
@@ -1460,6 +1988,28 @@ function ActionBoard({ G, ctx, moves, playerID }) {
             )}
           </div>
         </button>
+
+        {/* Bot rescue: nudge bot tick */}
+        {currentIsBot && !isMyTurn && !G.gameOver && (
+          <div className="fixed pointer-events-auto select-none flex flex-col gap-2" style={{ right: 'calc(2% + 6px)', top: 'calc(3% + 140px)' }}>
+            <button
+              type="button"
+              onClick={() => { try { moves.tickBot(); } catch {} }}
+              className="px-3 py-2 rounded-xl bg-red-950/55 hover:bg-red-950/70 border border-red-300/20 text-red-100 text-[11px] font-black"
+              title="Nudge bot / unstuck"
+            >
+              NUDGE BOT
+            </button>
+            <button
+              type="button"
+              onClick={() => { try { moves.forceSkipTurn(); } catch {} }}
+              className="px-3 py-2 rounded-xl bg-black/55 hover:bg-black/70 border border-amber-300/20 text-amber-100 text-[11px] font-black"
+              title="Thermonuclear: skip current bot turn"
+            >
+              SKIP BOT TURN
+            </button>
+          </div>
+        )}
 
         {/* Cookies (End Turn) */}
         <button
@@ -1670,10 +2220,21 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           {/* cancel_action stays as a compact pill */}
           {responseKind === 'cancel_action' && (
             <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/70 border border-amber-900/30 rounded-full px-5 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-4 pointer-events-auto">
-              <div>
-                {haveAction6 && 'Action played — respond with Action 6 to cancel'}
-                {!haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
-                <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+              <div className="flex items-center gap-3">
+                <div>
+                  {haveAction6 && 'Action played — respond with Action 6 to cancel'}
+                  {!haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
+                  <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
+                </div>
+                {haveAction6 && (() => {
+                  const c6 = (me?.hand || []).find((c) => c?.type === 'action' && String(c.id).split('#')[0] === 'action_6');
+                  if (!c6) return null;
+                  return (
+                    <button type="button" onClick={() => { try { moves.playAction(c6.id); } catch {} }} className="px-3 py-1 rounded-full bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-200/20 text-emerald-50 font-black text-[11px]">
+                      Play A6
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -2079,15 +2640,25 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
               type="button"
-              onClick={() => {
-                // Leave match state (client-side) — simplest reliable way is full reload.
-                try { window.location.hash = ''; } catch {}
-                try { window.location.reload(); } catch {}
+              onClick={async () => {
+                const m = String(matchID || '').match(/^t_([^_]+)_(\d+)_/);
+                const tid = m ? m[1] : null;
+                const tableId = m ? m[2] : null;
+                if (tid && tableId) {
+                  try {
+                    await fetch(`${SERVER}/public/tournament/${tid}/table/${tableId}/sync_result`, { method: 'POST' });
+                  } catch {}
+                  try { window.location.hash = `#/tournament/${tid}`; } catch {}
+                } else {
+                  // Leave match state (client-side) — simplest reliable way is full reload.
+                  try { window.location.hash = ''; } catch {}
+                  try { window.location.reload(); } catch {}
+                }
               }}
               className="px-4 py-2 rounded-full bg-black/60 border border-amber-900/30 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-              title="Back to lobby"
+              title={String(matchID || '').startsWith('t_') ? 'Back to tournament' : 'Back to lobby'}
             >
-              Back to lobby
+              {String(matchID || '').startsWith('t_') ? 'Back to tournament' : 'Back to lobby'}
             </button>
           </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
@@ -2166,7 +2737,25 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       })}
                     </div>
 
-                    {/* VP breakdown removed (was too noisy) */}
+                    {/* Per-card VP breakdown (base + tokens + passives) */}
+                    <div className="w-full max-w-[520px] px-1">
+                      <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
+                        {coal.map((c) => {
+                          const base = Number(c.baseVp ?? 0);
+                          const tok = Number(c.vpDelta || 0);
+                          const pas = Number(c.passiveVpDelta || 0);
+                          const total = Number(c.vp ?? (base + tok + pas));
+                          return (
+                            <div key={c.id} className="flex items-baseline justify-between gap-3">
+                              <span className="truncate">{String(c.name || c.id)}</span>
+                              <span className="shrink-0 tabular-nums">
+                                {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 );
               };
@@ -2334,57 +2923,6 @@ function ActionBoard({ G, ctx, moves, playerID }) {
           <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[168px] overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
           </div>
-
-          {/* Seats (kept OUT of the log scroller) */}
-          <div className="px-3 pb-3">
-            <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
-              <div className="mt-3 grid gap-2">
-                {(G.players || []).filter((p) => !!p?.active).map((p) => {
-                  const active = !!p.active;
-                  const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
-                  return (
-                    <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
-                      <div className="flex items-center gap-2">
-                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
-                          {p.name || `Seat ${p.id}`}
-                        </div>
-                        <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
-                        {!active && <div className="text-[10px] font-mono text-amber-900/50">(empty)</div>}
-                        {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
-                      </div>
-
-                      {isHost && String(p.id) !== '0' && active && bot && (
-                        <button
-                          onClick={() => moves.removePlayer(String(p.id))}
-                          className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {isHost && (
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => moves.addBot()}
-                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
-                  >
-                    Add bot
-                  </button>
-                  <button
-                    onClick={() => moves.startGame()}
-                    className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
-                  >
-                    Start game
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2516,12 +3054,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     }}
                   >
                     {String(c?.shieldedBy || '') === 'action_13' && (
-                      <img
-                        src={'/cards/action_13.webp'}
-                        alt={'action_13'}
-                        className="absolute left-[-18px] top-2 w-[70%] h-[92%] object-cover opacity-95 z-0 rounded-2xl shadow-2xl border border-black/30"
-                        draggable={false}
-                      />
+                      <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] object-cover opacity-80 -z-10" style={{ transform: 'translateY(10px) rotate(-2deg)' }} draggable={false} />
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
@@ -2727,7 +3260,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
 function Board(props) {
   const phase = String(props?.ctx?.phase || '');
   if (phase === 'lobby') return <LobbyBoard {...props} />;
-  return <ActionBoard {...props} />;
+  return <ActionBoard {...props} matchID={props.matchID} />;
 }
 
 const GameClient = Client({
@@ -2825,8 +3358,15 @@ function PolitikumWelcome({ onJoin }) {
       const match = response.match || response;
       if (!match || !match.players) throw new Error('Match not found');
 
-      // seat selection: first empty seat
-      const freeSeat = match.players.find((p) => !p.name && !p.isConnected);
+      // seat selection:
+      // 1) if match has reserved seats with stable playerId, take your reserved seat
+      // 2) else: first empty seat
+      let sessionPlayerId = '';
+      try { sessionPlayerId = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim(); } catch {}
+      const reservedSeat = sessionPlayerId
+        ? match.players.find((p) => String(p?.data?.playerId || '') === sessionPlayerId)
+        : null;
+      const freeSeat = reservedSeat || match.players.find((p) => !p.name && !p.isConnected);
       if (!freeSeat) {
         alert('Match is full!');
         setLoading(false);
@@ -2847,18 +3387,29 @@ function PolitikumWelcome({ onJoin }) {
     }
   };
 
+  useEffect(() => {
+    let mid = '';
+    try { mid = String(window.localStorage.getItem('politikum.prejoinMatchId') || ''); } catch {}
+    mid = String(mid || '').trim();
+    if (!mid) return;
+    try { window.localStorage.removeItem('politikum.prejoinMatchId'); } catch {}
+    joinMatch(mid).catch(() => {});
+  }, []);
+
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
     <div
       className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row"
       style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}
     >
+      {/* Top-right admin panel link (hash route, IP-independent) */}
       <div className="fixed top-3 right-3 z-[2000] select-none">
         <a
           href="#/admin/tournament"
           target="_blank"
           rel="noreferrer"
           className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
+          title="Open admin panel"
         >
           ADMIN PANEL
         </a>
@@ -2962,6 +3513,18 @@ export default function SpineUI() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
+
+  if (hash.startsWith('#/tournament/')) {
+    const tid = hash.slice('#/tournament/'.length).split('?')[0];
+    return <TournamentDetailPage tournamentId={tid} />;
+  }
+
+  if (hash.startsWith('#/tournament')) {
+    return <TournamentPage />;
+  }
+  if (hash.startsWith('#/admin/tournament')) {
+    return <AdminTournamentPage />;
+  }
   if (hash.startsWith('#/admin')) {
     return <AdminPage />;
   }

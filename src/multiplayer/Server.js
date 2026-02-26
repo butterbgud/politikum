@@ -1,6 +1,9 @@
-import { Server, Origins } from 'boardgame.io/dist/cjs/server.js';
+import { Server, Origins, FlatFile } from 'boardgame.io/dist/cjs/server.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -9,14 +12,20 @@ function clampLimit(v, dflt, max) {
 
 let lastAdminSyncAt = null;
 
+// Persist boardgame.io matches across restarts (required for tournament result sync).
+const FLATFILE_DIR = process.env.FLATFILE_DIR || path.join(process.cwd(), 'var', 'bgio');
+try { fs.mkdirSync(FLATFILE_DIR, { recursive: true }); } catch {}
+
 const server = Server({
   games: [CitadelGame],
+  db: new FlatFile({ dir: FLATFILE_DIR }),
   origins: [
     Origins.LOCALHOST_IN_DEVELOPMENT,
     // Current LAN (router reshuffle)
     "http://192.168.8.14:5177",
     "http://192.168.8.14:5176",
-    "http://192.168.8.14:5174", 
+    "http://192.168.8.14:5174",
+    "http://192.168.8.14:5173",
 
     // Old LAN / fallback
     "http://192.168.0.11:5173",
@@ -24,6 +33,8 @@ const server = Server({
     "http://192.168.0.11:5175",
     "http://192.168.0.11:5176",
 
+    "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:5175",
     "http://localhost:5176",
 
@@ -33,17 +44,18 @@ const server = Server({
   ],
 });
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
-const BETA_PASSWORD = process.env.BETA_PASSWORD || '';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "12qw12";
+
+const BETA_PASSWORDS_RAW = process.env.BETA_PASSWORDS || process.env.BETA_PASSWORD || '';
+const BETA_PASSWORDS = String(BETA_PASSWORDS_RAW)
+  .split(/[\s,]+/g)
+  .map((s) => String(s || '').trim())
+  .filter(Boolean);
 
 function requireAdmin(ctx) {
-  if (!ADMIN_TOKEN) {
-    ctx.throw(500, 'ADMIN_TOKEN is not configured');
-  }
+  if (!ADMIN_TOKEN) ctx.throw(401, 'Unauthorized');
   const header = ctx.request.headers['x-admin-token'];
-  if (!header || header !== ADMIN_TOKEN) {
-    ctx.throw(401, 'Unauthorized');
-  }
+  if (!header || header !== ADMIN_TOKEN) ctx.throw(401, 'Unauthorized');
 }
 
 async function syncFinishedGames(db) {
@@ -122,6 +134,44 @@ async function syncFinishedGames(db) {
         gameover: state?.ctx?.gameover ?? null,
       }),
     });
+
+    // If this match belongs to a tournament table, persist the result back into tournament_tables.
+    // This makes tournament results appear automatically whenever we run syncFinishedGames().
+    try {
+      const tmeta = metadata?.tournament;
+      const tid = tmeta?.id == null ? null : String(tmeta.id || '').trim();
+      const tableId = tmeta?.tableId;
+      if (tid && tableId != null) {
+        const tb = tournamentTableGet({ tournamentId: tid, tableId });
+        const seats = Array.isArray(tb?.seats) ? tb.seats : [];
+
+        // If winnerPlayerId is still a seat id, map it to stable playerId from table seats.
+        let winnerStable = winnerPlayerId ?? null;
+        try {
+          const sid = String(winnerStable ?? '').trim();
+          const n = Number.parseInt(sid, 10);
+          if (Number.isFinite(n)) {
+            const seat = seats.find((s) => Number(s?.seat) === n);
+            if (seat?.playerId) winnerStable = String(seat.playerId);
+          }
+        } catch {}
+
+        tournamentTableSetResult({
+          tournamentId: tid,
+          tableId,
+          winnerPlayerId: winnerStable,
+          result: {
+            matchId,
+            finishedAt,
+            winnerPlayerId: winnerStable,
+            winnerName: winnerName ?? null,
+            seats: seats.length ? seats : null,
+            autoSynced: true,
+          },
+        });
+      }
+    } catch {}
+
   }
   lastAdminSyncAt = Date.now();
 }
@@ -203,6 +253,32 @@ async function listInProgressMatches(db, limit = 20) {
     total: totalInProgress,
     items,
   };
+}
+
+function killMatchFlatFile(matchId) {
+  const dir = FLATFILE_DIR;
+  let removed = 0;
+  let errors = 0;
+  try {
+    const files = fs.readdirSync(dir);
+    for (const f of files) {
+      const fp = path.join(dir, f);
+      try {
+        const raw = fs.readFileSync(fp, 'utf8');
+        const j = JSON.parse(raw);
+        const k = String(j?.key || '');
+        if (k.startsWith(String(matchId) + ':')) {
+          fs.unlinkSync(fp);
+          removed++;
+        }
+      } catch {
+        errors++;
+      }
+    }
+  } catch {
+    // no dir, nothing to delete
+  }
+  return { removed, errors };
 }
 
 const PORT = Number.parseInt(process.env.PORT || '8000', 10);
@@ -300,8 +376,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       if (m && ctx.method === 'POST') {
         requireAdmin(ctx);
         const matchId = m[1];
-        try { await ctx.db.wipe(matchId); } catch {}
-        ctx.body = { ok: true, matchId };
+        const r = killMatchFlatFile(matchId);
+        ctx.body = { ok: true, matchId, ...r };
         return;
       }
     }
@@ -312,6 +388,224 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const limit = clampLimit(ctx.query.limit, 20, 200);
       ctx.body = getLeaderboard({ limit });
       return;
+    }
+
+
+
+    // Tournaments (public)
+    if (ctx.path === '/public/tournaments' && ctx.method === 'GET') {
+      const includeFinished = String(ctx.query.includeFinished || '') === '1';
+      ctx.body = tournamentsList({ includeFinished });
+      return;
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)$/);
+      if (m && ctx.method === 'GET') {
+        const t = tournamentGet({ id: m[1] });
+        if (!t) ctx.throw(404, 'Not found');
+        ctx.body = { ok: true, tournament: t };
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/tables$/);
+      if (m && ctx.method === 'GET') {
+        const round = Number.parseInt(String(ctx.query.round || '1'), 10) || 1;
+        try { await syncFinishedGames(ctx.db); } catch {}
+        const res = tournamentTablesList({ id: m[1], roundIndex: round });
+        if (!res.ok) ctx.throw(404, res.error || 'Not found');
+        ctx.body = res;
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/table\/(\d+)\/sync_result$/);
+      if (m && ctx.method === 'POST') {
+        const tid = String(m[1]);
+        const tableId = Number(m[2]);
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        const matchId = table.matchId;
+        if (!matchId) ctx.throw(409, 'no_match');
+
+        // NOTE: boardgame.io default storage is in-memory; if the server restarted, the match may be gone.
+        // In that case, we can't sync from server state.
+        const { metadata, state } = await ctx.db.fetch(matchId, { metadata: true, state: true });
+        const isGameover = Boolean(metadata?.gameover || state?.ctx?.gameover);
+        if (!isGameover) ctx.throw(409, 'not_finished');
+
+        const seatWinner = state?.ctx?.gameover?.winnerPlayerId ?? metadata?.gameover?.winnerPlayerId;
+        let winnerStable = seatWinner == null ? null : String(seatWinner);
+        try {
+          const n = Number.parseInt(String(winnerStable || ''), 10);
+          if (Number.isFinite(n)) {
+            const seat = (table.seats || []).find((s) => Number(s?.seat) === n);
+            if (seat?.playerId) winnerStable = String(seat.playerId);
+          }
+        } catch {}
+
+        const finishedAt = metadata?.gameover?.finishedAt ?? metadata?.updatedAt ?? Date.now();
+        tournamentTableSetResult({
+          tournamentId: tid,
+          tableId,
+          winnerPlayerId: winnerStable,
+          result: {
+            matchId,
+            finishedAt,
+            winnerPlayerId: winnerStable,
+            winnerName: metadata?.gameover?.winnerName ?? null,
+            seats: table.seats || null,
+          },
+        });
+
+        ctx.body = { ok: true, matchId, winnerPlayerId: winnerStable };
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/table\/(\d+)\/set_winner$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const tid = String(m[1]);
+        const tableId = Number(m[2]);
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        const body = ctx.request.body || {};
+        const seatIdx = body.seat == null ? null : Number(body.seat);
+        if (seatIdx == null || !Number.isFinite(seatIdx)) ctx.throw(400, 'bad_seat');
+        const seat = (table.seats || []).find((s) => Number(s?.seat) === seatIdx);
+        if (!seat?.playerId) ctx.throw(400, 'seat_missing_player');
+        tournamentTableSetResult({
+          tournamentId: tid,
+          tableId,
+          winnerPlayerId: String(seat.playerId),
+          result: {
+            matchId: table.matchId || null,
+            finishedAt: Date.now(),
+            winnerPlayerId: String(seat.playerId),
+            winnerName: seat.name || null,
+            seats: table.seats || null,
+            manual: true,
+          },
+        });
+        ctx.body = { ok: true };
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/bracket$/);
+      if (m && ctx.method === 'GET') {
+        const res = tournamentBracketGet({ id: m[1] });
+        if (!res.ok) ctx.throw(404, res.error || 'Not found');
+        ctx.body = res;
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/(join|leave)$/);
+      if (m && ctx.method === 'POST') {
+        const tid = m[1];
+        const action = m[2];
+        const auth = String(ctx.request.headers['authorization'] || '');
+        const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+        const sess = authGetSession(token);
+        if (!sess) ctx.throw(401, 'Unauthorized');
+
+        if (action === 'join') {
+          const body = ctx.request.body || {};
+          const name = (body.name == null) ? null : String(body.name || '').trim();
+          const res = tournamentJoin({ id: tid, playerId: sess.playerId, name: name || sess.email || null });
+          if (!res.ok) ctx.throw(409, res.error || 'join_failed');
+          ctx.body = res;
+          return;
+        }
+        if (action === 'leave') {
+          const res = tournamentLeave({ id: tid, playerId: sess.playerId });
+          if (!res.ok) ctx.throw(409, res.error || 'leave_failed');
+          ctx.body = res;
+          return;
+        }
+      }
+    }
+
+    // Tournaments (admin)
+    if (ctx.path === '/admin/tournament/create' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      const body = ctx.request.body || {};
+      ctx.body = tournamentCreate(body);
+      return;
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/(open_registration|close_registration|cancel|generate_round1)$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const tid = m[1];
+        const action = m[2];
+
+        if (action === 'generate_round1') {
+          const res = tournamentGenerateRound1({ id: tid });
+          if (!res.ok) ctx.throw(409, res.error || 'generate_failed');
+          ctx.body = res;
+          return;
+        }
+
+        const status = action === 'open_registration' ? 'registering' : action === 'close_registration' ? 'running' : 'canceled';
+        const res = tournamentSetStatus({ id: tid, status });
+        if (!res.ok) ctx.throw(404, res.error || 'not_found');
+        ctx.body = res;
+        return;
+      }
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/table\/(\d+)\/create_match$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const tid = m[1];
+        const tableId = Number(m[2]);
+
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        if (table.matchId) ctx.throw(409, 'match_exists');
+
+        const seats = Array.isArray(table.seats) ? table.seats : [];
+        const numPlayers = Math.max(2, seats.length || 0);
+        const matchId = `t_${tid}_${tableId}_${Date.now().toString(36)}`;
+
+        const match = createBgioMatch({
+          game: CitadelGame,
+          unlisted: true,
+          numPlayers,
+          setupData: undefined,
+        });
+        if ('setupDataError' in match) ctx.throw(400, 'setupData_required');
+
+        const { metadata, initialState } = match;
+        for (let i = 0; i < numPlayers; i++) {
+          const seat = seats[i];
+          const name = seat?.name == null ? null : String(seat.name || '').trim();
+          const playerId = seat?.playerId == null ? null : String(seat.playerId || '').trim();
+          // IMPORTANT: do NOT prefill metadata.players[i].name — LobbyClient.joinMatch treats named seats as taken.
+          // Keep the intended identity in metadata.players[i].data so the UI can claim the reserved seat.
+          if (playerId || name) metadata.players[i].data = { playerId: playerId || null, name: name || null };
+        }
+        metadata.tournament = { id: tid, tableId };
+
+        await ctx.db.createMatch(matchId, { initialState, metadata });
+
+        const res = tournamentTableSetMatch({ tournamentId: tid, tableId, matchId, status: 'ready' });
+        if (!res.ok) ctx.throw(404, res.error || 'not_found');
+
+        ctx.body = { ok: true, matchId };
+        return;
+      }
     }
 
     // Public leaderboard: safe to embed in lobby screen (no token).
@@ -327,8 +621,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const password = String(body.password || '');
       const email = (body.email == null) ? null : String(body.email || '').trim();
       const deviceId = (body.deviceId == null) ? null : String(body.deviceId || '').trim();
-      if (!BETA_PASSWORD) ctx.throw(500, 'BETA_PASSWORD is not configured');
-      if (!password || password !== BETA_PASSWORD) ctx.throw(401, 'Invalid password');
+      if (!BETA_PASSWORDS.length) ctx.throw(500, 'BETA_PASSWORDS is not configured');
+      if (!password || !BETA_PASSWORDS.includes(password)) ctx.throw(401, 'Invalid password');
       const sess = authCreateSession({ email, deviceId });
       ctx.body = { ok: true, ...sess };
       return;
