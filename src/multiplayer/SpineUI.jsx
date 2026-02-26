@@ -3409,8 +3409,53 @@ function PolitikumWelcome({ onJoin }) {
       </div>
 
       <div className="bg-transparent p-8 flex items-center justify-center w-full">
-        <div className="flex gap-8 items-start max-w-5xl w-full mx-auto px-4 max-h-[85vh]">
-          <div className="w-72 hidden lg:block">
+        <div className="flex gap-8 items-start max-w-7xl w-full mx-auto px-4 max-h-[85vh]">
+          {/* LEFT: NEWS + CHAT */}
+          <div className="flex-1 min-w-0 space-y-6">
+            <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="text-[10px] uppercase tracking-widest text-amber-500/70 font-black">News</div>
+                <div className="text-[10px] font-mono text-amber-200/40">Server: {SERVER}</div>
+              </div>
+              <div className="mt-3 text-amber-100/80 font-serif text-sm">
+                <div className="font-black text-amber-50">Welcome to Politikum</div>
+                <div className="mt-1 opacity-80">Work in progress. If something breaks, refresh first; if it still breaks, ping Konsta.</div>
+              </div>
+              <div className="mt-4 space-y-2 text-xs font-mono text-amber-200/60">
+                <div>• Pre-lobby list shows only lobby-phase matches (no in-progress clutter).</div>
+                <div>• Admin: /admin has KILL match + DEDUP KONSTA + Elo recompute.</div>
+                <div>• Next: real pre-lobby chat + prettier changelog feed.</div>
+              </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col min-h-[360px]">
+              <div className="text-[10px] uppercase tracking-[0.35em] text-amber-500/70 font-black">TAVERN BANTER</div>
+              <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
+                  <div className="text-[10px] font-mono text-amber-200/50">System</div>
+                  <div className="text-sm font-serif text-amber-50/90">Pre-lobby chat is coming back soon. For now: join a realm to chat in-game.</div>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <input
+                  value={''}
+                  readOnly
+                  placeholder="Chat coming soon…"
+                  className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200/60 font-serif text-sm focus:outline-none"
+                />
+                <button
+                  type="button"
+                  disabled
+                  className="px-4 py-2 bg-amber-600/40 text-amber-950/60 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: MODULES */}
+          <div className="w-[360px] max-w-full space-y-6">
             <div className="bg-black/75 backdrop-blur-xl p-6 rounded-3xl border border-amber-900/40 shadow-2xl">
               <h3 className="text-[10px] uppercase tracking-widest text-amber-500/70 mb-2 border-b border-amber-500/20 pb-1 font-black">Top 10</h3>
               {(top10 && top10.length > 0) ? (
@@ -3429,9 +3474,8 @@ function PolitikumWelcome({ onJoin }) {
                 <div className="text-[10px] font-mono text-amber-200/30">{top10Err ? `Top10 unavailable: ${top10Err}` : '—'}</div>
               )}
             </div>
-          </div>
-          <div className="w-80 sm:w-96 flex flex-col h-fit">
-            <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit max-w-md mx-auto">
+
+            <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit">
               <h2 className="text-xl font-serif text-amber-500 font-bold mb-6 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">The Guest List</h2>
               <div className="p-3 mb-6 bg-amber-950/30 rounded-xl border border-amber-500/20 flex flex-col gap-2">
                 <label className="text-[10px] uppercase tracking-widest text-amber-700 font-black px-1">Your Alias</label>
@@ -3474,30 +3518,23 @@ function PolitikumWelcome({ onJoin }) {
                 Host New Realm
               </button>
             </div>
-          </div>
 
-          <div className="flex-1">
             <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
-              <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
-              <div className="text-amber-100/70 font-serif mt-2">MVP: action phase + dealt hands + hand grouped. (Actions/reactions/events next.)</div>
-              <div className="mt-4 text-amber-200/60 text-xs font-mono">Server: {SERVER}</div>
-              <div className="mt-5">
-                <div className="text-[10px] uppercase tracking-widest text-amber-500/70 font-black mb-2">Open tournaments</div>
-                {tournamentsErr && <div className="text-[10px] font-mono text-amber-200/30">{tournamentsErr}</div>}
-                <div className="space-y-2">
-                  {(tournaments || []).slice(0, 6).map((t) => (
-                    <button key={t.id} type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="w-full text-left bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <div className="font-black text-amber-50">{t.name || t.id}</div>
-                        <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
-                      </div>
-                      <div className="mt-1 text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · players {t.playersCount}{(t.config?.maxPlayers ? `/${t.config.maxPlayers}` : '')}</div>
-                    </button>
-                  ))}
-                  {(!(tournaments || []).length && !tournamentsErr) && (
-                    <div className="text-[10px] font-mono text-amber-200/30">No open tournaments.</div>
-                  )}
-                </div>
+              <div className="text-[10px] uppercase tracking-widest text-amber-500/70 font-black mb-2">Open tournaments</div>
+              {tournamentsErr && <div className="text-[10px] font-mono text-amber-200/30">{tournamentsErr}</div>}
+              <div className="space-y-2">
+                {(tournaments || []).slice(0, 6).map((t) => (
+                  <button key={t.id} type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="w-full text-left bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="font-black text-amber-50">{t.name || t.id}</div>
+                      <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
+                    </div>
+                    <div className="mt-1 text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · players {t.playersCount}{(t.config?.maxPlayers ? `/${t.config.maxPlayers}` : '')}</div>
+                  </button>
+                ))}
+                {(!(tournaments || []).length && !tournamentsErr) && (
+                  <div className="text-[10px] font-mono text-amber-200/30">No open tournaments.</div>
+                )}
               </div>
             </div>
           </div>
