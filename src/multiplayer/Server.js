@@ -24,7 +24,8 @@ const server = Server({
     // Current LAN (router reshuffle)
     "http://192.168.8.14:5177",
     "http://192.168.8.14:5176",
-    "http://192.168.8.14:5174", 
+    "http://192.168.8.14:5174",
+    "http://192.168.8.14:5173",
 
     // Old LAN / fallback
     "http://192.168.0.11:5173",
@@ -32,6 +33,8 @@ const server = Server({
     "http://192.168.0.11:5175",
     "http://192.168.0.11:5176",
 
+    "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:5175",
     "http://localhost:5176",
 

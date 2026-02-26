@@ -1271,6 +1271,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const isMyTurn = String(ctx.currentPlayer) === String(playerID) && !G.gameOver;
   const current = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
   const currentIsBot = String(current?.name || '').startsWith('[B]') || !!current?.isBot;
+
+  // Bot driver election: pick the lowest-id active human seat.
+  // This avoids the old assumption that seat 0 is always present and driving.
+  const botDriverId = useMemo(() => {
+    try {
+      const humans = (G.players || [])
+        .filter((pp) => pp?.active)
+        .filter((pp) => !(String(pp?.name || '').startsWith('[B]') || !!pp?.isBot))
+        .map((pp) => String(pp.id));
+      if (!humans.length) return null;
+      humans.sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
+      return humans[0];
+    } catch { return null; }
+  }, [G.players]);
+  const isBotDriver = botDriverId != null && String(playerID) === String(botDriverId);
   const response = G.response || null;
   const pending = G.pending || null;
   const responseKind = response?.kind || null;
@@ -1599,18 +1614,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     if (G?.gameOver) return;
     if (!currentIsBot) return;
     // Only one client should drive bot ticks; otherwise other players spam INVALID_MOVE due to stateID/turn mismatch.
-    if (String(playerID) !== '0') return;
+    if (!isBotDriver) return;
 
     const t = setInterval(() => {
       try { moves.tickBot(); } catch {}
     }, 900);
     return () => clearInterval(t);
-  }, [moves, currentIsBot, G?.gameOver, playerID]);
+  }, [moves, currentIsBot, G?.gameOver, isBotDriver]);
 
   // Human-side tick: clears expired response windows + auto-ends stuck turns once response closes.
   useEffect(() => {
     if (G?.gameOver) return;
-    if (String(playerID) !== '0') return; // single driver
+    if (!isBotDriver) return; // single driver
     const needTick = !!G.response || String(G.pending?.kind || '') === 'resolve_persona_after_response';
     if (!needTick) return;
 
@@ -1618,7 +1633,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       try { moves.tick(); } catch {}
     }, 500);
     return () => clearInterval(t);
-  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, playerID]);
+  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, isBotDriver]);
 
   // Keep event card visible while the event is still being resolved.
   useEffect(() => {
