@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
 import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
   const n = Number.parseInt(v ?? String(dflt), 10) || dflt;
@@ -56,6 +57,14 @@ function requireAdmin(ctx) {
   if (!ADMIN_TOKEN) ctx.throw(401, 'Unauthorized');
   const header = ctx.request.headers['x-admin-token'];
   if (!header || header !== ADMIN_TOKEN) ctx.throw(401, 'Unauthorized');
+}
+
+function requireAuth(ctx) {
+  const auth = String(ctx.request.headers['authorization'] || '');
+  const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+  const sess = authGetSession(token);
+  if (!sess) ctx.throw(401, 'Unauthorized');
+  return sess;
 }
 
 async function syncFinishedGames(db) {
@@ -616,6 +625,56 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
       const limit = clampLimit(ctx.query.limit, 10, 50);
       ctx.body = getLeaderboard({ limit });
+      return;
+    }
+
+    // Global pre-lobby chat (MVP)
+    if (ctx.path === '/public/lobby_chat' && ctx.method === 'GET') {
+      const limit = clampLimit(ctx.query.limit, 50, 200);
+      ctx.body = lobbyChatList({ limit });
+      return;
+    }
+
+    if (ctx.path === '/public/lobby_chat/send' && ctx.method === 'POST') {
+      const sess = requireAuth(ctx);
+      if (!lobbyChatIsEnabled()) {
+        ctx.body = { ok: false, error: 'disabled' };
+        return;
+      }
+
+      // rate-limit per playerId (in-memory)
+      globalThis.__politikumLobbyChatRate ||= new Map();
+      const rate = globalThis.__politikumLobbyChatRate;
+      const key = String(sess.playerId || '');
+      const now = Date.now();
+      const last = Number(rate.get(key) || 0);
+      if (last && (now - last) < 3000) {
+        ctx.body = { ok: false, error: 'rate_limited' };
+        return;
+      }
+      rate.set(key, now);
+
+      const body = ctx.request.body || {};
+      const text = String(body.text || '').trim();
+      const name = String(body.name || body.playerName || '').trim();
+      const res = lobbyChatInsert({ playerId: sess.playerId, name: name || null, text });
+      ctx.body = res.ok ? { ok: true } : res;
+      return;
+    }
+
+    if (ctx.path === '/admin/lobby_chat/disable' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      ctx.body = lobbyChatSetEnabled(false);
+      return;
+    }
+    if (ctx.path === '/admin/lobby_chat/enable' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      ctx.body = lobbyChatSetEnabled(true);
+      return;
+    }
+    if (ctx.path === '/admin/lobby_chat/clear' && ctx.method === 'POST') {
+      requireAdmin(ctx);
+      ctx.body = lobbyChatClear();
       return;
     }
 

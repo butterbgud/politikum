@@ -137,6 +137,22 @@ function openDatabase() {
     CREATE INDEX IF NOT EXISTS idx_tournament_tables_round_id ON tournament_tables(round_id);
     CREATE INDEX IF NOT EXISTS idx_tournament_tables_tid_round_id ON tournament_tables(tournament_id, round_id);
     CREATE INDEX IF NOT EXISTS idx_tournament_tables_match_id ON tournament_tables(match_id);
+
+    -- global pre-lobby chat (MVP)
+    CREATE TABLE IF NOT EXISTS lobby_chat_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS lobby_chat_messages (
+      id INTEGER PRIMARY KEY,
+      created_at INTEGER NOT NULL,
+      player_id TEXT,
+      name TEXT,
+      text TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_lobby_chat_messages_created_at ON lobby_chat_messages(created_at);
   `);
 
   // Migrate older DBs (best effort, but avoid throwing during startup)

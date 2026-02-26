@@ -18,6 +18,15 @@ function TournamentPage() {
   const [items, setItems] = useState([]);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lobbyChat, setLobbyChat] = useState([]);
+  const [lobbyChatEnabled, setLobbyChatEnabled] = useState(true);
+  const [lobbyChatErr, setLobbyChatErr] = useState('');
+  const [lobbyChatInput, setLobbyChatInput] = useState('');
+
+  const lobbyChatToken = (() => {
+    try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
     return 'top10';
@@ -100,6 +109,15 @@ function TournamentDetailPage({ tournamentId }) {
   const [err, setErr] = useState('');
   const [tablesErr, setTablesErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lobbyChat, setLobbyChat] = useState([]);
+  const [lobbyChatEnabled, setLobbyChatEnabled] = useState(true);
+  const [lobbyChatErr, setLobbyChatErr] = useState('');
+  const [lobbyChatInput, setLobbyChatInput] = useState('');
+
+  const lobbyChatToken = (() => {
+    try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
     return 'top10';
@@ -376,6 +394,15 @@ function AdminTournamentPage() {
     try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
   });
   const [loading, setLoading] = useState(false);
+  const [lobbyChat, setLobbyChat] = useState([]);
+  const [lobbyChatEnabled, setLobbyChatEnabled] = useState(true);
+  const [lobbyChatErr, setLobbyChatErr] = useState('');
+  const [lobbyChatInput, setLobbyChatInput] = useState('');
+
+  const lobbyChatToken = (() => {
+    try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
     return 'top10';
@@ -612,6 +639,15 @@ function AdminPage() {
   const [liveTotal, setLiveTotal] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [lobbyChat, setLobbyChat] = useState([]);
+  const [lobbyChatEnabled, setLobbyChatEnabled] = useState(true);
+  const [lobbyChatErr, setLobbyChatErr] = useState('');
+  const [lobbyChatInput, setLobbyChatInput] = useState('');
+
+  const lobbyChatToken = (() => {
+    try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
     return 'top10';
@@ -3312,6 +3348,15 @@ function PolitikumWelcome({ onJoin }) {
   const [tournamentsErr, setTournamentsErr] = useState('');
   const [top10Err, setTop10Err] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lobbyChat, setLobbyChat] = useState([]);
+  const [lobbyChatEnabled, setLobbyChatEnabled] = useState(true);
+  const [lobbyChatErr, setLobbyChatErr] = useState('');
+  const [lobbyChatInput, setLobbyChatInput] = useState('');
+
+  const lobbyChatToken = (() => {
+    try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
     return 'top10';
@@ -3334,6 +3379,58 @@ function PolitikumWelcome({ onJoin }) {
     const interval = setInterval(() => refreshMatches().catch(() => {}), 4000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      try {
+        const res = await fetch(`${SERVER}/public/lobby_chat?limit=80`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!alive) return;
+        setLobbyChat(Array.isArray(json.items) ? json.items : []);
+        setLobbyChatEnabled(json.enabled !== false);
+        setLobbyChatErr('');
+      } catch (e) {
+        if (!alive) return;
+        setLobbyChatErr(e?.message || String(e));
+      }
+    };
+    run();
+    const t = setInterval(run, 2000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  const sendLobbyChat = async () => {
+    const text = String(lobbyChatInput || '').trim();
+    if (!text) return;
+    if (!lobbyChatToken) {
+      alert('Chat requires beta login first (open /#/beta).');
+      return;
+    }
+    try {
+      const res = await fetch(`${SERVER}/public/lobby_chat/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${lobbyChatToken}`,
+        },
+        body: JSON.stringify({ text, name: playerName }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.ok === false) {
+        const err = json?.error || `HTTP ${res.status}`;
+        if (err === 'rate_limited') alert('Slow down (3s).');
+        else if (err === 'disabled') alert('Lobby chat disabled.');
+        else alert(`Chat failed: ${err}`);
+        return;
+      }
+      setLobbyChatInput('');
+    } catch (e) {
+      alert('Chat failed: ' + (e?.message || String(e)));
+    }
+  };
+
 
   useEffect(() => {
     let alive = true;
@@ -3498,22 +3595,45 @@ function PolitikumWelcome({ onJoin }) {
             <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col min-h-[360px]">
               <div className="text-[10px] uppercase tracking-[0.35em] text-amber-500/70 font-black">TAVERN BANTER</div>
               <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
-                <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
-                  <div className="text-[10px] font-mono text-amber-200/50">System</div>
-                  <div className="text-sm font-serif text-amber-50/90">Pre-lobby chat is coming back soon. For now: join a realm to chat in-game.</div>
-                </div>
+                {!lobbyChatEnabled && (
+                  <div className="bg-red-950/35 border border-red-900/40 rounded-2xl px-4 py-3">
+                    <div className="text-[10px] font-mono text-red-200/70">System</div>
+                    <div className="text-sm font-serif text-red-50/90">Lobby chat is disabled by admin.</div>
+                  </div>
+                )}
+                {!!lobbyChatErr && (
+                  <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
+                    <div className="text-[10px] font-mono text-amber-200/50">System</div>
+                    <div className="text-sm font-serif text-amber-50/80">Chat error: {lobbyChatErr}</div>
+                  </div>
+                )}
+                {(lobbyChat || []).map((m, idx) => (
+                  <div key={m.id ?? idx} className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
+                    <div className="text-[10px] font-mono text-amber-200/50">{m.name || m.playerId || 'Anon'}</div>
+                    <div className="text-sm font-serif text-amber-50/90 whitespace-pre-wrap">{m.text}</div>
+                  </div>
+                ))}
+                {(!(lobbyChat || []).length && !lobbyChatErr) && (
+                  <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
+                    <div className="text-[10px] font-mono text-amber-200/50">System</div>
+                    <div className="text-sm font-serif text-amber-50/80">Say hi.</div>
+                  </div>
+                )}
               </div>
               <div className="mt-4 flex gap-2">
                 <input
-                  value={''}
-                  readOnly
-                  placeholder="Chat coming soon…"
-                  className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200/60 font-serif text-sm focus:outline-none"
+                  value={lobbyChatInput}
+                  onChange={(e) => setLobbyChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendLobbyChat(); } }}
+                  placeholder={lobbyChatToken ? (lobbyChatEnabled ? 'Say something…' : 'Chat disabled') : 'Login in /#/beta to chat…'}
+                  disabled={!lobbyChatToken || !lobbyChatEnabled}
+                  className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none disabled:opacity-60"
                 />
                 <button
                   type="button"
-                  disabled
-                  className="px-4 py-2 bg-amber-600/40 text-amber-950/60 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60"
+                  onClick={sendLobbyChat}
+                  disabled={!lobbyChatToken || !lobbyChatEnabled || !String(lobbyChatInput||'').trim()}
+                  className="px-4 py-2 bg-amber-600 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
                 >
                   Send
                 </button>
