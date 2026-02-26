@@ -3389,14 +3389,6 @@ function PolitikumWelcome({ onJoin }) {
         >
           ADMIN
         </a>
-        <a
-          href="#/admin/tournament"
-          target="_blank"
-          rel="noreferrer"
-          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
-        >
-          TOURNAMENT
-        </a>
       </div>
 
       <div className="bg-transparent p-8 flex items-center justify-center w-full">
