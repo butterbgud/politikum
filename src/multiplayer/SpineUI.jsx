@@ -3353,9 +3353,55 @@ function PolitikumWelcome({ onJoin }) {
   const [lobbyChatErr, setLobbyChatErr] = useState('');
   const [lobbyChatInput, setLobbyChatInput] = useState('');
 
-  const lobbyChatToken = (() => {
+  const [authToken, setAuthToken] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
-  })();
+  });
+
+  const [betaPassword, setBetaPassword] = useState('');
+  const [betaLoading, setBetaLoading] = useState(false);
+  const [betaErr, setBetaErr] = useState('');
+
+  const doBetaLogin = async () => {
+    const pw = String(betaPassword || '').trim();
+    if (!pw) return;
+    setBetaLoading(true);
+    setBetaErr('');
+    try {
+      const deviceId = (() => {
+        try {
+          let d = window.localStorage.getItem('politikum.deviceId');
+          if (!d) {
+            d = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+            window.localStorage.setItem('politikum.deviceId', d);
+          }
+          return d;
+        } catch {
+          return null;
+        }
+      })();
+
+      const res = await fetch(`${SERVER}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, email: null, deviceId }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const tok = String(json?.token || '');
+      const sessionPlayerId = String(json?.playerId || '');
+      if (!tok) throw new Error('no_token');
+      setAuthToken(tok);
+      try { window.localStorage.setItem('politikum.authToken', tok); } catch {}
+      if (sessionPlayerId) {
+        try { window.localStorage.setItem('politikum.sessionPlayerId', sessionPlayerId); } catch {}
+      }
+      setBetaPassword('');
+    } catch (e) {
+      setBetaErr(e?.message || String(e));
+    } finally {
+      setBetaLoading(false);
+    }
+  };
 
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'games'); } catch {}
@@ -3404,7 +3450,7 @@ function PolitikumWelcome({ onJoin }) {
   const sendLobbyChat = async () => {
     const text = String(lobbyChatInput || '').trim();
     if (!text) return;
-    if (!lobbyChatToken) {
+    if (!authToken) {
       alert('Chat requires beta login first (open /#/beta).');
       return;
     }
@@ -3413,7 +3459,7 @@ function PolitikumWelcome({ onJoin }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${lobbyChatToken}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ text, name: playerName }),
       });
@@ -3625,14 +3671,14 @@ function PolitikumWelcome({ onJoin }) {
                   value={lobbyChatInput}
                   onChange={(e) => setLobbyChatInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendLobbyChat(); } }}
-                  placeholder={lobbyChatToken ? (lobbyChatEnabled ? 'Say something…' : 'Chat disabled') : 'Login in /#/beta to chat…'}
-                  disabled={!lobbyChatToken || !lobbyChatEnabled}
+                  placeholder={authToken ? (lobbyChatEnabled ? 'Say something…' : 'Chat disabled') : 'Login in /#/beta to chat…'}
+                  disabled={!authToken || !lobbyChatEnabled}
                   className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none disabled:opacity-60"
                 />
                 <button
                   type="button"
                   onClick={sendLobbyChat}
-                  disabled={!lobbyChatToken || !lobbyChatEnabled || !String(lobbyChatInput||'').trim()}
+                  disabled={!authToken || !lobbyChatEnabled || !String(lobbyChatInput||'').trim()}
                   className="px-4 py-2 bg-amber-600 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
                 >
                   Send
@@ -3677,7 +3723,7 @@ function PolitikumWelcome({ onJoin }) {
                   </button>
                 </div>
                 <div className="mt-2 text-[10px] font-mono text-amber-200/50">
-                  {lobbyChatToken ? 'Logged in.' : 'Not logged in.'}{betaErr ? ` · ${betaErr}` : ''}
+                  {authToken ? 'Logged in.' : 'Not logged in.'}{betaErr ? ` · ${betaErr}` : ''}
                 </div>
               </div>
 </div>
