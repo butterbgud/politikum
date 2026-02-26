@@ -385,6 +385,42 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     }
 
     {
+      const m = String(ctx.path || '').match(/^\/admin\/match\/([^\/]+)\/log$/);
+      if (m && ctx.method === 'GET') {
+        requireAdmin(ctx);
+        const matchId = String(m[1] || '');
+        const limit = clampLimit(ctx.query.limit, 200, 1000);
+
+        let state = null;
+        let metadata = null;
+        try {
+          const fetched = await ctx.db.fetch(matchId, { metadata: true, state: true });
+          metadata = fetched?.metadata ?? null;
+          state = fetched?.state ?? null;
+        } catch {}
+
+        const log = Array.isArray(state?.G?.log) ? state.G.log : [];
+        const tail = log.slice(Math.max(0, log.length - limit));
+
+        ctx.body = {
+          ok: true,
+          matchId,
+          meta: {
+            createdAt: metadata?.createdAt ?? null,
+            updatedAt: metadata?.updatedAt ?? null,
+            gameover: metadata?.gameover ?? null,
+          },
+          ctx: state?.ctx ?? null,
+          pending: state?.G?.pending ?? null,
+          response: state?.G?.response ?? null,
+          log: tail,
+          logTotal: log.length,
+        };
+        return;
+      }
+    }
+
+    {
       const m = String(ctx.path || '').match(/^\/admin\/match\/([^\/]+)\/kill$/);
       if (m && ctx.method === 'POST') {
         requireAdmin(ctx);
