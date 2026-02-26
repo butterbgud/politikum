@@ -3728,37 +3728,58 @@ function PolitikumWelcome({ onJoin }) {
       {/* Top bar: alias + beta login */}
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
         <div className="pointer-events-auto max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 sm:items-center">
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Alias</div>
-            <input
+          <div className="flex justify-end items-center gap-3 w-full">
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Alias</div>
+              <input
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              className="flex-1 min-w-0 bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-serif text-sm focus:outline-none focus:border-amber-500"
+              className="w-[220px] max-w-[60vw] bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-serif text-sm focus:outline-none focus:border-amber-500"
               placeholder="your name"
             />
           </div>
-
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Beta</div>
-            <input
-              value={betaPassword}
-              onChange={(e) => setBetaPassword(e.target.value)}
-              type="password"
-              placeholder="beta password"
-              className="flex-1 min-w-0 bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-mono text-sm focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={doBetaLogin}
-              disabled={betaLoading || !String(betaPassword || '').trim()}
-              className="px-3 py-2 rounded bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
-            >
-              {betaLoading ? '…' : 'Login'}
-            </button>
-            <div className="hidden md:block text-[10px] font-mono text-black/70 whitespace-nowrap">
-              {authToken ? 'Logged in' : 'Not logged in'}{betaErr ? ` · ${betaErr}` : ''}
             </div>
+
+          <div className="flex-1 min-w-0 flex items-center gap-2 justify-end">
+            {authToken ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { window.localStorage.removeItem('politikum.authToken'); } catch {}
+                    try { window.localStorage.removeItem('politikum.sessionPlayerId'); } catch {}
+                    setAuthToken('');
+                  }}
+                  className="text-xs font-mono text-amber-200/80 hover:text-amber-50"
+                >
+                  Выйти
+                </button>
+                <div className="hidden md:block text-[10px] font-mono text-black/70 whitespace-nowrap">Logged in</div>
+              </>
+            ) : (
+              <>
+                <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Beta</div>
+                <input
+                  value={betaPassword}
+                  onChange={(e) => setBetaPassword(e.target.value)}
+                  type="password"
+                  placeholder="beta password"
+                  className="w-[260px] max-w-[60vw] bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-mono text-sm focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={doBetaLogin}
+                  disabled={betaLoading || !String(betaPassword || '').trim()}
+                  className="px-3 py-2 rounded bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+                >
+                  {betaLoading ? '…' : 'Login'}
+                </button>
+                <div className="hidden md:block text-[10px] font-mono text-black/70 whitespace-nowrap">
+                  Not logged in{betaErr ? ` · ${betaErr}` : ''}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
