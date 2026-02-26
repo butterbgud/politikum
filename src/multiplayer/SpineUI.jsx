@@ -18,6 +18,15 @@ function TournamentPage() {
   const [items, setItems] = useState([]);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rightTab, setRightTab] = useState(() => {
+    try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
+    return 'top10';
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem('politikum.welcomeRightTab', rightTab); } catch {}
+  }, [rightTab]);
+
   const [includeFinished, setIncludeFinished] = useState(false);
 
 
@@ -91,6 +100,15 @@ function TournamentDetailPage({ tournamentId }) {
   const [err, setErr] = useState('');
   const [tablesErr, setTablesErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rightTab, setRightTab] = useState(() => {
+    try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
+    return 'top10';
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem('politikum.welcomeRightTab', rightTab); } catch {}
+  }, [rightTab]);
+
 
   const hasAdminToken = (() => {
     try { return !!window.localStorage.getItem('politikum.adminToken'); } catch { return false; }
@@ -358,6 +376,15 @@ function AdminTournamentPage() {
     try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
   });
   const [loading, setLoading] = useState(false);
+  const [rightTab, setRightTab] = useState(() => {
+    try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
+    return 'top10';
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem('politikum.welcomeRightTab', rightTab); } catch {}
+  }, [rightTab]);
+
   const [error, setError] = useState('');
   const [items, setItems] = useState([]);
   const [includeFinished, setIncludeFinished] = useState(false);
@@ -585,6 +612,15 @@ function AdminPage() {
   const [liveTotal, setLiveTotal] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [rightTab, setRightTab] = useState(() => {
+    try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
+    return 'top10';
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem('politikum.welcomeRightTab', rightTab); } catch {}
+  }, [rightTab]);
+
   const [error, setError] = useState('');
 
   const saveToken = (value) => {
@@ -3254,6 +3290,15 @@ function PolitikumWelcome({ onJoin }) {
   const [tournamentsErr, setTournamentsErr] = useState('');
   const [top10Err, setTop10Err] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rightTab, setRightTab] = useState(() => {
+    try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'top10'); } catch {}
+    return 'top10';
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem('politikum.welcomeRightTab', rightTab); } catch {}
+  }, [rightTab]);
+
 
   const refreshMatches = async () => {
     const res = await fetch(`${SERVER}/public/matches_open?limit=50`, { cache: 'no-store' });
@@ -3456,28 +3501,10 @@ function PolitikumWelcome({ onJoin }) {
 
           {/* RIGHT: MODULES */}
           <div className="w-[360px] max-w-full space-y-6">
-            <div className="bg-black/75 backdrop-blur-xl p-6 rounded-3xl border border-amber-900/40 shadow-2xl">
-              <h3 className="text-[10px] uppercase tracking-widest text-amber-500/70 mb-2 border-b border-amber-500/20 pb-1 font-black">Top 10</h3>
-              {(top10 && top10.length > 0) ? (
-                <div className="space-y-2">
-                  {top10.map((r, i) => (
-                    <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-amber-900/20">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
-                        <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
-                      </div>
-                      <span className="text-xs font-mono text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-[10px] font-mono text-amber-200/30">{top10Err ? `Top10 unavailable: ${top10Err}` : '—'}</div>
-              )}
-            </div>
-
             <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit">
-              <h2 className="text-xl font-serif text-amber-500 font-bold mb-6 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">The Guest List</h2>
-              <div className="p-3 mb-6 bg-amber-950/30 rounded-xl border border-amber-500/20 flex flex-col gap-2">
+              <h2 className="text-xl font-serif text-amber-500 font-bold mb-4 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">The Guest List</h2>
+
+              <div className="p-3 mb-5 bg-amber-950/30 rounded-xl border border-amber-500/20 flex flex-col gap-2">
                 <label className="text-[10px] uppercase tracking-widest text-amber-700 font-black px-1">Your Alias</label>
                 <input
                   type="text"
@@ -3487,55 +3514,116 @@ function PolitikumWelcome({ onJoin }) {
                 />
               </div>
 
-              <div className="overflow-y-auto space-y-2 max-h-64 mb-6 pr-1 custom-scrollbar">
-                <h3 className="text-[10px] uppercase tracking-widest text-amber-900/60 mb-2 border-b border-amber-900/10 pb-1">Available Realms</h3>
-                {(matches || [])
-                  .filter((match) => {
-                    // Hide started matches: if no open seats, it’s in-progress.
-                    if (match.gameover) return false;
-                    const seats = match.players || [];
-                    return seats.some((p) => p && p.name == null);
-                  })
-                  .map((match) => {
-                    const host = match.setupData?.hostName || 'Noble';
-                    const displayName = host.endsWith('s') ? `${host}' Realm` : `${host}'s Realm`;
-                    return (
-                      <div key={match.matchID} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-amber-900/20 hover:bg-slate-900/80 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="font-serif text-amber-100 text-sm font-bold">{displayName}</span>
-                          <span className="text-[8px] text-amber-900/60 font-mono">ID: {match.matchID.slice(0, 4)}</span>
+              {/* Tabs */}
+              <div className="mb-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRightTab('realms')}
+                  className={
+                    'flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ' +
+                    (rightTab === 'realms'
+                      ? 'bg-amber-600 text-amber-950 border-amber-500/40'
+                      : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
+                  }
+                >
+                  Realms
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightTab('top10')}
+                  className={
+                    'flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ' +
+                    (rightTab === 'top10'
+                      ? 'bg-amber-600 text-amber-950 border-amber-500/40'
+                      : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
+                  }
+                >
+                  Top 10
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightTab('tournaments')}
+                  className={
+                    'flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ' +
+                    (rightTab === 'tournaments'
+                      ? 'bg-amber-600 text-amber-950 border-amber-500/40'
+                      : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
+                  }
+                >
+                  Tournaments
+                </button>
+              </div>
+
+              {/* Tab content */}
+              {rightTab === 'top10' && (
+                <div className="space-y-2">
+                  {(top10 && top10.length > 0) ? (
+                    top10.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-amber-900/20">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
+                          <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
                         </div>
-                        <button onClick={() => joinMatch(match.matchID)} className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase">
-                          [Join]
-                        </button>
+                        <span className="text-xs font-mono text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</span>
                       </div>
-                    );
-                  })}
-                {(!matches || matches.length === 0) && <div className="text-center py-8 text-amber-900/40 italic text-sm font-serif">Awaiting realms...</div>}
-              </div>
+                    ))
+                  ) : (
+                    <div className="text-[10px] font-mono text-amber-200/30">{top10Err ? `Top10 unavailable: ${top10Err}` : '—'}</div>
+                  )}
+                </div>
+              )}
 
-              <button onClick={createMatch} disabled={loading} className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60">
-                Host New Realm
-              </button>
-            </div>
+              {rightTab === 'tournaments' && (
+                <div className="space-y-2">
+                  {tournamentsErr && <div className="text-[10px] font-mono text-amber-200/30">{tournamentsErr}</div>}
+                  {(tournaments || []).slice(0, 10).map((t) => (
+                    <button key={t.id} type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="w-full text-left bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div className="font-black text-amber-50">{t.name || t.id}</div>
+                        <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
+                      </div>
+                      <div className="mt-1 text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · players {t.playersCount}{(t.config?.maxPlayers ? `/${t.config.maxPlayers}` : '')}</div>
+                    </button>
+                  ))}
+                  {(!(tournaments || []).length && !tournamentsErr) && (
+                    <div className="text-[10px] font-mono text-amber-200/30">No open tournaments.</div>
+                  )}
+                </div>
+              )}
 
-            <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
-              <div className="text-[10px] uppercase tracking-widest text-amber-500/70 font-black mb-2">Open tournaments</div>
-              {tournamentsErr && <div className="text-[10px] font-mono text-amber-200/30">{tournamentsErr}</div>}
-              <div className="space-y-2">
-                {(tournaments || []).slice(0, 6).map((t) => (
-                  <button key={t.id} type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="w-full text-left bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="font-black text-amber-50">{t.name || t.id}</div>
-                      <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
-                    </div>
-                    <div className="mt-1 text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · players {t.playersCount}{(t.config?.maxPlayers ? `/${t.config.maxPlayers}` : '')}</div>
+              {rightTab === 'realms' && (
+                <>
+                  <div className="overflow-y-auto space-y-2 max-h-64 mb-5 pr-1 custom-scrollbar">
+                    <h3 className="text-[10px] uppercase tracking-widest text-amber-900/60 mb-2 border-b border-amber-900/10 pb-1">Available Realms</h3>
+                    {(matches || [])
+                      .filter((match) => {
+                        if (match.gameover) return false;
+                        const seats = match.players || [];
+                        return seats.some((p) => p && p.name == null);
+                      })
+                      .map((match) => {
+                        const host = match.setupData?.hostName || 'Noble';
+                        const displayName = host.endsWith('s') ? `${host}' Realm` : `${host}'s Realm`;
+                        return (
+                          <div key={match.matchID} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-amber-900/20 hover:bg-slate-900/80 transition-colors">
+                            <div className="flex flex-col">
+                              <span className="font-serif text-amber-100 text-sm font-bold">{displayName}</span>
+                              <span className="text-[8px] text-amber-900/60 font-mono">ID: {match.matchID.slice(0, 4)}</span>
+                            </div>
+                            <button onClick={() => joinMatch(match.matchID)} className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase">
+                              [Join]
+                            </button>
+                          </div>
+                        );
+                      })}
+                    {(!matches || matches.length === 0) && <div className="text-center py-8 text-amber-900/40 italic text-sm font-serif">Awaiting realms...</div>}
+                  </div>
+
+                  <button onClick={createMatch} disabled={loading} className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60">
+                    Host New Realm
                   </button>
-                ))}
-                {(!(tournaments || []).length && !tournamentsErr) && (
-                  <div className="text-[10px] font-mono text-amber-200/30">No open tournaments.</div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>
