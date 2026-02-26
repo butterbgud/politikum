@@ -1218,29 +1218,30 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
           {/* Side panel */}
           <div className="grid gap-4">
-            <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={betaPassword}
-                  onChange={(e) => setBetaPassword(e.target.value)}
-                  placeholder="beta password"
-                  type="password"
-                  className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={doBetaLogin}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
-                >
-                  Login
-                </button>
+            {!authToken && (
+              <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={betaPassword}
+                    onChange={(e) => setBetaPassword(e.target.value)}
+                    placeholder="token"
+                    type="password"
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={doBetaLogin}
+                    className="px-4 py-1.5 rounded-xl bg-emerald-700/60 hover:bg-emerald-600/70 text-emerald-50 font-black text-xs uppercase tracking-widest"
+                  >
+                    Login
+                  </button>
+                </div>
+                <div className="mt-2 text-[10px] font-mono text-amber-200/50">
+                  {authStatus ? authStatus : 'Enter token to enable chat/tournaments.'}
+                </div>
               </div>
-              <div className="mt-2 text-[10px] font-mono text-amber-200/50">
-                {authToken ? 'Logged in (token saved).' : 'Not logged in.'}
-                {authStatus ? ` · ${authStatus}` : ''}
-              </div>
-            </div>
+            )}
 
             {/* Seats */}
             <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
