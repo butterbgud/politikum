@@ -3749,12 +3749,22 @@ function PolitikumWelcome({ onJoin }) {
                     <div className="text-sm font-serif text-amber-50/80">Chat error: {lobbyChatErr}</div>
                   </div>
                 )}
-                {(lobbyChat || []).map((m, idx) => (
-                  <div key={m.id ?? idx} className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
-                    <div className="text-[10px] font-mono text-amber-200/50">{m.name || m.playerId || 'Anon'}</div>
-                    <div className="text-sm font-serif text-amber-50/90 whitespace-pre-wrap">{m.text}</div>
-                  </div>
-                ))}
+                {(lobbyChat || []).map((m, idx) => {
+                  const isMe = String(m?.name || '') === String(playerName || '');
+                  return (
+                    <div
+                      key={m.id ?? idx}
+                      className={
+                        isMe
+                          ? 'px-1 py-1'
+                          : 'bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3'
+                      }
+                    >
+                      <div className="text-[10px] font-mono text-amber-200/50">{m.name || m.playerId || 'Anon'}</div>
+                      <div className="text-sm font-serif text-amber-50/90 whitespace-pre-wrap">{m.text}</div>
+                    </div>
+                  );
+                })}
                 {(!(lobbyChat || []).length && !lobbyChatErr) && (
                   <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
                     <div className="text-[10px] font-mono text-amber-200/50">System</div>
