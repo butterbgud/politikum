@@ -1318,20 +1318,40 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const current = (G.players || []).find((p) => String(p.id) === String(ctx.currentPlayer));
   const currentIsBot = String(current?.name || '').startsWith('[B]') || !!current?.isBot;
 
-  // Bot driver election: pick the lowest-id active human seat.
-  // This avoids the old assumption that seat 0 is always present and driving.
-  const botDriverId = useMemo(() => {
+  // Bot driver election (lock-based): any human tab can drive bot ticks.
+  // We use a localStorage lease so if the previous driver tab sleeps, another tab takes over.
+  const BOT_LOCK_KEY = useMemo(() => {
+    const mid = String(matchID || '');
+    return mid ? `politikum.botDriverLock:${mid}` : 'politikum.botDriverLock';
+  }, [matchID]);
+
+  const isHumanSeat = !(String(me?.name || '').startsWith('[B]') || !!me?.isBot);
+
+  const shouldDriveBots = useMemo(() => {
     try {
-      const humans = (G.players || [])
-        .filter((pp) => pp?.active)
-        .filter((pp) => !(String(pp?.name || '').startsWith('[B]') || !!pp?.isBot))
-        .map((pp) => String(pp.id));
-      if (!humans.length) return null;
-      humans.sort((a, b) => (Number(a) - Number(b)) || a.localeCompare(b));
-      return humans[0];
-    } catch { return null; }
-  }, [G.players]);
-  const isBotDriver = botDriverId != null && String(playerID) === String(botDriverId);
+      if (!currentIsBot) return false;
+      if (!isHumanSeat) return false;
+      const now = Date.now();
+      const raw = window.localStorage.getItem(BOT_LOCK_KEY);
+      let lock = null;
+      try { lock = raw ? JSON.parse(raw) : null; } catch { lock = null; }
+      const holder = String(lock?.playerID || '');
+      const ts = Number(lock?.ts || 0);
+      const alive = ts && (now - ts) < 2500; // 2.5s lease
+      if (!alive || holder === String(playerID)) return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }, [BOT_LOCK_KEY, currentIsBot, isHumanSeat, playerID]);
+
+  const refreshBotLease = () => {
+    try {
+      const now = Date.now();
+      window.localStorage.setItem(BOT_LOCK_KEY, JSON.stringify({ playerID: String(playerID), ts: now }));
+    } catch {}
+  };
+
   const response = G.response || null;
   const pending = G.pending || null;
   const responseKind = response?.kind || null;
@@ -1660,26 +1680,28 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     if (G?.gameOver) return;
     if (!currentIsBot) return;
     // Only one client should drive bot ticks; otherwise other players spam INVALID_MOVE due to stateID/turn mismatch.
-    if (!isBotDriver) return;
+    if (!shouldDriveBots) return;
 
     const t = setInterval(() => {
+      refreshBotLease();
       try { moves.tickBot(); } catch {}
     }, 900);
     return () => clearInterval(t);
-  }, [moves, currentIsBot, G?.gameOver, isBotDriver]);
+  }, [moves, currentIsBot, G?.gameOver, shouldDriveBots]);
 
   // Human-side tick: clears expired response windows + auto-ends stuck turns once response closes.
   useEffect(() => {
     if (G?.gameOver) return;
-    if (!isBotDriver) return; // single driver
+    if (!shouldDriveBots) return; // single driver
     const needTick = !!G.response || String(G.pending?.kind || '') === 'resolve_persona_after_response';
     if (!needTick) return;
 
     const t = setInterval(() => {
+      refreshBotLease();
       try { moves.tick(); } catch {}
     }, 500);
     return () => clearInterval(t);
-  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, isBotDriver]);
+  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, shouldDriveBots]);
 
   // Keep event card visible while the event is still being resolved.
   useEffect(() => {
