@@ -369,17 +369,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const limit = Math.min(50, Number.parseInt(ctx.query.limit ?? '20', 10) || 20);
       const body = await listInProgressMatches(ctx.db, limit);
 
-      // Auto-prune: if a match hasn't updated in 5 minutes, wipe it so it doesn't linger.
-      try {
-        const now = Date.now();
-        const STALE_MS = 5 * 60 * 1000;
-        for (const it of (body.items || [])) {
-          const upd = Number(it?.updatedAt || it?.createdAt || 0);
-          if (upd && (now - upd) > STALE_MS) {
-            try { await ctx.db.wipe(String(it.matchId)); } catch {}
-          }
-        }
-      } catch {}
+      // Auto-prune disabled (was too dangerous; could wipe active games if admin page is open).
 
       ctx.body = body;
       return;
