@@ -115,6 +115,8 @@ function AdminPage() {
             {!!token && (
               <a
                 href="#/admin/tournament"
+                target="_blank"
+                rel="noreferrer"
                 className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
                 title="Tournament admin"
               >
