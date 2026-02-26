@@ -1999,29 +1999,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </div>
         </button>
 
-        {/* Bot rescue: nudge bot tick */}
-        {currentIsBot && !isMyTurn && !G.gameOver && (
-          <div className="fixed pointer-events-auto select-none flex flex-col gap-2" style={{ right: 'calc(2% + 6px)', top: 'calc(3% + 140px)' }}>
-            <button
-              type="button"
-              onClick={() => { try { moves.tickBot(); } catch {} }}
-              className="px-3 py-2 rounded-xl bg-red-950/55 hover:bg-red-950/70 border border-red-300/20 text-red-100 text-[11px] font-black"
-              title="Nudge bot / unstuck"
-            >
-              NUDGE BOT
-            </button>
-            <button
-              type="button"
-              onClick={() => { try { moves.forceSkipTurn(); } catch {} }}
-              className="px-3 py-2 rounded-xl bg-black/55 hover:bg-black/70 border border-amber-300/20 text-amber-100 text-[11px] font-black"
-              title="Thermonuclear: skip current bot turn"
-            >
-              SKIP BOT TURN
-            </button>
-          </div>
-        )}
-
-        {/* Cookies (End Turn) */}
+                {/* Cookies (End Turn) */}
         <button
           type="button"
           onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
