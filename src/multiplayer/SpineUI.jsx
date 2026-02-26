@@ -3745,16 +3745,18 @@ function PolitikumWelcome({ onJoin }) {
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
         <div className="pointer-events-auto max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="flex justify-end items-center gap-3 w-full">
+            {!authToken && (
             <div className="flex items-center gap-2">
               <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Alias</div>
               <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="w-[220px] max-w-[60vw] bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-serif text-sm focus:outline-none focus:border-amber-500"
-              placeholder="your name"
-            />
-          </div>
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className="w-[220px] max-w-[60vw] bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-serif text-sm focus:outline-none focus:border-amber-500"
+                placeholder="your name"
+              />
+            </div>
+            )}
             </div>
 
           <div className="flex-1 min-w-0 flex items-center gap-2 justify-end">
