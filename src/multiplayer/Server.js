@@ -295,6 +295,17 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       return;
     }
 
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/match\/([^\/]+)\/kill$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const matchId = m[1];
+        try { await ctx.db.wipe(matchId); } catch {}
+        ctx.body = { ok: true, matchId };
+        return;
+      }
+    }
+
     if (ctx.path === '/admin/leaderboard' && ctx.method === 'GET') {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);
