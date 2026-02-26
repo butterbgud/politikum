@@ -3775,7 +3775,7 @@ function PolitikumWelcome({ onJoin }) {
           href="#/admin"
           target="_blank"
           rel="noreferrer"
-          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
+          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
         >
           ADMIN
         </a>
@@ -3784,14 +3784,14 @@ function PolitikumWelcome({ onJoin }) {
 
       {/* Top bar: alias + beta login */}
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
-        <div className="pointer-events-auto max-w-3xl mx-auto bg-black/60 backdrop-blur-md border border-amber-900/20 rounded-md px-3 py-2 shadow-2xl flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="pointer-events-auto max-w-7xl mx-auto bg-black/60 backdrop-blur-md border border-amber-900/20 rounded-2xl px-4 py-3 shadow-2xl flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="flex-1 min-w-0 flex items-center gap-2">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Alias</div>
             <input
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none focus:border-amber-500"
+              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none focus:border-amber-500"
               placeholder="your name"
             />
           </div>
@@ -3803,13 +3803,13 @@ function PolitikumWelcome({ onJoin }) {
               onChange={(e) => setBetaPassword(e.target.value)}
               type="password"
               placeholder="beta password"
-              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded px-3 py-2 text-amber-200 font-mono text-sm focus:outline-none"
+              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-mono text-sm focus:outline-none"
             />
             <button
               type="button"
               onClick={doBetaLogin}
               disabled={betaLoading || !String(betaPassword || '').trim()}
-              className="px-3 py-2 rounded bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+              className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
             >
               {betaLoading ? '…' : 'Login'}
             </button>
@@ -3821,7 +3821,7 @@ function PolitikumWelcome({ onJoin }) {
       </div>
 
       <div className="bg-transparent p-8 pt-28 flex items-center justify-center w-full">
-        <div className="flex gap-8 items-start max-w-3xl w-full mx-auto px-4 max-h-[85vh]">
+        <div className="flex gap-8 items-start max-w-7xl w-full mx-auto px-4 max-h-[85vh]">
           {/* LEFT: NEWS + CHAT */}
           <div className="flex-1 min-w-0 space-y-6">
             <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
@@ -3844,13 +3844,13 @@ function PolitikumWelcome({ onJoin }) {
               <div className="text-[10px] uppercase tracking-[0.35em] text-amber-500/70 font-black">TAVERN BANTER</div>
               <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
                 {!lobbyChatEnabled && (
-                  <div className="bg-red-950/35 border border-red-900/40 rounded-md px-3 py-2">
+                  <div className="bg-red-950/35 border border-red-900/40 rounded-2xl px-4 py-3">
                     <div className="text-[10px] font-mono text-red-200/70">System</div>
                     <div className="text-sm font-serif text-red-50/90">Lobby chat is disabled by admin.</div>
                   </div>
                 )}
                 {!!lobbyChatErr && (
-                  <div className="bg-black/35 border border-amber-900/20 rounded-md px-3 py-2">
+                  <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
                     <div className="text-[10px] font-mono text-amber-200/50">System</div>
                     <div className="text-sm font-serif text-amber-50/80">Chat error: {lobbyChatErr}</div>
                   </div>
@@ -3863,7 +3863,7 @@ function PolitikumWelcome({ onJoin }) {
                       className={
                         isMe
                           ? 'px-1 py-1'
-                          : 'bg-black/35 border border-amber-900/20 rounded-md px-3 py-2'
+                          : 'bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3'
                       }
                     >
                       <div className="text-[10px] font-mono text-amber-200/50">{m.name || m.playerId || 'Anon'}</div>
@@ -3872,7 +3872,7 @@ function PolitikumWelcome({ onJoin }) {
                   );
                 })}
                 {(!(lobbyChat || []).length && !lobbyChatErr) && (
-                  <div className="bg-black/35 border border-amber-900/20 rounded-md px-3 py-2">
+                  <div className="bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3">
                     <div className="text-[10px] font-mono text-amber-200/50">System</div>
                     <div className="text-sm font-serif text-amber-50/80">Say hi.</div>
                   </div>
@@ -3885,13 +3885,13 @@ function PolitikumWelcome({ onJoin }) {
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendLobbyChat(); } }}
                   placeholder={authToken ? (lobbyChatEnabled ? 'Say something…' : 'Chat disabled') : 'Login in /#/beta to chat…'}
                   disabled={!authToken || !lobbyChatEnabled}
-                  className="flex-1 bg-black/40 border border-amber-900/30 rounded px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none disabled:opacity-60"
+                  className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none disabled:opacity-60"
                 />
                 <button
                   type="button"
                   onClick={sendLobbyChat}
                   disabled={!authToken || !lobbyChatEnabled || !String(lobbyChatInput||'').trim()}
-                  className="px-3 py-2 bg-amber-600 text-amber-950 font-black rounded uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
+                  className="px-4 py-2 bg-amber-600 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
                 >
                   Send
                 </button>
@@ -3910,7 +3910,7 @@ function PolitikumWelcome({ onJoin }) {
                   type="button"
                   onClick={() => setRightTab('games')}
                   className={
-                    'flex-1 py-2 rounded border text-[10px] font-black uppercase tracking-widest ' +
+                    'flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ' +
                     (rightTab === 'games'
                       ? 'bg-amber-600 text-amber-950 border-amber-500/40'
                       : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
@@ -3922,7 +3922,7 @@ function PolitikumWelcome({ onJoin }) {
                   type="button"
                   onClick={() => setRightTab('top10')}
                   className={
-                    'flex-1 py-2 rounded border text-[10px] font-black uppercase tracking-widest ' +
+                    'flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ' +
                     (rightTab === 'top10'
                       ? 'bg-amber-600 text-amber-950 border-amber-500/40'
                       : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
@@ -3934,7 +3934,7 @@ function PolitikumWelcome({ onJoin }) {
                   type="button"
                   onClick={() => setRightTab('tournaments')}
                   className={
-                    'flex-1 py-2 rounded border text-[10px] font-black uppercase tracking-widest ' +
+                    'flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ' +
                     (rightTab === 'tournaments'
                       ? 'bg-amber-600 text-amber-950 border-amber-500/40'
                       : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
@@ -3949,7 +3949,7 @@ function PolitikumWelcome({ onJoin }) {
                 <div className="space-y-2">
                   {(top10 && top10.length > 0) ? (
                     top10.map((r, i) => (
-                      <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded border border-amber-900/20">
+                      <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-amber-900/20">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
                           <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
@@ -3967,7 +3967,7 @@ function PolitikumWelcome({ onJoin }) {
                 <div className="space-y-2">
                   {tournamentsErr && <div className="text-[10px] font-mono text-amber-200/30">{tournamentsErr}</div>}
                   {(tournaments || []).slice(0, 10).map((t) => (
-                    <button key={t.id} type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="w-full text-left bg-black/40 border border-amber-900/20 rounded-md px-3 py-2 hover:bg-black/50">
+                    <button key={t.id} type="button" onClick={() => { window.location.hash = `#/tournament/${t.id}`; }} className="w-full text-left bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3 hover:bg-black/50">
                       <div className="flex items-baseline justify-between gap-3">
                         <div className="font-black text-amber-50">{t.name || t.id}</div>
                         <div className="text-[10px] font-mono text-amber-200/60">{t.status}</div>
@@ -3995,7 +3995,7 @@ function PolitikumWelcome({ onJoin }) {
                         const host = match.setupData?.hostName || 'Noble';
                         const displayName = host.endsWith('s') ? `${host}' Realm` : `${host}'s Realm`;
                         return (
-                          <div key={match.matchID} className="flex justify-between items-center bg-slate-900/60 p-3 rounded border border-amber-900/20 hover:bg-slate-900/80 transition-colors">
+                          <div key={match.matchID} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-amber-900/20 hover:bg-slate-900/80 transition-colors">
                             <div className="flex flex-col">
                               <span className="font-serif text-amber-100 text-sm font-bold">{displayName}</span>
                               <span className="text-[8px] text-amber-900/60 font-mono">ID: {match.matchID.slice(0, 4)}</span>
@@ -4009,7 +4009,7 @@ function PolitikumWelcome({ onJoin }) {
                     {(!matches || matches.length === 0) && <div className="text-center py-8 text-amber-900/40 italic text-sm font-serif">Awaiting games...</div>}
                   </div>
 
-                  <button onClick={createMatch} disabled={loading} className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-amber-950 font-black rounded uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60">
+                  <button onClick={createMatch} disabled={loading} className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60">
                     Host New Realm
                   </button>
                 </>
