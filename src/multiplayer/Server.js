@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -703,7 +703,52 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       return;
     }
 
-    // Closed beta auth: shared password -> session token (stored in localStorage).
+    // Prod auth (MVP): username + token. If username doesn't exist yet, register it.
+    if (ctx.path === '/auth/register_or_login' && ctx.method === 'POST') {
+      const body = ctx.request.body || {};
+      const username = String(body.username || '').trim();
+      const token = String(body.token || '');
+      const deviceId = (body.deviceId == null) ? null : String(body.deviceId || '').trim();
+
+      // simple in-memory rate limit (per ip+username)
+      globalThis.__politikumAuthRate ||= new Map();
+      const rate = globalThis.__politikumAuthRate;
+      const key = `${String(ctx.request.ip || ctx.ip || '')}:${username.toLowerCase()}`;
+      const now = Date.now();
+      const last = Number(rate.get(key) || 0);
+      if (last && (now - last) < 1500) ctx.throw(429, 'Too many attempts');
+      rate.set(key, now);
+
+      try {
+        const sess = authRegisterOrLogin({ username, token, deviceId });
+        ctx.body = { ok: true, ...sess };
+      } catch (e) {
+        const status = Number(e?.status || 0) || (String(e?.message || '').includes('invalid_token') ? 401 : 400);
+        ctx.status = status;
+        ctx.body = { ok: false, error: e?.message || String(e) };
+      }
+      return;
+    }
+
+    // Change token (requires existing session)
+    if (ctx.path === '/auth/change_token' && ctx.method === 'POST') {
+      const auth = String(ctx.request.headers['authorization'] || '');
+      const sessToken = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+      const body = ctx.request.body || {};
+      const oldToken = String(body.oldToken || body.old || '');
+      const newToken = String(body.newToken || body.new || '');
+      try {
+        const res = authChangeToken({ sessionToken: sessToken, oldToken, newToken });
+        ctx.body = res;
+      } catch (e) {
+        const status = Number(e?.status || 0) || (String(e?.message || '').includes('unauthorized') ? 401 : 400);
+        ctx.status = status;
+        ctx.body = { ok: false, error: e?.message || String(e) };
+      }
+      return;
+    }
+
+    // Closed beta auth (legacy): shared password -> session token (stored in localStorage).
     if (ctx.path === '/auth/login' && ctx.method === 'POST') {
       const body = ctx.request.body || {};
       const password = String(body.password || '');

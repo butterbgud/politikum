@@ -37,11 +37,22 @@ function openDatabase() {
       account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
       device_id TEXT,
       player_id TEXT NOT NULL,
+      username TEXT,
       created_at INTEGER NOT NULL,
       last_seen_at INTEGER
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_account_id ON sessions(account_id);
+
+    -- Username+token auth (MVP prod)
+    CREATE TABLE IF NOT EXISTS users (
+      username TEXT PRIMARY KEY,
+      player_id TEXT UNIQUE NOT NULL,
+      token_hash TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_users_player_id ON users(player_id);
 
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY,
@@ -184,6 +195,14 @@ function openDatabase() {
   } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_device_id ON sessions(device_id)').run(); } catch {}
 
+  // sessions.username
+  try {
+    if (!hasColumn('sessions', 'username')) {
+      db.prepare('ALTER TABLE sessions ADD COLUMN username TEXT').run();
+    }
+  } catch {}
+  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_username ON sessions(username)').run(); } catch {}
+
   return db;
 }
 
@@ -197,6 +216,30 @@ function randToken() {
   // URL-safe enough for MVP
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
+
+function hashUserToken(token) {
+  const t = String(token || '');
+  const salt = crypto.randomBytes(16);
+  const iters = 120_000;
+  const hash = crypto.pbkdf2Sync(Buffer.from(t, 'utf8'), salt, iters, 32, 'sha256');
+  return `pbkdf2_sha256$${iters}$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
+
+function verifyUserToken(token, stored) {
+  try {
+    const [kind, itStr, saltHex, hashHex] = String(stored || '').split('$');
+    if (kind !== 'pbkdf2_sha256') return false;
+    const iters = Math.max(1, Number(itStr) || 0);
+    if (!iters || !saltHex || !hashHex) return false;
+    const salt = Buffer.from(saltHex, 'hex');
+    const expected = Buffer.from(hashHex, 'hex');
+    const got = crypto.pbkdf2Sync(Buffer.from(String(token || ''), 'utf8'), salt, iters, expected.length, 'sha256');
+    return crypto.timingSafeEqual(got, expected);
+  } catch {
+    return false;
+  }
+}
+
 
 export function authCreateSession({ email, deviceId }) {
   const db = sqlite;
@@ -233,11 +276,31 @@ export function authCreateSession({ email, deviceId }) {
   return { token, playerId, createdAt };
 }
 
+
+export function authCreateSessionForPlayer({ playerId, username, deviceId }) {
+  const db = sqlite;
+  const createdAt = nowMs();
+  const token = randToken();
+
+  const pid = String(playerId || '').trim();
+  if (!pid) throw new Error('playerId required');
+
+  const uname = username == null ? null : String(username || '').trim().toLowerCase();
+  const devId = deviceId ? String(deviceId).trim() : '';
+
+  db.prepare(`
+    INSERT INTO sessions (token, account_id, device_id, player_id, username, created_at, last_seen_at)
+    VALUES (?, NULL, ?, ?, ?, ?, ?)
+  `).run(token, devId || null, pid, uname || null, createdAt, createdAt);
+
+  return { token, playerId: pid, username: uname || null, createdAt };
+}
+
 export function authGetSession(token) {
   if (!token) return null;
   const db = sqlite;
   const row = db.prepare(`
-    SELECT s.token, s.player_id AS playerId, s.created_at AS createdAt, s.last_seen_at AS lastSeenAt,
+    SELECT s.token, s.player_id AS playerId, s.username AS username, s.created_at AS createdAt, s.last_seen_at AS lastSeenAt,
            a.email AS email
     FROM sessions s
     LEFT JOIN accounts a ON a.id = s.account_id
@@ -248,6 +311,74 @@ export function authGetSession(token) {
     db.prepare(`UPDATE sessions SET last_seen_at = ? WHERE token = ?`).run(nowMs(), String(token));
   } catch {}
   return row;
+}
+
+
+export function authRegisterOrLogin({ username, token, deviceId }) {
+  const db = sqlite;
+  const unameRaw = String(username || '').trim();
+  const uname = unameRaw.toLowerCase();
+  const tok = String(token || '');
+
+  if (!uname || uname.length < 2) throw new Error('username_too_short');
+  if (!/^[a-z0-9_\-\.]{2,32}$/.test(uname)) throw new Error('username_invalid');
+  if (tok.length < 4) throw new Error('token_too_short');
+
+  const createdAt = nowMs();
+
+  const row = db
+    .prepare('SELECT username, player_id AS playerId, token_hash AS tokenHash FROM users WHERE username = ?')
+    .get(uname);
+
+  if (!row) {
+    const playerId = randToken();
+    const tokenHash = hashUserToken(tok);
+    db.prepare('INSERT INTO users (username, player_id, token_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      uname,
+      playerId,
+      tokenHash,
+      createdAt,
+    );
+    return authCreateSessionForPlayer({ playerId, username: uname, deviceId });
+  }
+
+  if (!verifyUserToken(tok, row.tokenHash)) {
+    const err = new Error('invalid_token');
+    err.status = 401;
+    throw err;
+  }
+
+  return authCreateSessionForPlayer({ playerId: row.playerId, username: uname, deviceId });
+}
+
+export function authChangeToken({ sessionToken, oldToken, newToken }) {
+  const db = sqlite;
+  const sess = authGetSession(String(sessionToken || ''));
+  if (!sess) {
+    const err = new Error('unauthorized');
+    err.status = 401;
+    throw err;
+  }
+
+  const uname = String(sess.username || '').trim().toLowerCase();
+  if (!uname) throw new Error('no_username');
+
+  const oldT = String(oldToken || '');
+  const newT = String(newToken || '');
+  if (newT.length < 4) throw new Error('token_too_short');
+
+  const row = db.prepare('SELECT token_hash AS tokenHash FROM users WHERE username = ?').get(uname);
+  if (!row) throw new Error('user_not_found');
+
+  if (!verifyUserToken(oldT, row.tokenHash)) {
+    const err = new Error('invalid_token');
+    err.status = 401;
+    throw err;
+  }
+
+  const tokenHash = hashUserToken(newT);
+  db.prepare('UPDATE users SET token_hash = ? WHERE username = ?').run(tokenHash, uname);
+  return { ok: true };
 }
 
 // Admin tool: merge historical identity ids.
