@@ -3740,7 +3740,7 @@ function PolitikumWelcome({ onJoin }) {
 
       {/* Top bar: alias + beta login */}
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
-        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 sm:items-center justify-end">
           <div className="flex justify-end items-center gap-3 w-full">
             {!authToken && (
             <div className="flex items-center gap-2">
