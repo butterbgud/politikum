@@ -1398,7 +1398,12 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       }}
                     >
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
-                        <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                        <img
+                          src={'/cards/action_13.webp'}
+                          alt={'action_13'}
+                          className="absolute left-[-18px] top-2 w-[70%] h-[92%] object-cover opacity-95 z-0 rounded-2xl shadow-2xl border border-black/30"
+                          draggable={false}
+                        />
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
@@ -2161,25 +2166,7 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                       })}
                     </div>
 
-                    {/* Per-card VP breakdown (base + tokens + passives) */}
-                    <div className="w-full max-w-[520px] px-1">
-                      <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
-                        {coal.map((c) => {
-                          const base = Number(c.baseVp ?? 0);
-                          const tok = Number(c.vpDelta || 0);
-                          const pas = Number(c.passiveVpDelta || 0);
-                          const total = Number(c.vp ?? (base + tok + pas));
-                          return (
-                            <div key={c.id} className="flex items-baseline justify-between gap-3">
-                              <span className="truncate">{String(c.name || c.id)}</span>
-                              <span className="shrink-0 tabular-nums">
-                                {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    {/* VP breakdown removed (was too noisy) */}
                   </div>
                 );
               };
@@ -2529,7 +2516,12 @@ function ActionBoard({ G, ctx, moves, playerID }) {
                     }}
                   >
                     {String(c?.shieldedBy || '') === 'action_13' && (
-                      <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] object-cover opacity-95 -z-10" style={{ transform: 'translateY(-20px)' }} draggable={false} />
+                      <img
+                        src={'/cards/action_13.webp'}
+                        alt={'action_13'}
+                        className="absolute left-[-18px] top-2 w-[70%] h-[92%] object-cover opacity-95 z-0 rounded-2xl shadow-2xl border border-black/30"
+                        draggable={false}
+                      />
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
