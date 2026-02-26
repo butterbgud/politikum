@@ -713,7 +713,12 @@ export function getLeaderboard({ limit = 20 }) {
         WHERE gp.player_id = r.player_id AND gp.name IS NOT NULL AND TRIM(gp.name) <> ''
         ORDER BY gp.id DESC
         LIMIT 1
-      ) AS name
+      ) AS name,
+      (
+        SELECT MAX(g.finished_at)
+        FROM games g
+        WHERE g.winner_player_id = r.player_id
+      ) AS lastFinishedAt
     FROM ratings r
     ORDER BY r.rating DESC, r.wins DESC, r.games_played DESC
     LIMIT @limit;
@@ -727,6 +732,7 @@ export function getLeaderboard({ limit = 20 }) {
       games: Number(r.games || 0),
       wins: Number(r.wins || 0),
       updatedAt: r.updatedAt ?? null,
+      lastFinishedAt: r.lastFinishedAt ?? null,
     })),
   };
 }

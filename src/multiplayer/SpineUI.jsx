@@ -928,7 +928,7 @@ function AdminPage() {
                     <td className="px-2 py-2 align-top whitespace-nowrap text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap text-emerald-300 font-black tabular-nums">{r.wins}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap tabular-nums">{r.games}</td>
-                    <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(r.lastFinishedAt)}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{r.lastFinishedAt ? formatTime(r.lastFinishedAt) : '—'}</td>
                   </tr>
                 ))}
                 {leaderboard.length === 0 && (
