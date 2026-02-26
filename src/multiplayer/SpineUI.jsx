@@ -615,6 +615,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
 function ActionBoard({ G, ctx, moves, playerID }) {
   // H toggles on-screen hotkey hints (badges like (c)/(e)/(1..n)).
+  const isHost = String(playerID) === '0';
 
   const TokenPips = ({ delta, compact, right, dim }) => {
     const d = Number(delta || 0);
