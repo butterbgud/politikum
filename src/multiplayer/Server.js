@@ -615,6 +615,31 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       return;
     }
 
+    // Public: list only matches that are still in lobby phase (not started).
+    if (ctx.path === '/public/matches_open' && ctx.method === 'GET') {
+      const limit = Math.min(100, Number.parseInt(ctx.query.limit ?? '50', 10) || 50);
+      const gameName = CitadelGame?.name ?? 'politikum';
+      const matchIds = await ctx.db.listMatches({ gameName });
+      const items = [];
+      for (const matchId of matchIds) {
+        try {
+          const { metadata, state } = await ctx.db.fetch(matchId, { metadata: true, state: true });
+          if (!metadata || metadata.gameover) continue;
+          if (String(state?.ctx?.phase || '') !== 'lobby') continue;
+          items.push({
+            matchID: matchId,
+            updatedAt: metadata.updatedAt ?? null,
+            createdAt: metadata.createdAt ?? null,
+            setupData: metadata.setupData ?? null,
+            players: metadata.players ?? null,
+          });
+          if (items.length >= limit) break;
+        } catch {}
+      }
+      ctx.body = { matches: items };
+      return;
+    }
+
     // Closed beta auth: shared password -> session token (stored in localStorage).
     if (ctx.path === '/auth/login' && ctx.method === 'POST') {
       const body = ctx.request.body || {};

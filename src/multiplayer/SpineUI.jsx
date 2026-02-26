@@ -3254,8 +3254,10 @@ function PolitikumWelcome({ onJoin }) {
   const [loading, setLoading] = useState(false);
 
   const refreshMatches = async () => {
-    const { matches: fetchedMatches } = await lobbyClient.listMatches('politikum');
-    setMatches(fetchedMatches || []);
+    const res = await fetch(`${SERVER}/public/matches_open?limit=50`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    setMatches(json.matches || []);
   };
 
   useEffect(() => {
