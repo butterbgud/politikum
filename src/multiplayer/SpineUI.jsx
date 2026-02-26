@@ -3412,16 +3412,23 @@ function PolitikumWelcome({ onJoin }) {
       className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row"
       style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}
     >
-      {/* Top-right admin panel link (hash route, IP-independent) */}
-      <div className="fixed top-3 right-3 z-[2000] select-none">
+      {/* Top-right links */}
+      <div className="fixed top-3 right-3 z-[2000] select-none flex items-center gap-2">
+        <a
+          href="#/admin"
+          target="_blank"
+          rel="noreferrer"
+          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
+        >
+          ADMIN
+        </a>
         <a
           href="#/admin/tournament"
           target="_blank"
           rel="noreferrer"
           className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
-          title="Open admin panel"
         >
-          ADMIN PANEL
+          TOURNAMENT
         </a>
       </div>
 
