@@ -2007,7 +2007,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
-                      className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
+                      className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-visible border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                       title={id}
                       onClick={(e) => {
@@ -3154,7 +3154,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     type="button"
                     key={c.id}
                     className={
-                      "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border-2 shadow-2xl transition-colors " +
+                      "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-visible border-2 shadow-2xl transition-colors " +
                       (canUseP11
                         ? "border-emerald-300/80 ring-4 ring-emerald-400/25 shadow-[0_0_50px_rgba(16,185,129,0.35)] cursor-pointer"
                         : (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
