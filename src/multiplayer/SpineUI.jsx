@@ -658,6 +658,8 @@ function AdminPage() {
   }, [rightTab]);
 
   const [error, setError] = useState('');
+  const [matchLogId, setMatchLogId] = useState('');
+  const [matchLogJson, setMatchLogJson] = useState('');
 
   const saveToken = (value) => {
     setToken(value);
@@ -747,6 +749,27 @@ function AdminPage() {
     }
   };
 
+  const fetchMatchLog = async () => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    const mid = String(matchLogId || '').trim();
+    if (!mid) { setError('Set Match ID.'); return; }
+    setLoading(true);
+    setError('');
+    setMatchLogJson('');
+    try {
+      const res = await fetch(`${SERVER}/admin/match/${encodeURIComponent(mid)}/log?limit=200`, {
+        headers: { 'X-Admin-Token': token },
+      });
+      if (!res.ok) throw new Error(`match log: HTTP ${res.status}`);
+      const json = await res.json();
+      setMatchLogJson(JSON.stringify(json, null, 2));
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatTime = (ms) => {
     if (!ms) return '—';
     const d = new Date(ms);
@@ -770,8 +793,31 @@ function AdminPage() {
             <div className="text-amber-100/70 font-serif mt-1">Admin / stats (MVP)</div>
           </div>
           <div className="flex items-center gap-3">
-            
-
+            <div className="flex items-center gap-2">
+              <input
+                value={matchLogId}
+                onChange={(e) => setMatchLogId(e.target.value)}
+                placeholder="Match ID"
+                className="px-3 py-2 rounded-xl bg-black/40 border border-amber-900/30 text-amber-50/90 font-mono text-xs w-[190px]"
+              />
+              <button
+                type="button"
+                disabled={loading || !token}
+                onClick={fetchMatchLog}
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest"
+                title="Fetch /admin/match/:id/log"
+              >
+                Fetch log
+              </button>
+              <button
+                type="button"
+                disabled={!matchLogJson}
+                onClick={() => { try { navigator.clipboard?.writeText?.(matchLogJson); } catch {} }}
+                className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest"
+              >
+                Copy
+              </button>
+            </div>
 
             <button
               type="button"
