@@ -4,7 +4,7 @@ import { SocketIO } from 'boardgame.io/multiplayer';
 import { LobbyClient } from 'boardgame.io/client';
 import { CitadelGame as PolitikumGame } from './Game.js';
 
-const SERVER = `http://${window.location.hostname}:8001`;
+const SERVER = (import.meta.env.VITE_SERVER || window.localStorage.getItem('politikum.server') || `http://${window.location.hostname}:8001`);
 const lobbyClient = new LobbyClient({ server: SERVER });
 
 const NAMES = [
