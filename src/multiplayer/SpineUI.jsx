@@ -1827,13 +1827,46 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     return () => clearTimeout(t);
   }, [G.lastAction?.id]);
 
+  const [hudToast, setHudToast] = useState('');
+
+  const toast = (t) => {
+    setHudToast(String(t || ''));
+    try { setTimeout(() => setHudToast(''), 1500); } catch {}
+  };
+
   const copyText = (txt) => {
     const s = String(txt ?? '');
+
+    // 1) Clipboard API
     try {
       const fn = navigator.clipboard?.writeText;
-      if (fn) { fn.call(navigator.clipboard, s); return true; }
+      if (fn) {
+        fn.call(navigator.clipboard, s);
+        toast('copied');
+        return true;
+      }
     } catch {}
-    try { window.prompt('Copy to clipboard:', s); return false; } catch {}
+
+    // 2) execCommand fallback
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = s;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, s.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) { toast('copied'); return true; }
+    } catch {}
+
+    // 3) prompt fallback
+    try { window.prompt('Copy to clipboard:', s); toast('prompt'); return false; } catch {}
+
+    toast('copy failed');
     return false;
   };
 
@@ -1906,6 +1939,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             >
               Report bug
             </button>
+
+            {hudToast && (
+              <div className="pointer-events-none text-[10px] font-mono text-amber-200/80">
+                {hudToast}
+              </div>
+            )}
           </div>
         </div>
       </div>
