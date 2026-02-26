@@ -571,7 +571,7 @@ function AdminTournamentPage() {
                 <input value={String(tableSize)} onChange={(e) => setTableSize(e.target.value)} placeholder="tableSize" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
                 <input value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} placeholder="maxPlayers" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
               </div>
-              <button type="button" onClick={create} disabled={loading} className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Create</button>
+              <button type="button" onClick={create} disabled={loading} className="px-3 py-2 rounded bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Create</button>
             </div>
           </div>
 
@@ -900,7 +900,7 @@ function AdminPage() {
                 await fetchAdmin();
               } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
             }}
-            className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+            className="px-3 py-2 rounded bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
           >
             Enable lobby chat
           </button>
@@ -3784,14 +3784,14 @@ function PolitikumWelcome({ onJoin }) {
 
       {/* Top bar: alias + beta login */}
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
-        <div className="pointer-events-auto max-w-7xl mx-auto bg-black/60 backdrop-blur-md border border-amber-900/20 rounded-2xl px-4 py-3 shadow-2xl flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="flex-1 min-w-0 flex items-center gap-2">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Alias</div>
             <input
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none focus:border-amber-500"
+              className="flex-1 min-w-0 bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-serif text-sm focus:outline-none focus:border-amber-500"
               placeholder="your name"
             />
           </div>
@@ -3803,17 +3803,17 @@ function PolitikumWelcome({ onJoin }) {
               onChange={(e) => setBetaPassword(e.target.value)}
               type="password"
               placeholder="beta password"
-              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-mono text-sm focus:outline-none"
+              className="flex-1 min-w-0 bg-amber-100/80 border border-amber-900/20 rounded px-3 py-2 text-black font-mono text-sm focus:outline-none"
             />
             <button
               type="button"
               onClick={doBetaLogin}
               disabled={betaLoading || !String(betaPassword || '').trim()}
-              className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+              className="px-3 py-2 rounded bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
             >
               {betaLoading ? '…' : 'Login'}
             </button>
-            <div className="hidden md:block text-[10px] font-mono text-amber-200/50 whitespace-nowrap">
+            <div className="hidden md:block text-[10px] font-mono text-black/70 whitespace-nowrap">
               {authToken ? 'Logged in' : 'Not logged in'}{betaErr ? ` · ${betaErr}` : ''}
             </div>
           </div>
