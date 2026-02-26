@@ -3616,9 +3616,48 @@ function PolitikumWelcome({ onJoin }) {
         >
           ADMIN
         </a>
+
       </div>
 
-      <div className="bg-transparent p-8 flex items-center justify-center w-full">
+      {/* Top bar: alias + beta login */}
+      <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
+        <div className="pointer-events-auto max-w-7xl mx-auto bg-black/60 backdrop-blur-md border border-amber-900/20 rounded-2xl px-4 py-3 shadow-2xl flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Alias</div>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none focus:border-amber-500"
+              placeholder="your name"
+            />
+          </div>
+
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <div className="text-[10px] uppercase tracking-widest text-amber-200/60 font-black">Beta</div>
+            <input
+              value={betaPassword}
+              onChange={(e) => setBetaPassword(e.target.value)}
+              type="password"
+              placeholder="beta password"
+              className="flex-1 min-w-0 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-mono text-sm focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={doBetaLogin}
+              disabled={betaLoading || !String(betaPassword || '').trim()}
+              className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+            >
+              {betaLoading ? '…' : 'Login'}
+            </button>
+            <div className="hidden md:block text-[10px] font-mono text-amber-200/50 whitespace-nowrap">
+              {authToken ? 'Logged in' : 'Not logged in'}{betaErr ? ` · ${betaErr}` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-transparent p-8 pt-28 flex items-center justify-center w-full">
         <div className="flex gap-8 items-start max-w-7xl w-full mx-auto px-4 max-h-[85vh]">
           {/* LEFT: NEWS + CHAT */}
           <div className="flex-1 min-w-0 space-y-6">
@@ -3691,42 +3730,6 @@ function PolitikumWelcome({ onJoin }) {
           <div className="w-[360px] max-w-full space-y-6">
             <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit">
               <h2 className="text-xl font-serif text-amber-500 font-bold mb-4 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">Game List</h2>
-
-              <div className="p-3 mb-5 bg-amber-950/30 rounded-xl border border-amber-500/20 flex flex-col gap-2">
-                <label className="text-[10px] uppercase tracking-widest text-amber-700 font-black px-1">Your Alias</label>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  className="bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none focus:border-amber-500"
-                />
-              
-
-              {/* Beta login (so tournaments + global chat work before joining a game) */}
-              <div className="mb-5 bg-black/40 border border-amber-900/20 rounded-2xl p-4">
-                <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Beta login</div>
-                <div className="mt-3 flex gap-2">
-                  <input
-                    value={betaPassword}
-                    onChange={(e) => setBetaPassword(e.target.value)}
-                    type="password"
-                    placeholder="beta password"
-                    className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-mono text-sm focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={doBetaLogin}
-                    disabled={betaLoading || !String(betaPassword||'').trim()}
-                    className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
-                  >
-                    {betaLoading ? '…' : 'Login'}
-                  </button>
-                </div>
-                <div className="mt-2 text-[10px] font-mono text-amber-200/50">
-                  {authToken ? 'Logged in.' : 'Not logged in.'}{betaErr ? ` · ${betaErr}` : ''}
-                </div>
-              </div>
-</div>
 
               {/* Tabs */}
               <div className="mb-4 flex gap-2">
