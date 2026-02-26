@@ -537,6 +537,7 @@ function AdminTournamentPage() {
           </div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
+            <button type="button" disabled className="text-xs font-mono text-amber-50/90 font-black">Tournaments</button>
             <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
           </div>
         </div>
@@ -817,14 +818,13 @@ function AdminPage() {
               Clear
             </button>
 
-            <a
-              href="#/admin/tournament"
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => { window.location.hash = '#/admin/tournament'; }}
               className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
             >
-              Tournament
-            </a>
+              Tournaments
+            </button>
             <button
               type="button"
               onClick={() => { window.location.hash = ''; }}
