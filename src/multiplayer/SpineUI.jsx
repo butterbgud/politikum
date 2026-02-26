@@ -111,13 +111,24 @@ function AdminPage() {
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Admin / stats (MVP)</div>
           </div>
-          <button
-            type="button"
-            onClick={() => { window.location.hash = ''; }}
-            className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
-          >
-            Exit
-          </button>
+          <div className="flex items-center gap-3">
+            {!!token && (
+              <a
+                href="#/admin/tournament"
+                className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+                title="Tournament admin"
+              >
+                Tournament
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => { window.location.hash = ''; }}
+              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+            >
+              Exit
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6">
