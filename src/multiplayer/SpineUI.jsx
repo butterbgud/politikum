@@ -3463,6 +3463,26 @@ function PolitikumWelcome({ onJoin }) {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
   });
 
+  const [authRating, setAuthRating] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!authToken) { setAuthRating(null); return; }
+        const pid = (() => {
+          try { return String(window.localStorage.getItem('politikum.sessionPlayerId') || ''); } catch { return ''; }
+        })();
+        if (!pid) { setAuthRating(null); return; }
+        const res = await fetch(`${SERVER}/public/leaderboard?limit=50`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const row = (json?.items || []).find((r) => String(r?.playerId || '') === pid);
+        if (!row) return;
+        setAuthRating(Number(row.rating ?? null));
+      } catch {}
+    })();
+  }, [authToken]);
+
   const [betaPassword, setBetaPassword] = useState('');
   const [betaLoading, setBetaLoading] = useState(false);
   const [betaErr, setBetaErr] = useState('');
@@ -3744,18 +3764,21 @@ function PolitikumWelcome({ onJoin }) {
           <div className="flex-1 min-w-0 flex items-center gap-2 justify-end">
             {authToken ? (
               <>
+                <div className="text-xs font-mono text-black/80 whitespace-nowrap">
+                  {String(playerName || 'User').trim() || 'User'}{(authRating != null && !Number.isNaN(Number(authRating))) ? ` (${Math.round(Number(authRating))})` : ''}
+                </div>
                 <button
                   type="button"
                   onClick={() => {
                     try { window.localStorage.removeItem('politikum.authToken'); } catch {}
                     try { window.localStorage.removeItem('politikum.sessionPlayerId'); } catch {}
                     setAuthToken('');
+                    setAuthRating(null);
                   }}
-                  className="text-xs font-mono text-amber-200/80 hover:text-amber-50"
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-[10px] uppercase tracking-widest"
                 >
-                  Выйти
+                  Logout
                 </button>
-                <div className="hidden md:block text-[10px] font-mono text-black/70 whitespace-nowrap">Logged in</div>
               </>
             ) : (
               <>
