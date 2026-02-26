@@ -189,6 +189,50 @@ function AdminPage() {
         <div className="mt-2">
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Leaderboard (MVP)</div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={loading || !token}
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    setError('');
+                    const items = Array.isArray(leaderboard) ? leaderboard : [];
+                    const nameKey = 'konsta';
+                    const dupes = items.filter((r) => String(r?.name || '').trim().toLowerCase() === nameKey);
+                    if (dupes.length <= 1) {
+                      setError('No duplicate konsta entries found (in current leaderboard slice).');
+                      return;
+                    }
+                    const idOf = (r) => String(r?.playerId ?? r?.id ?? '');
+                    const sorted = dupes
+                      .map((r) => ({ ...r, _pid: idOf(r) }))
+                      .filter((r) => r._pid)
+                      .sort((a, b) => (Number(b?.games || 0) - Number(a?.games || 0)) || (Number(b?.wins || 0) - Number(a?.wins || 0)));
+                    const keep = sorted[0];
+                    if (!keep?._pid) throw new Error('Missing playerId for keep target');
+                    const headers = { 'X-Admin-Token': token, 'Content-Type': 'application/json' };
+                    for (const r of sorted.slice(1)) {
+                      const res = await fetch(`${SERVER}/admin/players/merge`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ fromPlayerId: r._pid, intoPlayerId: keep._pid }),
+                      });
+                      if (!res.ok) throw new Error(`merge HTTP ${res.status}`);
+                    }
+                    await fetchAdmin();
+                  } catch (e) {
+                    setError(e?.message || String(e));
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="px-2 py-1 rounded-lg bg-black/50 hover:bg-black/70 border border-amber-900/30 text-[10px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50 disabled:opacity-60"
+                title="Merge duplicate 'konsta' users into the one with most games"
+              >
+                DEDUP KONSTA
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto -mx-2 mb-6">
             <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
