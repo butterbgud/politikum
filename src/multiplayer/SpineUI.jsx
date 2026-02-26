@@ -202,6 +202,9 @@ function TournamentDetailPage({ tournamentId }) {
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Tournament</div>
+            {t && (
+              <div className="mt-2 text-[10px] font-mono text-amber-200/60">({t.type} · table {t.tableSize} · {t.status})</div>
+            )}
             <div className="text-amber-100/70 font-serif mt-1">{t?.name || tournamentId}</div>
           </div>
           <button type="button" onClick={() => { window.location.hash = '#/tournament'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Back</button>
@@ -262,12 +265,6 @@ function TournamentDetailPage({ tournamentId }) {
 
         {t && (
           <div className="grid gap-3">
-            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
-              <div className="text-xs font-mono text-amber-200/60">{t.type} · table {t.tableSize} · {t.status}</div>
-              {t?.config?.winner?.name && (
-                <div className="mt-1 text-sm font-serif text-emerald-200/90">Winner: {t.config.winner.name}</div>
-              )}
-            </div>
                         <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Players</div>
               <div className="mt-2 grid gap-1 text-sm font-serif">
