@@ -1699,18 +1699,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </button>
       </div>
 
-      {/* Top-right admin panel link (hash route, IP-independent) */}
-      <div className="fixed top-3 right-3 z-[2000] select-none">
-        <a
-          href="#/admin/tournament"
-          target="_blank"
-          rel="noreferrer"
-          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
-          title="Open admin panel"
-        >
-          ADMIN PANEL
-        </a>
-      </div>
+      {/* (admin link removed from in-game UI) */}
 
       {/* Opponents */}
       <div className="fixed top-20 left-0 right-0 z-[700] flex justify-evenly pointer-events-auto">
