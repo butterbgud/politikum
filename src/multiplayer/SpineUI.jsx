@@ -1435,6 +1435,36 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     }
   }, [BOT_LOCK_KEY, currentIsBot, isHumanSeat, playerID]);
 
+  // Tick driver election: needed for human-vs-human too (expires response windows + resolves deferred on-enter abilities).
+  const TICK_LOCK_KEY = useMemo(() => {
+    const mid = String(matchID || '');
+    return mid ? `politikum.tickDriverLock:${mid}` : 'politikum.tickDriverLock';
+  }, [matchID]);
+
+  const shouldDriveTick = useMemo(() => {
+    try {
+      if (!isHumanSeat) return false;
+      const now = Date.now();
+      const raw = window.localStorage.getItem(TICK_LOCK_KEY);
+      let lock = null;
+      try { lock = raw ? JSON.parse(raw) : null; } catch { lock = null; }
+      const holder = String(lock?.playerID || '');
+      const ts = Number(lock?.ts || 0);
+      const alive = ts && (now - ts) < 2500;
+      if (!alive || holder === String(playerID)) return true;
+      return false;
+    } catch {
+      return true;
+    }
+  }, [TICK_LOCK_KEY, isHumanSeat, playerID]);
+
+  const refreshTickLease = () => {
+    try {
+      const now = Date.now();
+      window.localStorage.setItem(TICK_LOCK_KEY, JSON.stringify({ playerID: String(playerID), ts: now }));
+    } catch {}
+  };
+
   const refreshBotLease = () => {
     try {
       const now = Date.now();
@@ -1782,16 +1812,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   // Human-side tick: clears expired response windows + auto-ends stuck turns once response closes.
   useEffect(() => {
     if (G?.gameOver) return;
-    if (!shouldDriveBots) return; // single driver
+    if (!shouldDriveTick) return; // single driver
     const needTick = !!G.response || String(G.pending?.kind || '') === 'resolve_persona_after_response';
     if (!needTick) return;
 
     const t = setInterval(() => {
-      refreshBotLease();
+      refreshTickLease();
       try { moves.tick(); } catch {}
     }, 500);
     return () => clearInterval(t);
-  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, shouldDriveBots]);
+  }, [moves, G?.response, G?.pending?.kind, G?.gameOver, shouldDriveTick]);
 
   // Keep event card visible while the event is still being resolved.
   useEffect(() => {
