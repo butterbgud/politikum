@@ -869,63 +869,6 @@ function AdminPage() {
           </div>
         </div>
 
-        {/* Lobby chat moderation */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            type="button"
-            disabled={loading || !token}
-            onClick={async () => {
-              if (!token) { setError('Set X-Admin-Token first.'); return; }
-              setLoading(true); setError('');
-              try {
-                const res = await fetch(`${SERVER}/admin/lobby_chat/disable`, { method: 'POST', headers: { 'X-Admin-Token': token } });
-                if (!res.ok) throw new Error(`disable: HTTP ${res.status}`);
-                await fetchAdmin();
-              } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
-            }}
-            className="px-4 py-2 rounded-xl bg-red-900/60 hover:bg-red-900/80 disabled:opacity-60 text-red-100 font-black text-xs uppercase tracking-widest"
-          >
-            Disable lobby chat
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || !token}
-            onClick={async () => {
-              if (!token) { setError('Set X-Admin-Token first.'); return; }
-              setLoading(true); setError('');
-              try {
-                const res = await fetch(`${SERVER}/admin/lobby_chat/enable`, { method: 'POST', headers: { 'X-Admin-Token': token } });
-                if (!res.ok) throw new Error(`enable: HTTP ${res.status}`);
-                await fetchAdmin();
-              } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
-            }}
-            className="px-3 py-2 rounded bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
-          >
-            Enable lobby chat
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || !token}
-            onClick={async () => {
-              if (!token) { setError('Set X-Admin-Token first.'); return; }
-              if (!confirm('Clear all lobby chat messages?')) return;
-              setLoading(true); setError('');
-              try {
-                const res = await fetch(`${SERVER}/admin/lobby_chat/clear`, { method: 'POST', headers: { 'X-Admin-Token': token } });
-                if (!res.ok) throw new Error(`clear: HTTP ${res.status}`);
-                await fetchAdmin();
-              } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
-            }}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-xs uppercase tracking-widest"
-          >
-            Clear lobby chat
-          </button>
-
-          <div className="text-[10px] font-mono text-amber-200/50 self-center">(server-side)</div>
-        </div>
-
         {error && (
           <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">
             Error: {error}
