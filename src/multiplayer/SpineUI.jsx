@@ -1278,7 +1278,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
               </div>
 
               {isHost && (
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex gap-2 items-center">
                   <button
                     onClick={() => moves.addBot()}
                     className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
@@ -3834,9 +3834,9 @@ function PolitikumWelcome({ onJoin }) {
               </div>
             </div>
 
-            <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col min-h-[360px]">
+            <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col h-[460px] max-h-[60vh]">
               <div className="text-[10px] uppercase tracking-[0.35em] text-amber-500/70 font-black">TAVERN BANTER</div>
-              <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+              <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2 min-h-0">
                 {!lobbyChatEnabled && (
                   <div className="bg-red-950/35 border border-red-900/40 rounded-2xl px-4 py-3">
                     <div className="text-[10px] font-mono text-red-200/70">System</div>
@@ -3885,7 +3885,7 @@ function PolitikumWelcome({ onJoin }) {
                   type="button"
                   onClick={sendLobbyChat}
                   disabled={!authToken || !lobbyChatEnabled || !String(lobbyChatInput||'').trim()}
-                  className="px-4 py-2 bg-amber-600 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
+                  className="flex-none px-4 py-2 bg-amber-600 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
                 >
                   Send
                 </button>
