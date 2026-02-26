@@ -1118,12 +1118,12 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
   const doBetaLogin = async () => {
     try {
       setAuthStatus('');
-      const res = await fetch(`${SERVER}/auth/login`, {
+      const res = await fetch(`${SERVER}/auth/register_or_login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          password: betaPassword,
-          email: String(name || '').trim() || null,
+          username: String(name || '').trim() || '',
+          token: betaPassword,
           deviceId: (() => {
             try {
               let id = window.localStorage.getItem('politikum.deviceId');
@@ -1147,15 +1147,10 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
       // Bind stable player identity into match state (for Elo/rankings).
       try {
-        const meRes = await fetch(`${SERVER}/auth/me`, { headers: { Authorization: `Bearer ${tok}` } });
-        if (meRes.ok) {
-          const meJson = await meRes.json();
-          const pid = meJson?.session?.playerId;
-          const email = meJson?.session?.email || null;
-          if (pid) {
-            try { window.localStorage.setItem('politikum.sessionPlayerId', String(pid)); } catch {}
-            try { moves.setPlayerIdentity({ playerId: pid, email }); } catch {}
-          }
+        const pid = json?.playerId;
+        if (pid) {
+          try { window.localStorage.setItem('politikum.sessionPlayerId', String(pid)); } catch {}
+          try { moves.setPlayerIdentity({ playerId: pid, email: null }); } catch {}
         }
       } catch {}
 
@@ -3511,10 +3506,10 @@ function PolitikumWelcome({ onJoin }) {
         }
       })();
 
-      const res = await fetch(`${SERVER}/auth/login`, {
+      const res = await fetch(`${SERVER}/auth/register_or_login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, email: null, deviceId }),
+        body: JSON.stringify({ username: String(playerName || '').trim(), token: pw, deviceId }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
