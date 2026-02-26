@@ -1827,24 +1827,81 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     return () => clearTimeout(t);
   }, [G.lastAction?.id]);
 
+  const copyText = (txt) => {
+    try { navigator.clipboard?.writeText?.(String(txt ?? '')); } catch {}
+  };
+
+  const buildBugReport = () => {
+    const appSha = (typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit');
+    const appShort = (typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : String(appSha).slice(0, 7));
+    const appBranch = (typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit');
+    const engShort = (typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? __ENGINE_GIT_SHA_SHORT__ : 'nogit');
+
+    const pend = (G && (G.pending || (G.pending === 0))) ? G.pending : null;
+    const resp = (G && (G.response || (G.response === 0))) ? G.response : null;
+
+    return {
+      ts: new Date().toISOString(),
+      matchID: matchID || null,
+      playerID: playerID ?? null,
+      app: { branch: appBranch, sha: appSha, short: appShort },
+      engine: { short: engShort },
+      ctx: {
+        phase: ctx?.phase ?? null,
+        currentPlayer: ctx?.currentPlayer ?? null,
+        gameover: ctx?.gameover ?? null,
+      },
+      state: {
+        hasDrawn: !!G?.hasDrawn,
+        hasPlayed: !!G?.hasPlayed,
+        lastEvent: G?.lastEvent?.id ?? null,
+        lastAction: G?.lastAction?.id ?? null,
+      },
+      pending: pend,
+      response: resp,
+    };
+  };
+
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
       <div className="fixed top-3 left-3 z-[2000] select-none">
         <div className="mb-1 pointer-events-none select-none text-amber-200/70 font-black tracking-[0.35em] uppercase text-[10px]">Politikum</div>
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              const full = (typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit');
-              navigator.clipboard?.writeText?.(full);
-            } catch {}
-          }}
-          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90"
-          title={`app ${typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit'}\nengine ${typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? __ENGINE_GIT_SHA_SHORT__ : 'nogit'}\n(click to copy full app sha)`}
-        >
-          {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : (typeof __GIT_SHA__ !== 'undefined' ? String(__GIT_SHA__).slice(0,7) : 'nogit')}
-          {typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? ` · eng@${__ENGINE_GIT_SHA_SHORT__}` : ''}
-        </button>
+        <div className="flex flex-col items-start gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                const full = (typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit');
+                copyText(full);
+              } catch {}
+            }}
+            className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90"
+            title={`app ${typeof __GIT_SHA__ !== 'undefined' ? __GIT_SHA__ : 'nogit'}\nengine ${typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? __ENGINE_GIT_SHA_SHORT__ : 'nogit'}\n(click to copy full app sha)`}
+          >
+            {typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'nogit'}@{typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : (typeof __GIT_SHA__ !== 'undefined' ? String(__GIT_SHA__).slice(0,7) : 'nogit')}
+            {typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? ` · eng@${__ENGINE_GIT_SHA_SHORT__}` : ''}
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => copyText(String(matchID || ''))}
+              className="pointer-events-auto bg-black/55 border border-amber-900/25 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/85"
+              title="Match ID (click to copy)"
+            >
+              match:{matchID ? String(matchID).slice(0, 8) : '—'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => copyText(JSON.stringify(buildBugReport(), null, 2))}
+              className="pointer-events-auto bg-slate-800/60 hover:bg-slate-700/70 border border-amber-900/20 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-100/90"
+              title="Report bug (copies JSON: matchId + versions + pending/response)"
+            >
+              Report bug
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* (admin link removed from in-game UI) */}
