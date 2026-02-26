@@ -3688,15 +3688,17 @@ function PolitikumWelcome({ onJoin }) {
       const match = response.match || response;
       if (!match || !match.players) throw new Error('Match not found');
 
+      const seats = Array.isArray(match.players) ? match.players : Object.values(match.players || {});
+
       // seat selection:
       // 1) if match has reserved seats with stable playerId, take your reserved seat
       // 2) else: first empty seat
       let sessionPlayerId = '';
       try { sessionPlayerId = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim(); } catch {}
       const reservedSeat = sessionPlayerId
-        ? match.players.find((p) => String(p?.data?.playerId || '') === sessionPlayerId)
+        ? seats.find((p) => String(p?.data?.playerId || '') === sessionPlayerId)
         : null;
-      const freeSeat = reservedSeat || match.players.find((p) => !p.name && !p.isConnected);
+      const freeSeat = reservedSeat || seats.find((p) => !p.name && !p.isConnected);
       if (!freeSeat) {
         alert('Match is full!');
         setLoading(false);
@@ -3977,7 +3979,9 @@ function PolitikumWelcome({ onJoin }) {
                     {(matches || [])
                       .filter((match) => {
                         if (match.gameover) return false;
-                        const seats = match.players || [];
+                        const seats = Array.isArray(match.players)
+                          ? match.players
+                          : Object.values(match.players || {});
                         return seats.some((p) => p && p.name == null);
                       })
                       .map((match) => {
