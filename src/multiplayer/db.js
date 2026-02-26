@@ -82,13 +82,33 @@ function openDatabase() {
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
   `);
 
-  // Migrate older DBs (best effort)
-  try { db.prepare('ALTER TABLE games ADD COLUMN elo_applied INTEGER NOT NULL DEFAULT 0').run(); } catch {}
-  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_games_elo_applied ON games(elo_applied)').run(); } catch {}
+  // Migrate older DBs (best effort, but avoid throwing during startup)
+  const hasColumn = (table, col) => {
+    try {
+      const rows = db.prepare(`PRAGMA table_info(${table})`).all();
+      return rows.some((r) => String(r?.name || '') === String(col));
+    } catch {
+      return false;
+    }
+  };
+
   try { db.prepare('CREATE TABLE IF NOT EXISTS ratings (player_id TEXT PRIMARY KEY, rating INTEGER NOT NULL, games_played INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run(); } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_ratings_updated_at ON ratings(updated_at)').run(); } catch {}
-  try { db.prepare('CREATE TABLE IF NOT EXISTS devices (device_id TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_at INTEGER NOT NULL)').run(); } catch {}
-  try { db.prepare('ALTER TABLE sessions ADD COLUMN device_id TEXT').run(); } catch {}
+
+  // games.elo_applied
+  try {
+    if (!hasColumn('games', 'elo_applied')) {
+      db.prepare('ALTER TABLE games ADD COLUMN elo_applied INTEGER NOT NULL DEFAULT 0').run();
+    }
+  } catch {}
+  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_games_elo_applied ON games(elo_applied)').run(); } catch {}
+
+  // sessions.device_id
+  try {
+    if (!hasColumn('sessions', 'device_id')) {
+      db.prepare('ALTER TABLE sessions ADD COLUMN device_id TEXT').run();
+    }
+  } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_device_id ON sessions(device_id)').run(); } catch {}
 
   return db;
