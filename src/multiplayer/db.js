@@ -737,6 +737,27 @@ export function getLeaderboard({ limit = 20 }) {
   };
 }
 
+export function getGameByMatchId(matchId) {
+  const mid = String(matchId || '').trim();
+  if (!mid) return null;
+  const db = sqlite;
+  const g = db.prepare('SELECT * FROM games WHERE match_id = ?').get(mid);
+  if (!g) return null;
+  const players = db.prepare('SELECT player_id AS playerId, name, is_bot AS isBot FROM game_players WHERE game_id = ?').all(g.id);
+  return {
+    matchId: g.match_id,
+    createdAt: g.created_at,
+    finishedAt: g.finished_at,
+    durationMs: g.duration_ms,
+    winnerPlayerId: g.winner_player_id,
+    winnerName: g.winner_name,
+    appVersion: g.app_version,
+    engineVersion: g.engine_version,
+    resultJson: g.result_json,
+    players: (players || []).map((p) => ({ ...p, isBot: !!p.isBot })),
+  };
+}
+
 export function getGames({ limit, offset }) {
   const db = sqlite;
   const totalRow = db.prepare('SELECT COUNT(*) AS total FROM games').get();

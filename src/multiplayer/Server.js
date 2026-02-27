@@ -6,7 +6,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -396,28 +396,40 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
 
         let state = null;
         let metadata = null;
+        let fetchError = null;
         try {
           const fetched = await ctx.db.fetch(matchId, { metadata: true, state: true });
           metadata = fetched?.metadata ?? null;
           state = fetched?.state ?? null;
-        } catch {}
+        } catch (e) {
+          fetchError = e?.message || String(e);
+        }
 
         const log = Array.isArray(state?.G?.log) ? state.G.log : [];
         const tail = log.slice(Math.max(0, log.length - limit));
 
+        // Fallback: if match is missing from boardgame.io storage (FlatFile), try SQLite record.
+        let dbGame = null;
+        try { dbGame = getGameByMatchId(matchId); } catch {}
+        let dbParsed = null;
+        try { dbParsed = dbGame?.resultJson ? JSON.parse(dbGame.resultJson) : null; } catch { dbParsed = null; }
+
         ctx.body = {
           ok: true,
           matchId,
+          foundInStorage: !!(state || metadata),
+          fetchError,
           meta: {
-            createdAt: metadata?.createdAt ?? null,
-            updatedAt: metadata?.updatedAt ?? null,
-            gameover: metadata?.gameover ?? null,
+            createdAt: metadata?.createdAt ?? dbParsed?.metadata?.createdAt ?? dbGame?.createdAt ?? null,
+            updatedAt: metadata?.updatedAt ?? dbParsed?.metadata?.updatedAt ?? null,
+            gameover: metadata?.gameover ?? dbParsed?.metadata?.gameover ?? null,
           },
-          ctx: state?.ctx ?? null,
+          ctx: state?.ctx ?? dbParsed?.gameover ?? null,
           pending: state?.G?.pending ?? null,
           response: state?.G?.response ?? null,
           log: tail,
           logTotal: log.length,
+          db: dbGame ? { hasRecord: true, winnerName: dbGame.winnerName ?? null, finishedAt: dbGame.finishedAt ?? null } : { hasRecord: false },
         };
         return;
       }
