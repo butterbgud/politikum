@@ -74,7 +74,7 @@ function NewsPanel() {
     <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
       <div className="flex items-baseline justify-between gap-3">
         <div className="text-[10px] uppercase tracking-widest text-amber-500/70 font-black">News</div>
-        <div className="text-[10px] font-mono text-amber-200/40">Server: {SERVER}</div>
+        {/* server url hidden */}
       </div>
       {err && (
         <div className="mt-3 text-xs font-mono text-red-300">news error: {err}</div>
@@ -82,7 +82,7 @@ function NewsPanel() {
       <div className="mt-3 text-amber-100/80 font-serif text-sm space-y-2">
         {renderBasicMarkdown(md)}
       </div>
-      <div className="mt-3 text-[10px] font-mono text-amber-200/40">Edit: GitHub → NEWS.md</div>
+      {/* edit hint removed */}
     </div>
   );
 }
