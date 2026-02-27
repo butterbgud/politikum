@@ -1303,6 +1303,48 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     } catch {}
   }, [me?.name, playerID]);
   const [chatInput, setChatInput] = useState('');
+  const [ratingsMap, setRatingsMap] = useState(() => ({}));
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileErr, setProfileErr] = useState('');
+  const [profile, setProfile] = useState(null);
+
+  const openProfileById = async (pid) => {
+    const id = String(pid || '').trim();
+    if (!id) return;
+    setShowProfile(true);
+    setProfileLoading(true);
+    setProfileErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setProfile(json);
+    } catch (e) {
+      setProfileErr(e?.message || String(e));
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${SERVER}/public/leaderboard?limit=200`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const items = Array.isArray(json?.items) ? json.items : [];
+        const m = {};
+        for (const r of items) {
+          const pid = String(r?.playerId || '').trim();
+          if (!pid) continue;
+          m[pid] = Math.round(Number(r?.rating || 0));
+        }
+        setRatingsMap(m);
+      } catch {}
+    })();
+  }, []);
+
   // (Top10 moved to the Guest List screen; keep lobby light.)
 
   const [betaPassword, setBetaPassword] = useState('');
@@ -1365,6 +1407,72 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
       className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
       style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
     >
+      {showProfile && (
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
+          <div className="w-[min(720px,95vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Профиль</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">Доступен всем</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowProfile(false)}
+                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+              >
+                Закрыть
+              </button>
+            </div>
+
+            {profileLoading && (
+              <div className="mt-4 text-amber-200/80 font-mono text-[12px]">loading…</div>
+            )}
+            {!profileLoading && profileErr && (
+              <div className="mt-4 text-red-200/90 font-mono text-[12px]">{profileErr}</div>
+            )}
+            {!profileLoading && !profileErr && profile?.ok && (
+              <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
+                <div className="flex items-center gap-4">
+                  <div className="w-24 aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/20 bg-black/30">
+                    <img
+                      src={`/public/profile_image/${encodeURIComponent(String(profile.playerId || ''))}.jpg`}
+                      onError={(e) => { try { e.currentTarget.src = `/cards/persona_${1 + ((Number(String(profile.playerId || '').split('').reduce((a,c)=>a+c.charCodeAt(0),0)) || 0) % 45)}.webp`; } catch {} }}
+                      className="w-full h-full object-cover"
+                      alt="avatar"
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <div><span className="text-amber-200/70">PlayerId:</span> {String(profile.playerId || '')}</div>
+                      <a
+                        className="px-3 py-2 rounded-xl bg-black/45 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+                        href={`/profile/${encodeURIComponent(String(profile.playerId || ''))}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Открыть публичный профиль
+                      </a>
+                    </div>
+                    <div><span className="text-amber-200/70">Имя:</span> {String(profile.name || profile.username || '—')}</div>
+                    <div><span className="text-amber-200/70">Рейтинг:</span> {Math.round(Number(profile.rating || 0))}</div>
+                    <div><span className="text-amber-200/70">Игр:</span> {Number(profile.games || 0)}</div>
+                    <div><span className="text-amber-200/70">Побед:</span> {Number(profile.wins || 0)} ({profile.games ? Math.round((Number(profile.wins || 0) / Math.max(1, Number(profile.games || 0))) * 100) : 0}%)</div>
+
+                    {String(profile.bioText || '').trim() && (
+                      <div className="mt-3 pt-3 border-t border-amber-900/20">
+                        <div className="text-amber-200/70 text-[10px] uppercase tracking-[0.3em] font-black">about</div>
+                        <div className="mt-2 whitespace-pre-wrap text-amber-50/85">{String(profile.bioText || '').trim()}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
         <div className="flex items-baseline justify-between">
           <div>
@@ -1381,12 +1489,26 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
             <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0">
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
               <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar space-y-2">
-                {(G.chat || []).map((m, i) => (
-                  <div key={i} className="text-sm font-serif">
-                    <span className="text-amber-200/60 font-mono text-[11px] mr-2">{m.sender}:</span>
-                    <span className="text-amber-50/90">{m.text}</span>
-                  </div>
-                ))}
+                {(G.chat || []).map((m, i) => {
+                  const sender = String(m?.sender || '').trim();
+                  const p = (G.players || []).find((pp) => String(pp?.name || '').trim() === sender);
+                  const pid = String(p?.identity?.playerId || '');
+                  const r = pid ? ratingsMap[pid] : null;
+                  return (
+                    <div key={i} className="text-sm font-serif">
+                      <button
+                        type="button"
+                        className="text-amber-200/60 font-mono text-[11px] mr-2 hover:text-amber-100"
+                        onClick={() => { if (pid) openProfileById(pid); }}
+                        disabled={!pid}
+                        title={pid ? 'Открыть профиль' : ''}
+                      >
+                        {m.sender}{(r != null) ? ` (${r})` : ''}:
+                      </button>
+                      <span className="text-amber-50/90">{m.text}</span>
+                    </div>
+                  );
+                })}
                 {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">No messages yet.</div>}
               </div>
               <form
@@ -1453,8 +1575,23 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                   return (
                     <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
                       <div className="flex items-center gap-2">
-                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm'}>
-                          {p.name || `Seat ${p.id}`}
+                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2'}>
+                          <span>{p.name || `Seat ${p.id}`}</span>
+                          {(() => {
+                            const pid = String(p?.identity?.playerId || '');
+                            const r = pid ? ratingsMap[pid] : null;
+                            if (r == null) return null;
+                            return (
+                              <button
+                                type="button"
+                                className="px-2 py-0.5 rounded-lg bg-black/35 hover:bg-black/45 border border-amber-900/20 text-amber-100/80 font-black text-[10px]"
+                                title="Открыть профиль"
+                                onClick={() => openProfileById(pid)}
+                              >
+                                {r}
+                              </button>
+                            );
+                          })()}
                         </div>
                         <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
                         {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
