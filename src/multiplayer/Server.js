@@ -802,8 +802,12 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
 
           <div class="bio" id="bioBox">
             <div class="row">
-              <div class="k">about</div>
+              <div class="k">profile</div>
               <div style="display:flex; gap:10px; align-items:center;">
+                <label class="btn" id="imgPick" style="display:none; padding:8px 10px; cursor:pointer;">
+                  Photo
+                  <input id="imgInput" type="file" accept="image/jpeg" style="display:none" />
+                </label>
                 <button class="btn" id="bioEdit" type="button" style="display:none; padding:8px 10px;">Edit</button>
                 <div class="msg" id="bioMsg"></div>
               </div>
@@ -825,6 +829,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
               const bioEditor = document.getElementById('bioEditor');
               const bioInput = document.getElementById('bioInput');
               const bioMsg = document.getElementById('bioMsg');
+              const imgPick = document.getElementById('imgPick');
+              const imgInput = document.getElementById('imgInput');
               const btnEdit = document.getElementById('bioEdit');
               const btnSave = document.getElementById('bioSave');
               const btnCancel = document.getElementById('bioCancel');
@@ -843,9 +849,39 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
                     const mePid = String(j?.session?.playerId || '');
                     if (!mePid || mePid !== PROFILE_PID) return;
 
-                    // enable edit button; keep the text visible
+                    // enable edit + image upload
                     if (btnEdit) btnEdit.style.display = '';
+                    if (imgPick) imgPick.style.display = '';
                     setMsg('');
+
+                    if (imgInput) {
+                      imgInput.addEventListener('change', () => {
+                        try {
+                          const f = imgInput.files && imgInput.files[0];
+                          if (!f) return;
+                          if (f.type !== 'image/jpeg') { setMsg('jpeg only'); return; }
+                          if (f.size > 1000000) { setMsg('max 1MB'); return; }
+
+                          setMsg('uploading…');
+                          const fr = new FileReader();
+                          fr.onload = () => {
+                            const dataUrl = String(fr.result || '');
+                            fetch('/auth/profile/image', {
+                              method: 'POST',
+                              headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + tok },
+                              body: JSON.stringify({ jpegBase64: dataUrl })
+                            })
+                              .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+                              .then(() => { setMsg('uploaded'); setTimeout(() => window.location.reload(), 350); })
+                              .catch(e => { setMsg(e.message || String(e)); });
+                          };
+                          fr.onerror = () => setMsg('read_failed');
+                          fr.readAsDataURL(f);
+                        } catch (e) {
+                          setMsg(e?.message || String(e));
+                        }
+                      });
+                    }
 
                     const enterEdit = () => {
                       showEditor(true);
