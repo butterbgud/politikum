@@ -3098,6 +3098,29 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
             } catch {}
           }}
+          onPointerMove={(e) => {
+            try {
+              const el = document.elementFromPoint(e.clientX, e.clientY);
+              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
+              setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
+            } catch {}
+          }}
+          onTouchMove={(e) => {
+            try {
+              const t = e?.touches?.[0];
+              if (!t) return;
+              const el = document.elementFromPoint(t.clientX, t.clientY);
+              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
+              setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
+            } catch {}
+          }}
+          onPointerDown={(e) => {
+            try {
+              const el = document.elementFromPoint(e.clientX, e.clientY);
+              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
+              setGoHitboxDebug(`DOWN ${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
+            } catch {}
+          }}
         >
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
