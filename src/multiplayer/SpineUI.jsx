@@ -4151,7 +4151,6 @@ function PolitikumWelcome({ onJoin }) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-amber-100 font-black text-sm">Что я? Где я?</div>
-                <div className="text-amber-200/70 font-mono text-[12px] mt-1">Как залогиниться и поменять имя</div>
               </div>
               <button
                 type="button"
@@ -4171,11 +4170,7 @@ function PolitikumWelcome({ onJoin }) {
               />
             </div>
 
-            <div className="mt-4 text-amber-100/90 font-mono text-[12px]">
-              <div>• Введи имя в поле <b>Username</b>.</div>
-              <div>• Введи твой токен/пароль в <b>Token</b> и нажми <b>Login</b>.</div>
-              <div>• Хочешь другое имя — просто поменяй Username и залогинься снова.</div>
-            </div>
+            {/* tutorial text removed (already on image) */}
           </div>
         </div>
       )}
