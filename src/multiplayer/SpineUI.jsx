@@ -3403,7 +3403,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 const scaleByDist2 = (_dist) => 1; // no zoom on win screen
 
                 return (
-                  <div className="flex flex-col items-center gap-2 relative pt-10 pointer-events-auto" style={{ transform: 'translateY(200px)' }}>
+                  <div className="flex flex-col items-center gap-2 relative pt-10 pointer-events-auto">
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest z-[2000] whitespace-nowrap justify-center" style={{ color }}>
                       <span>{p?.name || pid}</span>
                       <span className="opacity-50">•</span>
