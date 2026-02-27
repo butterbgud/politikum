@@ -4195,15 +4195,16 @@ function PolitikumWelcome({ onJoin }) {
 
       {/* Top bar: alias + beta login */}
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
-        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-row gap-3 items-center justify-between">
-          <button
-            type="button"
-            className="px-3 py-2 rounded-xl bg-black/60 hover:bg-black/70 border border-amber-900/30 text-amber-100 font-black text-[10px] uppercase tracking-widest"
-            onClick={() => setShowWhereAmI(true)}
-            title="Что я? Где я?"
-          >
-            Что я? Где я?
-          </button>
+        <button
+          type="button"
+          className="pointer-events-auto absolute left-0 top-0 px-3 py-2 rounded-xl bg-black/60 hover:bg-black/70 border border-amber-900/30 text-amber-100 font-black text-[10px] uppercase tracking-widest"
+          onClick={() => setShowWhereAmI(true)}
+          title="Что я? Где я?"
+        >
+          Что я? Где я?
+        </button>
+
+        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-row gap-3 items-center justify-end">
 
           <div className="flex min-w-0 flex items-center gap-2 justify-end">
             {authToken ? (
