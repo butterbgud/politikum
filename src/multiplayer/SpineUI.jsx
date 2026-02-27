@@ -4204,7 +4204,17 @@ function PolitikumWelcome({ onJoin }) {
             )}
             {!profileLoading && !profileErr && profile?.ok && (
               <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
-                <div><span className="text-amber-200/70">PlayerId:</span> {String(profile.playerId || '')}</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div><span className="text-amber-200/70">PlayerId:</span> {String(profile.playerId || '')}</div>
+                  <a
+                    className="px-3 py-2 rounded-xl bg-black/45 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+                    href={`/profile/${encodeURIComponent(String(profile.playerId || ''))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Открыть публичный профиль
+                  </a>
+                </div>
                 <div><span className="text-amber-200/70">Имя:</span> {String(profile.name || profile.username || '—')}</div>
                 <div><span className="text-amber-200/70">Рейтинг:</span> {Math.round(Number(profile.rating || 0))}</div>
                 <div><span className="text-amber-200/70">Игр:</span> {Number(profile.games || 0)}</div>
