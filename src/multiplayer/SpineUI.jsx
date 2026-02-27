@@ -3287,7 +3287,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {/* Game over overlay */}
       {G.gameOver && (
         <div
-          className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto"
+          className="fixed inset-0 z-[3000] flex items-start justify-center bg-black/65 backdrop-blur-sm pointer-events-auto overflow-y-auto py-12"
         >
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
@@ -3318,7 +3318,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {String(matchID || '').startsWith('t_') ? 'Назад в турнир' : 'Назад в лобби'}
             </button>
           </div>
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw] relative">
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw] relative max-h-[90vh] overflow-y-auto">
             {/* hitbox debug removed */}
             <button
               type="button"
