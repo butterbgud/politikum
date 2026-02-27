@@ -3088,7 +3088,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 const scaleByDist2 = (_dist) => 1; // no zoom on win screen
 
                 return (
-                  <div className="flex flex-col items-center gap-2 relative pt-10">
+                  <div className="flex flex-col items-center gap-2 relative pt-10 pointer-events-auto">
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest z-[2000] whitespace-nowrap justify-center" style={{ color }}>
                       <span>{p?.name || pid}</span>
                       <span className="opacity-50">•</span>
@@ -3128,7 +3128,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                     <button
                       type="button"
-                      className="mt-2 text-[11px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-4"
+                      className="mt-2 w-full text-center text-[11px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-4 pointer-events-auto"
                       onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
                     >
                       Детали
@@ -3223,7 +3223,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </div>
             )}
 
-            <div className="mt-4 text-amber-200/60 text-xs">(Refresh to start a new match for now.)</div>
+            {/* (removed) */}
           </div>
         </div>
       )}
