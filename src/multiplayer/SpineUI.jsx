@@ -4138,6 +4138,10 @@ function PolitikumWelcome({ onJoin }) {
   }, []);
 
   const [showWhereAmI, setShowWhereAmI] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileErr, setProfileErr] = useState('');
+  const [profile, setProfile] = useState(null);
 
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
@@ -4175,6 +4179,42 @@ function PolitikumWelcome({ onJoin }) {
         </div>
       )}
 
+      {showProfile && (
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
+          <div className="w-[min(720px,95vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Профиль</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">Доступен всем</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowProfile(false)}
+                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+              >
+                Закрыть
+              </button>
+            </div>
+
+            {profileLoading && (
+              <div className="mt-4 text-amber-200/80 font-mono text-[12px]">loading…</div>
+            )}
+            {!profileLoading && profileErr && (
+              <div className="mt-4 text-red-200/90 font-mono text-[12px]">{profileErr}</div>
+            )}
+            {!profileLoading && !profileErr && profile?.ok && (
+              <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
+                <div><span className="text-amber-200/70">PlayerId:</span> {String(profile.playerId || '')}</div>
+                <div><span className="text-amber-200/70">Имя:</span> {String(profile.name || profile.username || '—')}</div>
+                <div><span className="text-amber-200/70">Рейтинг:</span> {Math.round(Number(profile.rating || 0))}</div>
+                <div><span className="text-amber-200/70">Игр:</span> {Number(profile.games || 0)}</div>
+                <div><span className="text-amber-200/70">Побед:</span> {Number(profile.wins || 0)} ({profile.games ? Math.round((Number(profile.wins || 0) / Math.max(1, Number(profile.games || 0))) * 100) : 0}%)</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top-right links */}
       <div className="fixed top-3 right-3 z-[2000] select-none flex items-center gap-2">
         <a
@@ -4204,8 +4244,34 @@ function PolitikumWelcome({ onJoin }) {
           <div className="flex min-w-0 flex items-center gap-2 justify-end">
             {authToken ? (
               <>
-                <div className="text-xs font-mono text-black/80 whitespace-nowrap">
-                  {String(playerName || 'User').trim() || 'User'}{(authRating != null && !Number.isNaN(Number(authRating))) ? ` (${Math.round(Number(authRating))})` : ''}
+                <div className="text-xs font-mono text-black/80 whitespace-nowrap flex items-center gap-2">
+                  <span>{String(playerName || 'User').trim() || 'User'}</span>
+                  {(authRating != null && !Number.isNaN(Number(authRating))) && (
+                    <button
+                      type="button"
+                      className="px-2 py-1 rounded-lg bg-black/45 hover:bg-black/55 border border-amber-900/20 text-black/80"
+                      title="Открыть профиль"
+                      onClick={async () => {
+                        try {
+                          const pid = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim();
+                          if (!pid) return;
+                          setShowProfile(true);
+                          setProfileLoading(true);
+                          setProfileErr('');
+                          const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(pid)}`, { cache: 'no-store' });
+                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                          const json = await res.json();
+                          setProfile(json);
+                        } catch (e) {
+                          setProfileErr(e?.message || String(e));
+                        } finally {
+                          setProfileLoading(false);
+                        }
+                      }}
+                    >
+                      {Math.round(Number(authRating))}
+                    </button>
+                  )}
                 </div>
                 <button
                   type="button"

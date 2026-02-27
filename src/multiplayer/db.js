@@ -737,6 +737,49 @@ export function getLeaderboard({ limit = 20 }) {
   };
 }
 
+export function getPublicProfile({ playerId }) {
+  const pid = String(playerId || '').trim();
+  if (!pid) return { ok:false, error:'bad_args' };
+  const db = sqlite;
+
+  const ratingRow = db.prepare('SELECT rating, games_played AS games, wins FROM ratings WHERE player_id=?').get(pid);
+  const rating = ratingRow ? Number(ratingRow.rating || 1000) : 1000;
+
+  // authoritative counts from finished games table
+  const counts = db.prepare(`
+    SELECT
+      COUNT(DISTINCT g.id) AS games,
+      SUM(CASE WHEN g.winner_player_id = @pid THEN 1 ELSE 0 END) AS wins
+    FROM games g
+    JOIN game_players gp ON gp.game_id = g.id
+    WHERE gp.player_id = @pid AND g.finished_at IS NOT NULL;
+  `).get({ pid });
+
+  const games = Number(counts?.games || 0);
+  const wins = Number(counts?.wins || 0);
+
+  const nameRow = db.prepare(`
+    SELECT gp.name AS name
+    FROM game_players gp
+    WHERE gp.player_id = ? AND gp.name IS NOT NULL AND TRIM(gp.name) <> ''
+    ORDER BY gp.id DESC
+    LIMIT 1;
+  `).get(pid);
+
+  const usernameRow = db.prepare('SELECT username FROM users WHERE player_id = ?').get(pid);
+
+  return {
+    ok: true,
+    playerId: pid,
+    username: usernameRow?.username || null,
+    name: nameRow?.name || null,
+    rating,
+    games,
+    wins,
+    winRate: games ? (wins / games) : 0,
+  };
+}
+
 export function getGameByMatchId(matchId) {
   const mid = String(matchId || '').trim();
   if (!mid) return null;

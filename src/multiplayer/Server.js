@@ -6,7 +6,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -688,6 +688,18 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const limit = clampLimit(ctx.query.limit, 10, 50);
       ctx.body = getLeaderboard({ limit });
       return;
+    }
+
+    // Public player profile (MVP): rating + games + wins.
+    {
+      const m = String(ctx.path || '').match(/^\/public\/profile\/([^\/]+)$/);
+      if (m && ctx.method === 'GET') {
+        const pid = decodeURIComponent(m[1] || '');
+        const res = getPublicProfile({ playerId: pid });
+        if (!res?.ok) ctx.throw(400, res?.error || 'bad_args');
+        ctx.body = res;
+        return;
+      }
     }
 
     // Global pre-lobby chat (MVP)
