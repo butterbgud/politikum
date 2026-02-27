@@ -1858,6 +1858,23 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responseKey]);
 
+  // If the same response window keeps re-opening (rare desync), auto-skip it client-side.
+  useEffect(() => {
+    try {
+      if (!responseActive || !responseKey) return;
+      const k = `politikum.skipResponse:${responseKey}`;
+      const last = Number(window.localStorage.getItem(k) || 0);
+      if (!last) return;
+      if ((Date.now() - last) < 12_000) {
+        try { setSkippedResponseKey(responseKey); } catch {}
+        try { moves.skipResponseWindow(); } catch {}
+      } else {
+        try { window.localStorage.removeItem(k); } catch {}
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [responseActive, responseKey]);
+
   const p8SwapSpec = responseKind === 'cancel_persona' ? (response?.persona8Swap || null) : null;
   const canPersona8Swap = !!p8SwapSpec && String(p8SwapSpec.playerId || '') === String(playerID);
   const [showEventSplash, setShowEventSplash] = useState(false);
@@ -2041,7 +2058,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       if (responseKind && key === '2') {
         // skip/decline response window (allow actor too)
         if (responseActive) {
-          try { setSkippedResponseKey(responseKey); } catch {}
+          try {
+            setSkippedResponseKey(responseKey);
+            window.localStorage.setItem(`politikum.skipResponse:${responseKey}`, String(Date.now()));
+          } catch {}
           try { moves.skipResponseWindow(); } catch {}
         }
         return;
