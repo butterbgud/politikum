@@ -3198,10 +3198,43 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     return (
                       <div className="mt-4">
                         <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black text-center">История успеха (ходы → очки)</div>
-                        <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
+                        <svg width={W} height={H} className="mt-2 mx-auto block rounded-xl bg-black/25 border border-amber-900/20">
                           {/* axes */}
                           <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
                           <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
+
+                          {/* axis labels */}
+                          <text x={W / 2} y={H - 2} textAnchor="middle" fontSize={9} fill="rgba(251,191,36,0.55)" fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">ход</text>
+                          <text x={6} y={H / 2} textAnchor="middle" fontSize={9} fill="rgba(251,191,36,0.55)" fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" transform={`rotate(-90 6 ${H / 2})`}>очки</text>
+
+                          {/* ticks */}
+                          {(() => {
+                            const ticksY = 4;
+                            const out = [];
+                            for (let i = 0; i <= ticksY; i++) {
+                              const v = minY + ((maxY - minY) * i) / ticksY;
+                              const y = sy(v);
+                              out.push(
+                                <g key={`y-${i}`}>
+                                  <line x1={pad - 4} y1={y} x2={pad} y2={y} stroke="rgba(251,191,36,0.25)" />
+                                  <text x={pad - 7} y={y + 3} textAnchor="end" fontSize={9} fill="rgba(251,191,36,0.55)" fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">{Math.round(v)}</text>
+                                </g>
+                              );
+                            }
+                            const ticksX = Math.min(6, Math.max(1, maxT - minT));
+                            for (let i = 0; i <= ticksX; i++) {
+                              const t = minT + Math.round(((maxT - minT) * i) / ticksX);
+                              const x = sx(t);
+                              out.push(
+                                <g key={`x-${i}`}>
+                                  <line x1={x} y1={H - pad} x2={x} y2={H - pad + 4} stroke="rgba(251,191,36,0.25)" />
+                                  <text x={x} y={H - pad + 14} textAnchor="middle" fontSize={9} fill="rgba(251,191,36,0.55)" fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">{t}</text>
+                                </g>
+                              );
+                            }
+                            return out;
+                          })()}
+
                           {playerIds.map((pid, i) => (
                             <path key={pid} d={pathFor(pid)} fill="none" stroke={colors[i % colors.length]} strokeWidth={2.5} opacity={0.95} />
                           ))}
