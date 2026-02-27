@@ -882,21 +882,7 @@ function AdminPage() {
               >
                 Fetch log
               </button>
-              <button
-                type="button"
-                disabled={!matchLogJson}
-                onClick={() => {
-                  const s = String(matchLogJson || '');
-                  try {
-                    const fn = navigator.clipboard?.writeText;
-                    if (fn) { fn.call(navigator.clipboard, s); return; }
-                  } catch {}
-                  try { window.prompt('Copy match log JSON:', s); } catch {}
-                }}
-                className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest"
-              >
-                Copy
-              </button>
+              {/* Copy moved into the match log panel */}
             </div>
 
             <button
@@ -960,13 +946,29 @@ function AdminPage() {
           <div className="mb-4">
             <div className="flex items-center justify-between gap-3 mb-1">
               <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black">Match log JSON</div>
-              <button
-                type="button"
-                className="text-[10px] font-mono font-black text-amber-200/70 hover:text-amber-50 underline underline-offset-4"
-                onClick={() => setMatchLogJson('')}
-              >
-                Hide
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="text-[10px] font-mono font-black text-amber-200/70 hover:text-amber-50 underline underline-offset-4"
+                  onClick={() => {
+                    const s = String(matchLogJson || '');
+                    try {
+                      const fn = navigator.clipboard?.writeText;
+                      if (fn) { fn.call(navigator.clipboard, s); return; }
+                    } catch {}
+                    try { window.prompt('Copy match log JSON:', s); } catch {}
+                  }}
+                >
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  className="text-[10px] font-mono font-black text-amber-200/70 hover:text-amber-50 underline underline-offset-4"
+                  onClick={() => setMatchLogJson('')}
+                >
+                  Hide
+                </button>
+              </div>
             </div>
             <textarea
               readOnly
