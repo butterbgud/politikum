@@ -2874,7 +2874,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {canPersona10Cancel && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
-            persona_10: click Naki in your hand to cancel this effect
+            Вы можете позвать маму Наки чтобы отменить действие
           </div>
         </div>
       )}
@@ -3616,7 +3616,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   'absolute bottom-0 w-36 aspect-[2/3] rounded-2xl border-2 transition-all duration-200 ease-out shadow-xl overflow-visible ' +
                   (canClickP16
                     ? ((p16DiscardPick || []).includes(card.id) ? 'border-emerald-300 hover:border-emerald-200 cursor-pointer ring-2 ring-emerald-400/30' : 'border-emerald-500/40 hover:border-emerald-300 cursor-pointer')
-                    : (canClick ? ((canCancelAction || canCancelPersona) ? 'border-emerald-500/50 hover:border-emerald-300 cursor-pointer' : 'border-amber-700/40 hover:border-amber-400 cursor-pointer') : 'border-slate-900 cursor-not-allowed'))
+                    : (canClick
+                      ? (canCancelWithPersona10
+                        ? 'border-fuchsia-300/80 hover:border-fuchsia-200 cursor-pointer ring-4 ring-fuchsia-300/30 animate-pulse'
+                        : ((canCancelAction || canCancelPersona) ? 'border-emerald-500/50 hover:border-emerald-300 cursor-pointer' : 'border-amber-700/40 hover:border-amber-400 cursor-pointer'))
+                      : 'border-slate-900 cursor-not-allowed'))
                 }
                 style={{
                   left: `${left}px`,
@@ -3624,7 +3628,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   transform: `rotate(${rot}deg) scale(${scale})`,
                   transformOrigin: 'bottom center',
                 }}
-                title={card.id}
+                title={
+                  canCancelWithPersona10
+                    ? 'Вы можете позвать маму Наки чтобы отменить действие'
+                    : (card.name || card.id)
+                }
               >
                 <div className="w-full h-full rounded-2xl overflow-hidden">
                   <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
