@@ -4219,6 +4219,13 @@ function PolitikumWelcome({ onJoin }) {
                 <div><span className="text-amber-200/70">Рейтинг:</span> {Math.round(Number(profile.rating || 0))}</div>
                 <div><span className="text-amber-200/70">Игр:</span> {Number(profile.games || 0)}</div>
                 <div><span className="text-amber-200/70">Побед:</span> {Number(profile.wins || 0)} ({profile.games ? Math.round((Number(profile.wins || 0) / Math.max(1, Number(profile.games || 0))) * 100) : 0}%)</div>
+
+                {String(profile.bioText || '').trim() && (
+                  <div className="mt-3 pt-3 border-t border-amber-900/20">
+                    <div className="text-amber-200/70 text-[10px] uppercase tracking-[0.3em] font-black">about</div>
+                    <div className="mt-2 whitespace-pre-wrap text-amber-50/85">{String(profile.bioText || '').trim()}</div>
+                  </div>
+                )}
               </div>
             )}
           </div>
