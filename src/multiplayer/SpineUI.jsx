@@ -4413,16 +4413,22 @@ function PolitikumWelcome({ onJoin }) {
       )}
 
       {/* Top-right links */}
-      <div className="fixed top-3 right-3 z-[2000] select-none flex items-center gap-2">
-        <a
-          href="#/admin"
-          target="_blank"
-          rel="noreferrer"
-          className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
-        >
-          ADMIN
-        </a>
-
+      <div className="fixed top-3 right-3 z-[2000] select-none flex items-center gap-2 pointer-events-auto">
+        {(() => {
+          // Show ADMIN only for Konsta (avoid tempting others to guess tokens)
+          const isKonsta = String(playerName || '').trim().toLowerCase() === 'konsta';
+          if (!isKonsta) return null;
+          return (
+            <a
+              href="#/admin"
+              target="_blank"
+              rel="noreferrer"
+              className="bg-black/70 border border-amber-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/70 hover:text-amber-50"
+            >
+              ADMIN
+            </a>
+          );
+        })()}
       </div>
 
       {/* Top bar: alias + beta login */}
@@ -4436,7 +4442,7 @@ function PolitikumWelcome({ onJoin }) {
           Что я? Где я?
         </button>
 
-        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-row gap-3 items-center justify-end">
+        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-row gap-3 items-center justify-end mr-24">
 
           <div className="flex min-w-0 flex items-center gap-2 justify-end">
             {authToken ? (
