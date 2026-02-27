@@ -3874,20 +3874,48 @@ function PolitikumWelcome({ onJoin }) {
 
   const [authRating, setAuthRating] = useState(null);
 
+  const openProfileById = async (pid) => {
+    const id = String(pid || '').trim();
+    if (!id) return;
+    setShowProfile(true);
+    setProfileLoading(true);
+    setProfileErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setProfile(json);
+    } catch (e) {
+      setProfileErr(e?.message || String(e));
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
+        // Build a rating map for the whole page (chat badges etc)
+        const res = await fetch(`${SERVER}/public/leaderboard?limit=200`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const items = Array.isArray(json?.items) ? json.items : [];
+        const m = {};
+        for (const r of items) {
+          const pid = String(r?.playerId || '').trim();
+          if (!pid) continue;
+          m[pid] = Math.round(Number(r?.rating || 0));
+        }
+        setRatingsMap(m);
+
         if (!authToken) { setAuthRating(null); return; }
         const pid = (() => {
           try { return String(window.localStorage.getItem('politikum.sessionPlayerId') || ''); } catch { return ''; }
         })();
         if (!pid) { setAuthRating(null); return; }
-        const res = await fetch(`${SERVER}/public/leaderboard?limit=50`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const json = await res.json();
-        const row = (json?.items || []).find((r) => String(r?.playerId || '') === pid);
-        if (!row) return;
-        setAuthRating(Number(row.rating ?? null));
+        const rating = m[String(pid)] ?? null;
+        if (rating == null) return;
+        setAuthRating(Number(rating));
       } catch {}
     })();
   }, [authToken]);
@@ -4142,6 +4170,7 @@ function PolitikumWelcome({ onJoin }) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileErr, setProfileErr] = useState('');
   const [profile, setProfile] = useState(null);
+  const [ratingsMap, setRatingsMap] = useState(() => ({}));
 
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
@@ -4283,21 +4312,8 @@ function PolitikumWelcome({ onJoin }) {
                       className="px-2 py-1 rounded-lg bg-black/45 hover:bg-black/55 border border-amber-900/20 text-black/80"
                       title="Открыть профиль"
                       onClick={async () => {
-                        try {
-                          const pid = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim();
-                          if (!pid) return;
-                          setShowProfile(true);
-                          setProfileLoading(true);
-                          setProfileErr('');
-                          const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(pid)}`, { cache: 'no-store' });
-                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                          const json = await res.json();
-                          setProfile(json);
-                        } catch (e) {
-                          setProfileErr(e?.message || String(e));
-                        } finally {
-                          setProfileLoading(false);
-                        }
+                        const pid = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim();
+                        openProfileById(pid);
                       }}
                     >
                       {Math.round(Number(authRating))}
@@ -4385,7 +4401,24 @@ function PolitikumWelcome({ onJoin }) {
                           : 'bg-black/35 border border-amber-900/20 rounded-2xl px-4 py-3'
                       }
                     >
-                      <div className="text-[10px] font-mono text-amber-200/50">{m.name || m.playerId || 'Anon'}</div>
+                      <div className="text-[10px] font-mono text-amber-200/50 flex items-center gap-2">
+                        <span
+                          className={m?.playerId ? 'cursor-pointer hover:text-amber-100' : ''}
+                          onClick={() => { if (m?.playerId) openProfileById(m.playerId); }}
+                        >
+                          {m.name || m.playerId || 'Anon'}
+                        </span>
+                        {(m?.playerId && (ratingsMap[String(m.playerId)] != null)) && (
+                          <button
+                            type="button"
+                            className="px-2 py-0.5 rounded-lg bg-black/35 hover:bg-black/45 border border-amber-900/20 text-amber-100/80 font-black"
+                            title="Открыть профиль"
+                            onClick={() => openProfileById(m.playerId)}
+                          >
+                            {ratingsMap[String(m.playerId)]}
+                          </button>
+                        )}
+                      </div>
                       <div className="text-sm font-serif text-amber-50/90 whitespace-pre-wrap">{m.text}</div>
                     </div>
                   );
