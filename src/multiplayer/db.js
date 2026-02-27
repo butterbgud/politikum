@@ -1099,6 +1099,57 @@ export function tournamentTableSetResult({ tournamentId, tableId, winnerPlayerId
           db.prepare('UPDATE tournaments SET config_json=@c WHERE id=@id').run({ id: tid, c: JSON.stringify(cfg) });
         } catch {}
       }
+
+      // Auto-finish double_elim tournaments: when only one player remains (losses < 2).
+      if (type === 'double_elim') {
+        try {
+          const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL').all(tid);
+          const losses = new Map();
+          for (const p of players) losses.set(String(p.playerId), 0);
+
+          const rows = db.prepare(
+            "SELECT tt.winner_player_id AS winnerPlayerId, tt.result_json AS resultJson " +
+            "FROM tournament_tables tt " +
+            "JOIN tournament_rounds tr ON tr.id = tt.round_id " +
+            "WHERE tr.tournament_id = ? AND tt.status = 'finished' " +
+            "ORDER BY tr.round_index ASC, tt.table_index ASC;"
+          ).all(tid);
+
+          for (const row of rows) {
+            const wpid = row.winnerPlayerId ? String(row.winnerPlayerId) : null;
+            let seats = [];
+            try {
+              const parsed = row.resultJson ? JSON.parse(row.resultJson) : null;
+              if (Array.isArray(parsed?.seats)) seats = parsed.seats;
+            } catch {}
+            for (const s of seats) {
+              const pid = s?.playerId ? String(s.playerId) : null;
+              if (!pid || !losses.has(pid)) continue;
+              if (wpid && pid === wpid) continue;
+              const next = (losses.get(pid) || 0) + 1;
+              losses.set(pid, next);
+            }
+          }
+
+          const survivors = [];
+          for (const p of players) {
+            const pid = String(p.playerId);
+            const l = losses.get(pid) || 0;
+            if (l < 2) survivors.push({ playerId: pid, name: p.name || null, losses: l });
+          }
+
+          if (survivors.length === 1) {
+            const champ = survivors[0];
+            const winnerName = champ.name || (db.prepare('SELECT name FROM tournament_players WHERE tournament_id=? AND player_id=?').get(tid, champ.playerId)?.name || null);
+            db.prepare('UPDATE tournaments SET status=@s, finished_at=@f WHERE id=@id').run({ id: tid, s: 'finished', f: nowMs() });
+            try {
+              const cfg = t.cfg ? JSON.parse(String(t.cfg)) : {};
+              cfg.winner = { playerId: champ.playerId, name: winnerName, losses: champ.losses };
+              db.prepare('UPDATE tournaments SET config_json=@c WHERE id=@id').run({ id: tid, c: JSON.stringify(cfg) });
+            } catch {}
+          }
+        } catch {}
+      }
     }
   } catch {}
 
@@ -1109,7 +1160,11 @@ export function tournamentCreate(body = {}) {
   const db = sqlite;
   const id = tournamentId();
   const createdAt = nowMs();
-  const cfg = { name: String(body.name||'').trim()||'Tournament', type: String(body.type||'single_elim'), tableSize: Number(body.tableSize)||2, maxPlayers: body.maxPlayers==null?null:(Number(body.maxPlayers)||null), seeding: String(body.seeding||'random'), allowSpectators: Boolean(body.allowSpectators) };
+  let tableSize = Number(body.tableSize) || 2;
+  if (!Number.isFinite(tableSize) || tableSize < 2) tableSize = 2;
+  if (tableSize > 5) tableSize = 5;
+  const type = String(body.type || 'single_elim');
+  const cfg = { name: String(body.name||'').trim()||'Tournament', type, tableSize, maxPlayers: body.maxPlayers==null?null:(Number(body.maxPlayers)||null), seeding: String(body.seeding||'random'), allowSpectators: Boolean(body.allowSpectators) };
   db.prepare('INSERT INTO tournaments (id,name,type,table_size,status,created_at,started_at,finished_at,config_json) VALUES (@id,@name,@type,@table_size,@status,@created_at,NULL,NULL,@config_json)').run({ id, name: cfg.name, type: cfg.type, table_size: cfg.tableSize, status: 'registering', created_at: createdAt, config_json: JSON.stringify(cfg) });
   return { ok: true, tournament: tournamentGet({ id }) };
 }
@@ -1175,7 +1230,7 @@ export function tournamentGenerateRound1({ id }) {
   const existing = db.prepare('SELECT id FROM tournament_rounds WHERE tournament_id=? AND round_index=1').get(tid);
   if (existing) return { ok:false, error:'round_exists' };
 
-  const tableSize = Math.max(2, Number(t.tableSize) || 2);
+  const tableSize = Math.max(2, Math.min(5, Number(t.tableSize) || 2));
 
   const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC').all(tid);
   const ids = players.map((p) => ({ playerId: String(p.playerId), name: p.name || null }));
@@ -1189,9 +1244,11 @@ export function tournamentGenerateRound1({ id }) {
 
   const tables = [];
   let tableIndex = 1;
-  for (let i = 0; i < ids.length; i += tableSize) {
-    const slice = ids.slice(i, i + tableSize);
-    // allow last table smaller (MVP)
+  for (let i = 0; i < ids.length;) {
+    const remaining = ids.length - i;
+    if (remaining === 1) break; // single bye
+    const size = Math.min(tableSize, remaining);
+    const slice = ids.slice(i, i + size);
     const row = db.prepare('INSERT INTO tournament_tables (tournament_id, round_id, table_index, match_id, status, winner_player_id, result_json) VALUES (@t,@rid,@ti,NULL,@s,NULL,@rj) RETURNING id').get({
       t: tid,
       rid: roundId,
@@ -1201,7 +1258,138 @@ export function tournamentGenerateRound1({ id }) {
     });
     tables.push({ id: row?.id, tableIndex, seats: slice });
     tableIndex++;
+    i += size;
   }
 
   return { ok:true, round: { id: roundId, roundIndex: 1 }, tables, tournament: tournamentGet({ id: tid }) };
+}
+
+// Double elimination support: generate subsequent rounds by grouping players by current loss count.
+export function tournamentGenerateNextRound({ id }) {
+  const db = sqlite;
+  const tid = String(id || '').trim();
+  if (!tid) return { ok: false, error: 'bad_args' };
+
+  const t = db.prepare('SELECT id, type, table_size AS tableSize, status FROM tournaments WHERE id=?').get(tid);
+  if (!t) return { ok: false, error: 'not_found' };
+  if (String(t.type || '') !== 'double_elim') return { ok: false, error: 'bad_type' };
+  if (String(t.status || '') !== 'running') return { ok: false, error: 'not_running' };
+
+  const tableSize = Math.max(2, Math.min(5, Number(t.tableSize) || 2));
+
+  const lastRoundRow = db.prepare('SELECT MAX(round_index) AS maxRound FROM tournament_rounds WHERE tournament_id=?').get(tid);
+  const lastRoundIndex = Number(lastRoundRow?.maxRound || 0) || 0;
+  if (!lastRoundIndex) return { ok: false, error: 'no_rounds' };
+
+  const lastRound = db.prepare('SELECT id FROM tournament_rounds WHERE tournament_id=? AND round_index=?').get(tid, lastRoundIndex);
+  if (!lastRound?.id) return { ok: false, error: 'round_not_found' };
+
+  const unfinished = Number(db.prepare("SELECT COUNT(1) AS n FROM tournament_tables WHERE tournament_id=? AND round_id=? AND status<>'finished'").get(tid, lastRound.id)?.n || 0) || 0;
+  if (unfinished > 0) return { ok: false, error: 'round_not_finished' };
+
+  const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC').all(tid);
+  if (players.length < 2) return { ok: false, error: 'not_enough_players' };
+
+  const nameById = new Map();
+  const losses = new Map();
+  for (const p of players) {
+    const pid = String(p.playerId);
+    nameById.set(pid, p.name || null);
+    losses.set(pid, 0);
+  }
+
+  const rows = db.prepare(
+    "SELECT tt.winner_player_id AS winnerPlayerId, tt.result_json AS resultJson " +
+    "FROM tournament_tables tt " +
+    "JOIN tournament_rounds tr ON tr.id = tt.round_id " +
+    "WHERE tr.tournament_id = ? AND tt.status = 'finished' " +
+    "ORDER BY tr.round_index ASC, tt.table_index ASC;"
+  ).all(tid);
+
+  for (const row of rows) {
+    const wpid = row.winnerPlayerId ? String(row.winnerPlayerId) : null;
+    let seats = [];
+    try {
+      const parsed = row.resultJson ? JSON.parse(row.resultJson) : null;
+      if (Array.isArray(parsed?.seats)) seats = parsed.seats;
+    } catch {}
+    for (const s of seats) {
+      const pid = s?.playerId ? String(s.playerId) : null;
+      if (!pid || !losses.has(pid)) continue;
+      if (wpid && pid === wpid) continue;
+      const next = (losses.get(pid) || 0) + 1;
+      losses.set(pid, next);
+    }
+  }
+
+  const survivors0 = [];
+  const survivors1 = [];
+  for (const p of players) {
+    const pid = String(p.playerId);
+    const l = losses.get(pid) || 0;
+    if (l >= 2) continue;
+    if (l === 0) survivors0.push(pid);
+    else if (l === 1) survivors1.push(pid);
+  }
+
+  const totalSurvivors = survivors0.length + survivors1.length;
+  if (totalSurvivors <= 1) return { ok: false, error: 'tournament_finished' };
+
+  // Grand final: one player with 0 losses vs one with 1 loss.
+  if (survivors0.length === 1 && survivors1.length === 1) {
+    const nextRoundIndex = lastRoundIndex + 1;
+    const now = nowMs();
+    const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'pending', c: now });
+    const roundId = round?.id;
+    const tables = [];
+    const pair = [survivors0[0], survivors1[0]];
+    const seats = pair.map((pid, idx) => ({ seat: idx, playerId: pid, name: nameById.get(pid) || null }));
+    const row = db.prepare('INSERT INTO tournament_tables (tournament_id, round_id, table_index, match_id, status, winner_player_id, result_json) VALUES (@t,@rid,@ti,NULL,@s,NULL,@rj) RETURNING id').get({
+      t: tid,
+      rid: roundId,
+      ti: 1,
+      s: 'pending',
+      rj: JSON.stringify({ seats }),
+    });
+    tables.push({ id: row?.id, tableIndex: 1, seats });
+    return { ok: true, round: { id: roundId, roundIndex: nextRoundIndex }, tables, tournament: tournamentGet({ id: tid }) };
+  }
+
+  const nextRoundIndex = lastRoundIndex + 1;
+  const now = nowMs();
+  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'pending', c: now });
+  const roundId = round?.id;
+
+  const tables = [];
+  let tableIndex = 1;
+
+  const scheduleGroup = (ids) => {
+    const groupIds = [...ids];
+    shuffleInPlace(groupIds);
+    for (let i = 0; i < groupIds.length;) {
+      const remaining = groupIds.length - i;
+      if (remaining === 1) break; // bye
+      const size = Math.min(tableSize, remaining);
+      const slice = groupIds.slice(i, i + size);
+      const seats = slice.map((pid, idx) => ({ seat: idx, playerId: pid, name: nameById.get(pid) || null }));
+      const row = db.prepare('INSERT INTO tournament_tables (tournament_id, round_id, table_index, match_id, status, winner_player_id, result_json) VALUES (@t,@rid,@ti,NULL,@s,NULL,@rj) RETURNING id').get({
+        t: tid,
+        rid: roundId,
+        ti: tableIndex,
+        s: 'pending',
+        rj: JSON.stringify({ seats }),
+      });
+      tables.push({ id: row?.id, tableIndex, seats });
+      tableIndex++;
+      i += size;
+    }
+  };
+
+  // Winners (0-loss) bracket first, then 1-loss bracket.
+  scheduleGroup(survivors0);
+  scheduleGroup(survivors1);
+
+  if (!tables.length) return { ok: false, error: 'no_tables' };
+
+  return { ok: true, round: { id: roundId, roundIndex: nextRoundIndex }, tables, tournament: tournamentGet({ id: tid }) };
 }

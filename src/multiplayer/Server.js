@@ -7,7 +7,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -622,7 +622,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     }
 
     {
-      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/(open_registration|close_registration|cancel|generate_round1)$/);
+      const m = String(ctx.path || '').match(/^\/admin\/tournament\/([^\/]+)\/(open_registration|close_registration|cancel|generate_round1|generate_next_round)$/);
       if (m && ctx.method === 'POST') {
         requireAdmin(ctx);
         const tid = m[1];
@@ -630,6 +630,13 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
 
         if (action === 'generate_round1') {
           const res = tournamentGenerateRound1({ id: tid });
+          if (!res.ok) ctx.throw(409, res.error || 'generate_failed');
+          ctx.body = res;
+          return;
+        }
+
+        if (action === 'generate_next_round') {
+          const res = tournamentGenerateNextRound({ id: tid });
           if (!res.ok) ctx.throw(409, res.error || 'generate_failed');
           ctx.body = res;
           return;
