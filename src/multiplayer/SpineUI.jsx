@@ -2715,7 +2715,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Response window UI */}
       {responseActive && responseKey !== skippedResponseKey && String(response?.playedBy) !== String(playerID) && (
-        (responseKind === 'cancel_action' && (haveAction6 || (haveAction14 && responseTargetsMe))) ||
+        (responseKind === 'cancel_action' && (haveAction6 || canPersona10Cancel || (haveAction14 && responseTargetsMe))) ||
         (responseKind === 'cancel_persona' && haveAction8)
       ) && (
         <div className="fixed inset-0 z-[6000] pointer-events-none select-none">
@@ -2726,6 +2726,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <div>
                   {haveAction6 && 'Action played — respond with Action 6 to cancel'}
                   {!haveAction6 && haveAction14 && responseTargetsMe && 'You are targeted — respond with Action 14 to cancel the effect'}
+                  {(!haveAction6 && canPersona10Cancel) && 'Вы можете позвать маму Наки чтобы отменить действие'}
                   <span className="ml-3 text-amber-200/70">{responseSecondsLeft}s</span>
                 </div>
                 {haveAction6 && (() => {
@@ -2737,6 +2738,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     </button>
                   );
                 })()}
+                {canPersona10Cancel && (
+                  <button type="button" onClick={() => { try { moves.persona10CancelFromCoalition(); } catch {} }} className="px-3 py-1 rounded-full bg-fuchsia-700/50 hover:bg-fuchsia-600/60 border border-fuchsia-200/20 text-fuchsia-50 font-black text-[11px]">
+                    p10 cancel
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -3706,7 +3712,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             // Server enforces actual expiry; UI shouldn't block.
             const canCancelAction = responseKind === 'cancel_action' && card.type === 'action' && baseId === 'action_6' && String(response.playedBy) !== String(playerID);
             const canCancelPersona = responseKind === 'cancel_persona' && card.type === 'action' && baseId === 'action_8' && String(response.playedBy) !== String(playerID) && String(response?.personaCard?.id || '').split('#')[0] !== 'persona_33';
-            const canCancelWithPersona10 = canPersona10Cancel && card.type === 'persona' && baseId === 'persona_10';
+            const canCancelWithPersona10 = false; // persona_10 cancel is from coalition (not hand)
 
             const baseIs14 = baseId === 'action_14';
             const canCancelEffectOnMe = responseKind === 'cancel_action' && responseTargetsMe && baseIs14;
@@ -3773,7 +3779,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     moves.playAction(card.id);
                   } else if (canCancelWithPersona10) {
                     playSfx('ui', 0.35);
-                    moves.persona10CancelFromHand(card.id);
+                    // persona_10 cancel is from coalition; handled via overlay button
                   }
                 }}
                 aria-disabled={!canClick}
