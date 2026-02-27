@@ -784,7 +784,10 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
           <div class="bio" id="bioBox">
             <div class="row">
               <div class="k">about</div>
-              <div class="msg" id="bioMsg"></div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <button class="btn" id="bioEdit" type="button" style="display:none; padding:8px 10px;">Edit</button>
+                <div class="msg" id="bioMsg"></div>
+              </div>
             </div>
             <div class="text" id="bioText">${bioText ? bioText.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}</div>
             <div id="bioEditor" style="display:none; margin-top:10px;">
@@ -803,6 +806,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
               const bioEditor = document.getElementById('bioEditor');
               const bioInput = document.getElementById('bioInput');
               const bioMsg = document.getElementById('bioMsg');
+              const btnEdit = document.getElementById('bioEdit');
               const btnSave = document.getElementById('bioSave');
               const btnCancel = document.getElementById('bioCancel');
 
@@ -820,13 +824,23 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
                     const mePid = String(j?.session?.playerId || '');
                     if (!mePid || mePid !== PROFILE_PID) return;
 
-                    // switch to editor mode
-                    showEditor(true);
-                    bioInput.value = (bioTextEl.textContent || '').trim();
-                    bioTextEl.style.display = 'none';
-                    setMsg('you can edit');
+                    // enable edit button; keep the text visible
+                    if (btnEdit) btnEdit.style.display = '';
+                    setMsg('');
 
-                    btnCancel.addEventListener('click', () => { window.location.reload(); });
+                    const enterEdit = () => {
+                      showEditor(true);
+                      bioInput.value = (bioTextEl.textContent || '').trim();
+                      bioTextEl.style.display = 'none';
+                      setMsg('');
+                    };
+
+                    if (btnEdit) btnEdit.addEventListener('click', enterEdit);
+                    btnCancel.addEventListener('click', () => {
+                      showEditor(false);
+                      bioTextEl.style.display = '';
+                      setMsg('');
+                    });
                     btnSave.addEventListener('click', () => {
                       btnSave.disabled = true;
                       setMsg('saving…');
