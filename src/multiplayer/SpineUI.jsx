@@ -2286,13 +2286,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   const canClickFaceForP3A = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:leftwing') && !it.card?.shielded && !isImmovablePersona(it.card);
                   const pendingA7 = G.pending?.kind === 'action_7_block_persona' && String(playerID) === String(G.pending.attackerId);
                   const canClickFaceForA7 = pendingA7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
+
+                  const pendingA13 = G.pending?.kind === 'action_13_shield_persona' && String(playerID) === String(G.pending.attackerId);
+                  const canClickFaceForA13 = pendingA13 && String(p.id) === String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
                   const canClickFaceForP7 = pendingP7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
                   const canClickFaceForP14 = pending?.kind === 'discard_one_persona_from_any_coalition' && String(pending?.playerId) === String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP11 = pendingP11Pick && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP13 = pendingP13 && String(p.id) === String(pendingP13AttackerId) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP5 = G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && String(p.id) !== String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card) && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:liberal');
 
-                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForA7 || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11 || canClickFaceForP13 || canClickFaceForP5;
+                  const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForA7 || canClickFaceForA13 || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11 || canClickFaceForP13 || canClickFaceForP5;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
@@ -2339,6 +2342,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         }
                         if (canClickFaceForA7) {
                           try { playSfx('ui', 0.35); moves.blockPersonaForAction7(String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (canClickFaceForA13) {
+                          try { playSfx('ui', 0.35); moves.shieldPersonaForAction13(it.card.id); } catch {}
                           return;
                         }
                         if (canClickFaceForP7) {
@@ -2934,24 +2941,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {/* Action_13: shield one of YOUR personas */}
+      {/* Action_13: shield one of YOUR personas (no modal) */}
       {G.pending?.kind === 'action_13_shield_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 13 — Shield</div>
-            <div className="mt-2 text-amber-100/80 text-sm">Choose one of your personas to shield. It can&apos;t be targeted by actions/abilities, and +1 gains are reduced by 1.</div>
-            <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).map((c) => (
-                <button
-                  key={c.id}
-                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
-                  onClick={() => moves.shieldPersonaForAction13(c.id)}
-                  title={c.name || c.id}
-                >
-                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                </button>
-              ))}
-            </div>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            Белое пальто: ткни по персоне в СВОЕЙ коалиции чтобы защитить
           </div>
         </div>
       )}
