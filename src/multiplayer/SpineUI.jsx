@@ -3403,6 +3403,28 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       })}
                     </div>
 
+                    {/* Per-player details section (toggled by top-right button) */}
+                    {goShowAllDetails && (
+                      <div className="w-full max-w-[520px] px-1">
+                        <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
+                          {coal.map((c) => {
+                            const base = Number(c.baseVp ?? 0);
+                            const tok = Number(c.vpDelta || 0);
+                            const pas = Number(c.passiveVpDelta || 0);
+                            const total = Number(c.vp ?? (base + tok + pas));
+                            return (
+                              <div key={c.id} className="flex items-baseline justify-between gap-3">
+                                <span className="truncate">{String(c.name || c.id)}</span>
+                                <span className="shrink-0 tabular-nums">
+                                  {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* per-player details button removed */}
                   </div>
                 );
@@ -3484,39 +3506,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     ))}
                   </div>
 
-                  {/* Global details (toggle top-right button) */}
-                  {goShowAllDetails && (
-                    <div className="mt-6 bg-black/35 border border-amber-900/25 rounded-2xl p-4 max-h-[48vh] overflow-auto custom-scrollbar">
-                      <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black text-center">Детали расчёта</div>
-                      <div className="mt-3 grid gap-4">
-                        {playerIds.map((pid) => {
-                          const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
-                          const coal = (p?.coalition || []).filter((c) => c.type === 'persona');
-                          return (
-                            <div key={pid} className="bg-black/40 border border-amber-900/20 rounded-2xl p-3">
-                              <div className="text-amber-100/90 text-[12px] font-mono font-black">{p?.name || pid} · {scoreNow(pid)} очк</div>
-                              <div className="mt-2 space-y-1 text-[11px] font-mono text-amber-100/75">
-                                {coal.map((c) => {
-                                  const base = Number(c.baseVp ?? 0);
-                                  const tok = Number(c.vpDelta || 0);
-                                  const pas = Number(c.passiveVpDelta || 0);
-                                  const total = Number(c.vp ?? (base + tok + pas));
-                                  return (
-                                    <div key={c.id} className="flex items-baseline justify-between gap-3">
-                                      <span className="truncate">{String(c.name || c.id)}</span>
-                                      <span className="shrink-0 tabular-nums">
-                                        {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {/* Global details removed: now rendered under each player */}
                 </>
               );
             })()}
