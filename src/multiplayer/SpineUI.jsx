@@ -885,7 +885,14 @@ function AdminPage() {
               <button
                 type="button"
                 disabled={!matchLogJson}
-                onClick={() => { try { navigator.clipboard?.writeText?.(matchLogJson); } catch {} }}
+                onClick={() => {
+                  const s = String(matchLogJson || '');
+                  try {
+                    const fn = navigator.clipboard?.writeText;
+                    if (fn) { fn.call(navigator.clipboard, s); return; }
+                  } catch {}
+                  try { window.prompt('Copy match log JSON:', s); } catch {}
+                }}
                 className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest"
               >
                 Copy
@@ -946,6 +953,17 @@ function AdminPage() {
         {error && (
           <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">
             Error: {error}
+          </div>
+        )}
+
+        {!!matchLogJson && (
+          <div className="mb-4">
+            <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Match log JSON</div>
+            <textarea
+              readOnly
+              value={matchLogJson}
+              className="w-full h-[240px] px-3 py-2 rounded-2xl bg-black/50 border border-amber-900/30 text-amber-50/90 font-mono text-[11px]"
+            />
           </div>
         )}
 
