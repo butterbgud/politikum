@@ -3034,7 +3034,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   } catch {}
                   try { window.location.hash = `#/tournament/${tid}`; } catch {}
                 } else {
-                  // Leave match state (client-side) — simplest reliable way is full reload.
+                  // Leave match state (client-side). Also clear persisted last match so reload doesn't re-open gameover.
+                  try {
+                    window.localStorage.removeItem('politikum.lastMatchID');
+                    window.localStorage.removeItem('politikum.lastPlayerID');
+                    window.localStorage.removeItem('politikum.lastCredentials');
+                  } catch {}
                   try { window.location.hash = ''; } catch {}
                   try { window.location.reload(); } catch {}
                 }
