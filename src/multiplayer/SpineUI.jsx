@@ -3051,8 +3051,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             </button>
           </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">КОНЕЦ ИГРЫ</div>
-            <div className="mt-2 text-amber-100 font-serif text-2xl font-bold">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black text-center">КОНЕЦ ИГРЫ</div>
+            <div className="mt-2 text-amber-100 font-serif text-2xl font-bold text-center">
               Самый оппозиционер и отец русской демократии: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
             </div>
             {Array.isArray(G.history) && G.history.length >= 2 && (() => {
@@ -3184,7 +3184,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                     return (
                       <div className="mt-4">
-                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black">История успеха (ходы → очки)</div>
+                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black text-center">История успеха (ходы → очки)</div>
                         <svg width={W} height={H} className="mt-2 rounded-xl bg-black/25 border border-amber-900/20">
                           {/* axes */}
                           <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
