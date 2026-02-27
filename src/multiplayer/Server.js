@@ -1,6 +1,9 @@
 import { Server, Origins, FlatFile } from 'boardgame.io/dist/cjs/server.js';
 import fs from 'node:fs';
 import path from 'node:path';
+
+const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
+
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
 import { recordGameFinished, getSummary, getGames, getLeaderboard, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
@@ -440,6 +443,17 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     }
 
 
+
+    // Public: news (markdown)
+    if (ctx.path === '/public/news' && ctx.method === 'GET') {
+      try {
+        const raw = fs.readFileSync(NEWS_PATH, 'utf8');
+        ctx.body = { ok: true, markdown: raw };
+      } catch (e) {
+        ctx.body = { ok: false, markdown: '' };
+      }
+      return;
+    }
 
     // Tournaments (public)
     if (ctx.path === '/public/tournaments' && ctx.method === 'GET') {
