@@ -3199,7 +3199,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                     return (
                       <div className="mt-4">
-                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black text-center">История успеха (ходы → очки)</div>
+                        <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black text-center">История успеха</div>
                         <svg width={W} height={H} className="mt-2 mx-auto block rounded-xl bg-black/25 border border-amber-900/20">
                           {/* axes */}
                           <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="rgba(251,191,36,0.25)" />
