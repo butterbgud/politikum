@@ -738,7 +738,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
   <title>${name || 'Profile'} · Politikum</title>
   <style>
     :root { --bg:#0b0f17; --card:#101826; --muted:rgba(255,255,255,.6); --gold:#f5d17a; }
-    body{ background-image: url('/assets/lobby_bg.jpg'), radial-gradient(1200px 600px at 20% 0%, rgba(245,209,122,.12), transparent 55%); background-size: cover, auto; background-position: center, 0 0; background-attachment: fixed, fixed; background-repeat: no-repeat, no-repeat; }
+    body{ background-image: url('/assets/lobby_bg.webp'), radial-gradient(1200px 600px at 20% 0%, rgba(245,209,122,.12), transparent 55%); background-size: cover, auto; background-position: center, 0 0; background-attachment: fixed, fixed; background-repeat: no-repeat, no-repeat; }
 
     *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 600px at 20% 0%, rgba(245,209,122,.12), transparent 55%), var(--bg); color:#fff; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;}
     .wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}

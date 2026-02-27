@@ -130,7 +130,7 @@ function TournamentPage() {
   useEffect(() => { load(); }, [includeFinished]);
 
   return (
-    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
@@ -270,7 +270,7 @@ function TournamentDetailPage({ tournamentId }) {
   };
 
   return (
-    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
@@ -600,7 +600,7 @@ function AdminTournamentPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
@@ -879,7 +879,7 @@ function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+    <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
@@ -1363,7 +1363,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
   return (
     <div
       className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
-      style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}
+      style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
     >
       <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
         <div className="flex items-baseline justify-between">
@@ -4147,7 +4147,7 @@ function PolitikumWelcome({ onJoin }) {
   return (
     <div
       className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row"
-      style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}
+      style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
     >
       {showWhereAmI && (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
