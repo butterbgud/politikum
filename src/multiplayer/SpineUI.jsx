@@ -2066,7 +2066,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     if (!showEventSplash) return;
     // When no pending decisions remain, fade the event card shortly after.
     if (G.pending) return;
-    const t = setTimeout(() => setShowEventSplash(false), 800);
+    const t = setTimeout(() => setShowEventSplash(false), 4000);
     return () => clearTimeout(t);
   }, [showEventSplash, G.pending]);
 
