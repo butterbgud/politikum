@@ -1699,8 +1699,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
     );
   };
-  const [goDetails, setGoDetails] = useState(() => ({})); // pid -> bool
-  const [goHitboxDebug, setGoHitboxDebug] = useState('');
+  const [goShowAllDetails, setGoShowAllDetails] = useState(false);
 
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
@@ -3289,47 +3288,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {G.gameOver && (
         <div
           className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto"
-          onMouseMove={(e) => {
-            try {
-              const el = document.elementFromPoint(e.clientX, e.clientY);
-              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
-              setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
-            } catch {}
-          }}
-          onPointerMove={(e) => {
-            try {
-              const el = document.elementFromPoint(e.clientX, e.clientY);
-              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
-              setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
-            } catch {}
-          }}
-          onTouchMove={(e) => {
-            try {
-              const t = e?.touches?.[0];
-              if (!t) return;
-              const el = document.elementFromPoint(t.clientX, t.clientY);
-              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
-              setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
-            } catch {}
-          }}
-          onPointerDownCapture={(e) => {
-            try {
-              const el = document.elementFromPoint(e.clientX, e.clientY);
-              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
-              const id = el?.id ? `#${el.id}` : '';
-              const r = el?.getBoundingClientRect ? el.getBoundingClientRect() : null;
-              const rect = r ? ` rect(${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)})` : '';
-              setGoHitboxDebug(`DOWN @${Math.round(e.clientX)},${Math.round(e.clientY)} ${(el?.tagName || 'null')}${id} ${cls}${rect}`.slice(0, 260));
-              try {
-                const prev = window.__goHitEl;
-                if (prev && prev.style) prev.style.outline = '';
-                if (el && el.style) {
-                  el.style.outline = '3px solid rgba(255,0,0,0.85)';
-                  window.__goHitEl = el;
-                }
-              } catch {}
-            } catch {}
-          }}
         >
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
@@ -3360,12 +3318,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {String(matchID || '').startsWith('t_') ? 'Назад в турнир' : 'Назад в лобби'}
             </button>
           </div>
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
-            {!!goHitboxDebug && (
-              <div className="fixed bottom-4 left-4 z-[999999] max-w-[92vw] px-3 py-2 rounded-xl bg-black/80 border-2 border-red-500/70 text-red-100 text-[12px] font-mono pointer-events-none shadow-2xl">
-                hit: {goHitboxDebug}
-              </div>
-            )}
+          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw] relative">
+            {/* hitbox debug removed */}
+            <button
+              type="button"
+              onClick={() => setGoShowAllDetails((v) => !v)}
+              className="absolute top-4 right-4 z-[3200] px-3 py-2 rounded-xl bg-black/50 hover:bg-black/65 border border-amber-900/25 text-amber-100 font-mono font-black text-[11px]"
+              title="Показать детали расчёта"
+            >
+              Детали
+            </button>
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black text-center">КОНЕЦ ИГРЫ</div>
             <div className="mt-2 text-amber-100 font-serif text-2xl font-bold text-center">
               Самый оппозиционер и отец русской демократии: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
@@ -3441,37 +3403,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       })}
                     </div>
 
-                    <div className="w-full pointer-events-auto relative isolate">
-                      <button
-                        type="button"
-                        className="relative z-[999999] pointer-events-auto cursor-pointer w-full h-11 text-center text-[12px] font-mono font-black text-amber-200/80 hover:text-amber-100 underline underline-offset-4 py-2 bg-black/20 hover:bg-black/35 rounded-xl border-2 border-red-500"
-                        onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
-                      >
-                        Детали
-                      </button>
-                    </div>
-
-                    {/* Per-card VP breakdown (hidden by default) */}
-                    {!!goDetails?.[pid] && (
-                      <div className="w-full max-w-[520px] px-1">
-                        <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
-                          {coal.map((c) => {
-                            const base = Number(c.baseVp ?? 0);
-                            const tok = Number(c.vpDelta || 0);
-                            const pas = Number(c.passiveVpDelta || 0);
-                            const total = Number(c.vp ?? (base + tok + pas));
-                            return (
-                              <div key={c.id} className="flex items-baseline justify-between gap-3">
-                                <span className="truncate">{String(c.name || c.id)}</span>
-                                <span className="shrink-0 tabular-nums">
-                                  {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+                    {/* per-player details button removed */}
                   </div>
                 );
               };
@@ -3551,6 +3483,40 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       <Fan key={pid} pid={pid} color={colors[i % colors.length]} />
                     ))}
                   </div>
+
+                  {/* Global details (toggle top-right button) */}
+                  {goShowAllDetails && (
+                    <div className="mt-6 bg-black/35 border border-amber-900/25 rounded-2xl p-4 max-h-[48vh] overflow-auto custom-scrollbar">
+                      <div className="text-amber-200/60 text-[10px] uppercase tracking-[0.3em] font-black text-center">Детали расчёта</div>
+                      <div className="mt-3 grid gap-4">
+                        {playerIds.map((pid) => {
+                          const p = (G.players || []).find((pp) => String(pp.id) === String(pid));
+                          const coal = (p?.coalition || []).filter((c) => c.type === 'persona');
+                          return (
+                            <div key={pid} className="bg-black/40 border border-amber-900/20 rounded-2xl p-3">
+                              <div className="text-amber-100/90 text-[12px] font-mono font-black">{p?.name || pid} · {scoreNow(pid)} очк</div>
+                              <div className="mt-2 space-y-1 text-[11px] font-mono text-amber-100/75">
+                                {coal.map((c) => {
+                                  const base = Number(c.baseVp ?? 0);
+                                  const tok = Number(c.vpDelta || 0);
+                                  const pas = Number(c.passiveVpDelta || 0);
+                                  const total = Number(c.vp ?? (base + tok + pas));
+                                  return (
+                                    <div key={c.id} className="flex items-baseline justify-between gap-3">
+                                      <span className="truncate">{String(c.name || c.id)}</span>
+                                      <span className="shrink-0 tabular-nums">
+                                        {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </>
               );
             })()}
