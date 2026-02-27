@@ -1,5 +1,5 @@
-# Welcome to Politikum
+# Добро пожаловать в Politikum
 
-Work in progress.
+Чиним починяем баги. Милов с его абилкой ужасен. предлагайте решения
 
-- If something breaks: refresh first; if it still breaks, ping Konsta.
+- если вы что-то нажали и сломалось всё то жамкайте субмит репорт в левом верхнем и кидайте в телегу @potatOs.
