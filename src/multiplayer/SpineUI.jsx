@@ -3215,10 +3215,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         return (
                           <div
                             key={c.id}
-                            className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                            className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl pointer-events-none"
                             style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                           >
-                            <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                            <img src={c.img} alt={c.id} className="w-full h-full object-cover pointer-events-none" draggable={false} />
                             {(Number(c.vpDelta || 0) !== 0) && (
                               <div className={
                                 "absolute left-2 bottom-2 w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] " +
