@@ -135,7 +135,7 @@ function TournamentPage() {
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
-            <div className="text-amber-100/70 font-serif mt-1">Tournaments</div>
+            <div className="text-amber-100/70 font-serif mt-1">Турниры</div>
           </div>
           <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
         </div>
@@ -609,7 +609,7 @@ function AdminTournamentPage() {
           </div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
-            <button type="button" disabled className="text-xs font-mono text-amber-50/90 font-black">Tournaments</button>
+            <button type="button" disabled className="text-xs font-mono text-amber-50/90 font-black">Турниры</button>
             <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
           </div>
         </div>
@@ -654,7 +654,7 @@ function AdminTournamentPage() {
           </div>
         </div>
 
-        <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Tournaments</div>
+        <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Турниры</div>
         <div className="overflow-x-auto -mx-2">
           <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
             <thead>
@@ -1090,7 +1090,7 @@ function AdminPage() {
                   <th className="px-2 py-2 whitespace-nowrap">Player</th>
                   <th className="px-2 py-2 whitespace-nowrap">Elo</th>
                   <th className="px-2 py-2 whitespace-nowrap">Wins</th>
-                  <th className="px-2 py-2 whitespace-nowrap">Games</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Игры</th>
                   <th className="px-2 py-2 whitespace-nowrap">Last win</th>
                 </tr>
               </thead>
