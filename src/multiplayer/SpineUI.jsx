@@ -640,6 +640,7 @@ function AdminTournamentPage() {
               <div className="grid grid-cols-3 gap-2">
                 <select value={type} onChange={(e) => setType(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono">
                   <option value="single_elim">single_elim</option>
+                  <option value="double_elim">double_elim</option>
                 </select>
                 <input value={String(tableSize)} onChange={(e) => setTableSize(e.target.value)} placeholder="tableSize" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
                 <input value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} placeholder="maxPlayers" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
@@ -680,6 +681,27 @@ function AdminTournamentPage() {
                       <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'open_registration')} className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Open reg</button>
                       <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'close_registration')} className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Close reg</button>
                       <button type="button" disabled={loading} onClick={() => generateRound1(t.id)} className="px-2 py-1 rounded-lg bg-amber-700/70 hover:bg-amber-600/80 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">Generate R1</button>
+                      {t.type === 'double_elim' && (
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={async () => {
+                            setLoading(true);
+                            setError('');
+                            try {
+                              await adminPost(`/admin/tournament/${t.id}/generate_next_round`, null);
+                              await load();
+                            } catch (e) {
+                              setError(e?.message || String(e));
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}
+                          className="px-2 py-1 rounded-lg bg-amber-700/70 hover:bg-amber-600/80 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+                        >
+                          Next round
+                        </button>
+                      )}
                       <button type="button" disabled={loading} onClick={() => setStatus(t.id, 'cancel')} className="px-2 py-1 rounded-lg bg-red-900/60 hover:bg-red-900/80 disabled:opacity-60 text-red-100 font-black text-[10px] uppercase tracking-widest">Cancel</button>
                     </div>
                   </td>
@@ -4597,7 +4619,7 @@ function PolitikumWelcome({ onJoin }) {
           {/* RIGHT: MODULES */}
           <div className="w-[360px] max-w-full space-y-6">
             <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit">
-              <h2 className="text-xl font-serif text-amber-500 font-bold mb-4 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">Game List</h2>
+              <h2 className="text-xl font-serif text-amber-500 font-bold mb-4 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">Список игр</h2>
 
               {/* Tabs */}
               <div className="mb-4 flex gap-2">
@@ -4611,7 +4633,7 @@ function PolitikumWelcome({ onJoin }) {
                       : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
                   }
                 >
-                  Games
+                  Игры
                 </button>
                 <button
                   type="button"
@@ -4623,7 +4645,7 @@ function PolitikumWelcome({ onJoin }) {
                       : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
                   }
                 >
-                  Top 10
+                  ТОП-10
                 </button>
                 <button
                   type="button"
@@ -4635,7 +4657,7 @@ function PolitikumWelcome({ onJoin }) {
                       : 'bg-black/40 text-amber-200/70 border-amber-900/30 hover:bg-black/50')
                   }
                 >
-                  Tournaments
+                  Турниры
                 </button>
               </div>
 
@@ -4679,7 +4701,7 @@ function PolitikumWelcome({ onJoin }) {
               {rightTab === 'games' && (
                 <>
                   <div className="overflow-y-auto space-y-2 max-h-64 mb-5 pr-1 custom-scrollbar">
-                    <h3 className="text-[10px] uppercase tracking-widest text-amber-900/60 mb-2 border-b border-amber-900/10 pb-1">Available Games</h3>
+                    <h3 className="text-[10px] uppercase tracking-widest text-amber-900/60 mb-2 border-b border-amber-900/10 pb-1">Доступные игры</h3>
                     {(matches || [])
                       .filter((match) => {
                         if (match.gameover) return false;
@@ -4703,11 +4725,11 @@ function PolitikumWelcome({ onJoin }) {
                           </div>
                         );
                       })}
-                    {(!matches || matches.length === 0) && <div className="text-center py-8 text-amber-900/40 italic text-sm font-serif">Awaiting games...</div>}
+                    {(!matches || matches.length === 0) && <div className="text-center py-8 text-amber-900/40 italic text-sm font-serif">Ждём игры…</div>}
                   </div>
 
                   <button onClick={createMatch} disabled={loading} className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60">
-                    Host New Realm
+                    Начать игру
                   </button>
                 </>
               )}
