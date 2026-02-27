@@ -49,11 +49,19 @@ function openDatabase() {
       username TEXT PRIMARY KEY,
       player_id TEXT UNIQUE NOT NULL,
       token_hash TEXT NOT NULL,
-      bio_text TEXT,
       created_at INTEGER NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_users_player_id ON users(player_id);
+
+    -- Public player profiles (works for legacy sessions too)
+    CREATE TABLE IF NOT EXISTS player_profiles (
+      player_id TEXT PRIMARY KEY,
+      bio_text TEXT,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_player_profiles_updated_at ON player_profiles(updated_at);
 
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY,
@@ -204,12 +212,11 @@ function openDatabase() {
   } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_username ON sessions(username)').run(); } catch {}
 
-  // users.bio_text
+  // player_profiles (new)
   try {
-    if (!hasColumn('users', 'bio_text')) {
-      db.prepare('ALTER TABLE users ADD COLUMN bio_text TEXT').run();
-    }
+    db.prepare('CREATE TABLE IF NOT EXISTS player_profiles (player_id TEXT PRIMARY KEY, bio_text TEXT, updated_at INTEGER NOT NULL)').run();
   } catch {}
+  try { db.prepare('CREATE INDEX IF NOT EXISTS idx_player_profiles_updated_at ON player_profiles(updated_at)').run(); } catch {}
 
   return db;
 }
@@ -774,7 +781,8 @@ export function getPublicProfile({ playerId }) {
     LIMIT 1;
   `).get(pid);
 
-  const userRow = db.prepare('SELECT username, bio_text AS bioText FROM users WHERE player_id = ?').get(pid);
+  const userRow = db.prepare('SELECT username FROM users WHERE player_id = ?').get(pid);
+  const profRow = db.prepare('SELECT bio_text AS bioText FROM player_profiles WHERE player_id = ?').get(pid);
 
   return {
     ok: true,
@@ -785,7 +793,7 @@ export function getPublicProfile({ playerId }) {
     games,
     wins,
     winRate: games ? (wins / games) : 0,
-    bioText: userRow?.bioText || null,
+    bioText: profRow?.bioText || null,
   };
 }
 
@@ -795,7 +803,14 @@ export function setUserBio({ playerId, bioText }) {
   const bio = String(bioText || '');
   const clean = bio.replace(/\r/g, '').trim().slice(0, 800);
   const db = sqlite;
-  db.prepare('UPDATE users SET bio_text = ? WHERE player_id = ?').run(clean || null, pid);
+  const now = nowMs();
+  db.prepare(`
+    INSERT INTO player_profiles (player_id, bio_text, updated_at)
+    VALUES (@pid, @bio, @now)
+    ON CONFLICT(player_id) DO UPDATE SET
+      bio_text=excluded.bio_text,
+      updated_at=excluded.updated_at
+  `).run({ pid, bio: clean || null, now });
   return { ok:true, bioText: clean || '' };
 }
 
