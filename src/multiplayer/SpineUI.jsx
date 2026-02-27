@@ -1640,6 +1640,15 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const haveAction14 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_14');
   const responseTargetsMe = !!pending && (pending.kind === 'action_4_discard' || pending.kind === 'action_9_discard_persona') && String(pending.targetId) === String(playerID);
   const canPersona10Cancel = responseKind === 'cancel_action' && String(response?.allowPersona10By || '') === String(playerID) && responseTargetsMe;
+  const responseKey = responseKind ? `${responseKind}:${String(response?.personaCard?.id || response?.actionCard?.id || '')}:${String(response?.expiresAtMs || '')}` : '';
+  const [skippedResponseKey, setSkippedResponseKey] = useState('');
+  useEffect(() => {
+    // clear skip marker when response changes / closes
+    if (!responseKey) { if (skippedResponseKey) setSkippedResponseKey(''); return; }
+    if (skippedResponseKey && skippedResponseKey !== responseKey) setSkippedResponseKey('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [responseKey]);
+
   const p8SwapSpec = responseKind === 'cancel_persona' ? (response?.persona8Swap || null) : null;
   const canPersona8Swap = !!p8SwapSpec && String(p8SwapSpec.playerId || '') === String(playerID);
   const [showEventSplash, setShowEventSplash] = useState(false);
@@ -1801,6 +1810,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       if (responseKind && key === '2') {
         // skip/decline response window (allow actor too)
         if (responseActive) {
+          try { setSkippedResponseKey(responseKey); } catch {}
           try { moves.skipResponseWindow(); } catch {}
         }
         return;
@@ -2637,7 +2647,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Response window UI */}
-      {responseActive && String(response?.playedBy) !== String(playerID) && (
+      {responseActive && responseKey !== skippedResponseKey && String(response?.playedBy) !== String(playerID) && (
         (responseKind === 'cancel_action' && (haveAction6 || (haveAction14 && responseTargetsMe))) ||
         (responseKind === 'cancel_persona' && haveAction8)
       ) && (
