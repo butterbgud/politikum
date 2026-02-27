@@ -1738,6 +1738,23 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const pendingTokensRemaining = pendingTokens ? Number(pending?.remaining || 0) : 0;
   const pendingTokensSource = pendingTokens ? String(pending?.sourceCardId || '') : '';
 
+  const pendingTokensBase = String(pendingTokensSource || '').split('#')[0];
+  const pendingTokensSingleTarget = pendingTokensBase === 'event_1';
+  const [pendingTokensTargetId, setPendingTokensTargetId] = useState(null);
+  const [pendingTokensLastSource, setPendingTokensLastSource] = useState('');
+  useEffect(() => {
+    if (!pendingTokens) {
+      if (pendingTokensTargetId) setPendingTokensTargetId(null);
+      if (pendingTokensLastSource) setPendingTokensLastSource('');
+      return;
+    }
+    if (pendingTokensSource !== pendingTokensLastSource) {
+      setPendingTokensLastSource(pendingTokensSource);
+      setPendingTokensTargetId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingTokens, pendingTokensSource]);
+
   const pendingPersona45 = pending?.kind === 'persona_45_steal_from_opponent' && String(pending?.playerId) === String(playerID);
   const pendingPersona45Source = pendingPersona45 ? String(pending?.sourceCardId || '') : '';
 
@@ -2519,7 +2536,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pendingTokens && pendingTokensRemaining > 0 && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingTokensSource || 'EVENT'}: place +1 tokens on your coalition — click a coalition card ({pendingTokensRemaining} left)
+            {pendingTokensSource || 'EVENT'}: {pendingTokensSingleTarget ? 'choose ONE persona, then place all +1 on it' : 'place +1 tokens on your coalition'} — click a coalition card ({pendingTokensRemaining} left)
           </div>
         </div>
       )}
@@ -3582,6 +3599,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         return;
                       }
                       if (!pendingTokens) return;
+                      if (pendingTokensSingleTarget) {
+                        const tid = pendingTokensTargetId || c.id;
+                        if (!pendingTokensTargetId) setPendingTokensTargetId(tid);
+                        if (String(c.id) !== String(tid)) return; // must place all tokens on the same persona
+                        try { moves.applyPendingToken(tid); } catch {}
+                        return;
+                      }
                       try { moves.applyPendingToken(c.id); } catch {}
                     }}
                   >
