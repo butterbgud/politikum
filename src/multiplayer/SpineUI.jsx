@@ -1163,6 +1163,7 @@ function AdminPage() {
               <thead>
                 <tr className="border-b border-amber-900/40">
                   <th className="px-2 py-2 whitespace-nowrap">Finished</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Match</th>
                   <th className="px-2 py-2 whitespace-nowrap">Players</th>
                   <th className="px-2 py-2 whitespace-nowrap">Winner</th>
                   <th className="px-2 py-2 whitespace-nowrap">Duration</th>
@@ -1172,6 +1173,17 @@ function AdminPage() {
                 {games.map((g) => (
                   <tr key={g.matchId} className="border-b border-amber-900/20">
                     <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(g.finishedAt || g.createdAt)}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">
+                      <span className="font-mono text-[11px] text-amber-200/70">{String(g.matchId || '').slice(0, 12)}</span>
+                      <button
+                        type="button"
+                        className="ml-2 text-[10px] font-mono font-black text-amber-200/60 hover:text-amber-50 underline underline-offset-4"
+                        onClick={() => { try { navigator.clipboard?.writeText?.(String(g.matchId || '')); } catch {} }}
+                        title={g.matchId}
+                      >
+                        copy
+                      </button>
+                    </td>
                     <td className="px-2 py-2 align-top">
                       <div className="flex flex-wrap gap-1">
                         {(g.players || []).map((p, idx) => (
