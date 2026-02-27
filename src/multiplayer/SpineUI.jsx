@@ -3142,10 +3142,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       })}
                     </div>
 
-                    <div className="w-full pointer-events-auto relative z-[9999]">
+                    <div className="w-full pointer-events-auto relative isolate">
                       <button
                         type="button"
-                        className="w-full h-11 text-center text-[12px] font-mono font-black text-amber-200/80 hover:text-amber-100 underline underline-offset-4 py-2 bg-black/20 hover:bg-black/35 rounded-xl border-2 border-red-500"
+                        className="relative z-[999999] pointer-events-auto cursor-pointer w-full h-11 text-center text-[12px] font-mono font-black text-amber-200/80 hover:text-amber-100 underline underline-offset-4 py-2 bg-black/20 hover:bg-black/35 rounded-xl border-2 border-red-500"
                         onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
                       >
                         Детали
