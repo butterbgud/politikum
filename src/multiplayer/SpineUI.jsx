@@ -1688,7 +1688,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const haveAction14 = (me?.hand || []).some((c) => c.type === 'action' && String(c.id).split('#')[0] === 'action_14');
   const responseTargetsMe = !!pending && (pending.kind === 'action_4_discard' || pending.kind === 'action_9_discard_persona') && String(pending.targetId) === String(playerID);
   const canPersona10Cancel = responseKind === 'cancel_action' && String(response?.allowPersona10By || '') === String(playerID) && responseTargetsMe;
-  const responseKey = responseKind ? `${responseKind}:${String(response?.personaCard?.id || response?.actionCard?.id || '')}:${String(response?.expiresAtMs || '')}` : '';
+  // IMPORTANT: don't include expiresAtMs in the key: server/client can drift and update it,
+  // which would re-open the prompt even after user pressed Skip.
+  const responseKey = responseKind ? `${responseKind}:${String(response?.playedBy || '')}:${String(response?.personaCard?.id || response?.actionCard?.id || '')}` : '';
   const [skippedResponseKey, setSkippedResponseKey] = useState('');
   useEffect(() => {
     // clear skip marker when response changes / closes
