@@ -639,8 +639,8 @@ function AdminTournamentPage() {
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
               <div className="grid grid-cols-3 gap-2">
                 <select value={type} onChange={(e) => setType(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono">
-                  <option value="single_elim">single_elim</option>
-                  <option value="double_elim">double_elim</option>
+                  <option value="single_elim">Single elimination</option>
+                  <option value="double_elim">Double elimination</option>
                 </select>
                 <input value={String(tableSize)} onChange={(e) => setTableSize(e.target.value)} placeholder="tableSize" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
                 <input value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} placeholder="maxPlayers" className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
