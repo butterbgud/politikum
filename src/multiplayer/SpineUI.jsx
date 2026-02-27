@@ -2996,24 +2996,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_4 / Action_9 discard prompt (target chooses) */}
       {(G.pending?.kind === 'action_4_discard' || G.pending?.kind === 'action_9_discard_persona') && String(playerID) === String(G.pending.targetId) && !(responseActive && responseKind === 'cancel_action' && haveAction14 && responseTargetsMe) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from coalition</div>
-            <div className="mt-2 text-amber-100/80 text-sm">
+        <div className="fixed inset-0 z-[3199] pointer-events-none select-none">
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Выбор сброса</div>
+            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre text-center">
               {G.pending?.kind === 'action_9_discard_persona'
-                ? 'Choose 1 PERSONA from your coalition to discard.'
-                : 'Choose 1 card from your coalition to discard.'}
-            </div>
-            <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.coalition || []).filter((c) => (G.pending?.kind === 'action_9_discard_persona' ? c.type === 'persona' : true) && !c.shielded && !isImmovablePersona(c)).map((c) => (
-                <Card
-                  key={c.id}
-                  card={c}
-                  onClick={() => moves.discardFromCoalition(c.id)}
-                  disabled={false}
-                  showCheck={isPolishedCard(c)}
-                />
-              ))}
+                ? 'Кликни по ПЕРСОНЕ в своей коалиции, чтобы сбросить её.'
+                : 'Кликни по карте в своей коалиции, чтобы сбросить её.'}
             </div>
           </div>
         </div>
@@ -3730,6 +3719,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 const z = hoverMyCoalition == null ? i : (1000 - dist);
 
                 const pendingEvent16 = pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(pending?.playerId) === String(playerID);
+                const pendingA4A9Discard = (pending?.kind === 'action_4_discard' || pending?.kind === 'action_9_discard_persona') && String(pending?.targetId) === String(playerID);
                 const pendingP21Here = pendingP21;
                 const pendingP26Here = pendingP26;
                 const pendingP28Here = pendingP28;
@@ -3751,7 +3741,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-visible border-2 shadow-2xl transition-colors " +
                       (canUseP11
                         ? "border-emerald-300/80 ring-4 ring-emerald-400/25 shadow-[0_0_50px_rgba(16,185,129,0.35)] cursor-pointer"
-                        : (placementMode || pendingTokens || pendingEvent16 || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
+                        : (placementMode || pendingTokens || pendingEvent16 || pendingA4A9Discard || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
                           ? (canUseP39Here
                             ? "border-emerald-300/80 hover:border-emerald-200 cursor-pointer ring-4 ring-emerald-400/25 shadow-[0_0_45px_rgba(16,185,129,0.28)]"
                             : (pendingP14Here ? "border-emerald-400/60 hover:border-emerald-300 cursor-pointer" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer"))
@@ -3771,6 +3761,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       }
                       if (pendingEvent16) {
                         try { moves.discardPersonaFromOwnCoalitionForEvent16(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingA4A9Discard) {
+                        if (pending?.kind === 'action_9_discard_persona' && c.type !== 'persona') return;
+                        if (c.shielded || isImmovablePersona(c)) return;
+                        try { moves.discardFromCoalition(c.id); } catch {}
                         return;
                       }
                       if (pendingP21Here) {
