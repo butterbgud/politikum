@@ -690,7 +690,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       return;
     }
 
-    // Public player profile (MVP): rating + games + wins.
+    // Public player profile JSON (MVP): rating + games + wins.
     {
       const m = String(ctx.path || '').match(/^\/public\/profile\/([^\/]+)$/);
       if (m && ctx.method === 'GET') {
@@ -698,6 +698,83 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         const res = getPublicProfile({ playerId: pid });
         if (!res?.ok) ctx.throw(400, res?.error || 'bad_args');
         ctx.body = res;
+        return;
+      }
+    }
+
+    // Public profile page (pretty HTML): safe to open in a browser.
+    {
+      const m = String(ctx.path || '').match(/^\/profile\/([^\/]+)$/);
+      if (m && ctx.method === 'GET') {
+        const pid = decodeURIComponent(m[1] || '');
+        const res = getPublicProfile({ playerId: pid });
+        if (!res?.ok) ctx.throw(400, res?.error || 'bad_args');
+
+        const name = String(res.name || res.username || res.playerId || '').trim();
+        const rating = Math.round(Number(res.rating || 0));
+        const games = Number(res.games || 0);
+        const wins = Number(res.wins || 0);
+        const winRate = games ? Math.round((wins / Math.max(1, games)) * 100) : 0;
+
+        // pick a pseudo-random persona art based on playerId (stable per player)
+        const hash = (() => {
+          const s = String(res.playerId || '');
+          let h = 2166136261;
+          for (let i = 0; i < s.length; i++) {
+            h ^= s.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+          }
+          return (h >>> 0);
+        })();
+        const personaN = 1 + (hash % 45);
+        const img = `/cards/persona_${personaN}.webp`;
+
+        ctx.type = 'text/html; charset=utf-8';
+        ctx.body = `<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${name || 'Profile'} · Politikum</title>
+  <style>
+    :root { --bg:#0b0f17; --card:#101826; --muted:rgba(255,255,255,.6); --gold:#f5d17a; }
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 600px at 20% 0%, rgba(245,209,122,.12), transparent 55%), var(--bg); color:#fff; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;}
+    .wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+    .panel{width:min(960px, 96vw); background:rgba(16,24,38,.82); border:1px solid rgba(245,209,122,.18); border-radius:20px; overflow:hidden; box-shadow:0 30px 120px rgba(0,0,0,.55);}
+    .hero{display:grid; grid-template-columns: 280px 1fr; gap:18px; padding:18px; background:linear-gradient(180deg, rgba(255,255,255,.04), transparent);}
+    .art{border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:#000; aspect-ratio: 2/3; width:100%; max-width:280px;}
+    .art img{width:100%; height:100%; object-fit:cover; display:block;}
+    .title{display:flex; flex-direction:column; gap:8px; padding-top:6px;}
+    .name{font-weight:900; font-size:22px; letter-spacing:.02em}
+    .sub{color:var(--muted); font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .stats{display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-top:10px;}
+    .stat{background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px;}
+    .k{color:var(--muted); font-size:10px; letter-spacing:.22em; text-transform:uppercase; font-weight:900;}
+    .v{margin-top:6px; font-size:18px; font-weight:900; color:var(--gold)}
+    .v small{font-size:12px; color:rgba(255,255,255,.75); font-weight:800}
+    @media (max-width: 760px){ .hero{grid-template-columns: 160px 1fr;} .stats{grid-template-columns: repeat(2,1fr);} .name{font-size:18px;} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="hero">
+        <div class="art"><img src="${img}" alt="persona_${personaN}" /></div>
+        <div class="title">
+          <div class="name">${name || '—'}</div>
+          <div class="sub">playerId: ${String(res.playerId || '')}</div>
+          <div class="stats">
+            <div class="stat"><div class="k">rating</div><div class="v">${rating}</div></div>
+            <div class="stat"><div class="k">games</div><div class="v">${games}</div></div>
+            <div class="stat"><div class="k">wins</div><div class="v">${wins}</div></div>
+            <div class="stat"><div class="k">win rate</div><div class="v">${winRate}<small>%</small></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
         return;
       }
     }
