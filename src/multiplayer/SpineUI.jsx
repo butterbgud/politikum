@@ -3329,9 +3329,27 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               Детали
             </button>
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black text-center">КОНЕЦ ИГРЫ</div>
-            <div className="mt-2 text-amber-100 font-serif text-2xl font-bold text-center">
-              Самый оппозиционер и отец русской демократии: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
-            </div>
+            {(() => {
+              const active = (G.players || [])
+                .filter((p) => !!p?.active)
+                .filter((p) => {
+                  const n = String(p?.name || '').trim();
+                  if (!n) return false;
+                  if (n.startsWith('[H] Seat')) return false;
+                  return true;
+                });
+              const scoreNow = (p) => (p?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
+              const scores = active.map((p) => ({ id: String(p.id), name: String(p.name || p.id), score: scoreNow(p) }));
+              const best = Math.max(...scores.map((x) => x.score), -Infinity);
+              const winners = scores.filter((x) => x.score === best);
+              const label = (winners.length >= 2) ? 'Ничья' : 'Победитель';
+              const names = winners.map((x) => x.name).join(' · ');
+              return (
+                <div className="mt-2 text-amber-100 font-serif text-2xl font-bold text-center">
+                  {label}: {names}
+                </div>
+              );
+            })()}
             {Array.isArray(G.history) && G.history.length >= 2 && (() => {
               const hist = G.history;
               // Use the same ordering for legend + chart: sort by final score DESC.
