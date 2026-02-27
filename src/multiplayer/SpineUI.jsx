@@ -1709,6 +1709,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
   const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
+  useEffect(() => {
+    if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending?.kind]);
   const [hoverOppCoalition, setHoverOppCoalition] = useState({}); // { [playerId]: idx }
 
   const hand = me?.hand || [];
@@ -3506,13 +3510,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               style={{ width }}
               onMouseMove={(e) => {
                 if (!coal.length) return;
+                if (pendingP28) return; // disable hover-zoom during persona_28 targeting (hitboxes must be stable)
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 // smoother: use card center thresholds instead of rounding
                 const idx = Math.max(0, Math.min(coal.length - 1, Math.floor((x + step / 2) / step)));
                 setHoverMyCoalition(idx);
               }}
-              onMouseLeave={() => setHoverMyCoalition(null)}
+              onMouseLeave={() => { if (!pendingP28) setHoverMyCoalition(null); }}
             >
               {coal.map((c, i) => {
                 const t = n <= 1 ? 0.5 : i / (n - 1);
@@ -3534,7 +3539,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                 const isP11 = String(c.id).split('#')[0] === 'persona_11';
                 const canUseP11 = pendingP11Offer && isP11;
-                const finalScale = (hoverMyCoalition == null ? 1 : scaleByDist3(dist)) * (canUseP11 ? 1.2 : 1);
+                const finalScale = pendingP28Here ? 1 : ((hoverMyCoalition == null ? 1 : scaleByDist3(dist)) * (canUseP11 ? 1.2 : 1));
 
                 return (
                   <button
