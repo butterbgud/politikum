@@ -958,7 +958,16 @@ function AdminPage() {
 
         {!!matchLogJson && (
           <div className="mb-4">
-            <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black mb-1">Match log JSON</div>
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-black">Match log JSON</div>
+              <button
+                type="button"
+                className="text-[10px] font-mono font-black text-amber-200/70 hover:text-amber-50 underline underline-offset-4"
+                onClick={() => setMatchLogJson('')}
+              >
+                Hide
+              </button>
+            </div>
             <textarea
               readOnly
               value={matchLogJson}
