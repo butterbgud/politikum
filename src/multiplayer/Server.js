@@ -6,7 +6,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1 } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -715,6 +715,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         const games = Number(res.games || 0);
         const wins = Number(res.wins || 0);
         const winRate = games ? Math.round((wins / Math.max(1, games)) * 100) : 0;
+        const bioText = String(res.bioText || '').trim();
 
         // pick a pseudo-random persona art based on playerId (stable per player)
         const hash = (() => {
@@ -751,6 +752,14 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     .sub{color:var(--muted); font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
     .stats{display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-top:10px;}
     .stat{background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px;}
+    .bio{margin-top:12px; padding:12px; border-radius:14px; background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.08);}
+    .bio .k{display:block}
+    .bio .text{margin-top:8px; color:rgba(255,255,255,.85); font-size:13px; line-height:1.35; white-space:pre-wrap;}
+    .bio textarea{width:100%; min-height:96px; resize:vertical; background:rgba(0,0,0,.25); color:#fff; border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:10px; outline:none; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .bio .row{display:flex; gap:10px; align-items:center; justify-content:space-between;}
+    .bio .btn{border:1px solid rgba(245,209,122,.20); background:rgba(0,0,0,.25); color:rgba(255,255,255,.88); padding:10px 12px; border-radius:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; font-size:10px; cursor:pointer;}
+    .bio .btn:disabled{opacity:.45; cursor:default;}
+    .bio .msg{color:rgba(255,255,255,.70); font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
     .k{color:var(--muted); font-size:10px; letter-spacing:.22em; text-transform:uppercase; font-weight:900;}
     .v{margin-top:6px; font-size:18px; font-weight:900; color:var(--gold)}
     .v small{font-size:12px; color:rgba(255,255,255,.75); font-weight:800}
@@ -771,6 +780,70 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
             <div class="stat"><div class="k">wins</div><div class="v">${wins}</div></div>
             <div class="stat"><div class="k">win rate</div><div class="v">${winRate}<small>%</small></div></div>
           </div>
+
+          <div class="bio" id="bioBox">
+            <div class="row">
+              <div class="k">about</div>
+              <div class="msg" id="bioMsg"></div>
+            </div>
+            <div class="text" id="bioText">${bioText ? bioText.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}</div>
+            <div id="bioEditor" style="display:none; margin-top:10px;">
+              <textarea id="bioInput" maxlength="800" placeholder="Напиши пару строк о себе…"></textarea>
+              <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn" id="bioSave">Save</button>
+                <button class="btn" id="bioCancel" type="button">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            (function(){
+              const PROFILE_PID = ${JSON.stringify(String(res.playerId || ''))};
+              const bioTextEl = document.getElementById('bioText');
+              const bioEditor = document.getElementById('bioEditor');
+              const bioInput = document.getElementById('bioInput');
+              const bioMsg = document.getElementById('bioMsg');
+              const btnSave = document.getElementById('bioSave');
+              const btnCancel = document.getElementById('bioCancel');
+
+              function setMsg(t){ bioMsg.textContent = t || ''; }
+              function showEditor(v){ bioEditor.style.display = v ? '' : 'none'; }
+
+              // If user is logged-in and this is their own profile, enable edit.
+              try {
+                const tok = String(localStorage.getItem('politikum.authToken') || '');
+                if (!tok) return;
+
+                fetch('/auth/me', { headers: { 'Authorization': 'Bearer ' + tok } })
+                  .then(r => r.ok ? r.json() : null)
+                  .then(j => {
+                    const mePid = String(j?.session?.playerId || '');
+                    if (!mePid || mePid !== PROFILE_PID) return;
+
+                    // switch to editor mode
+                    showEditor(true);
+                    bioInput.value = (bioTextEl.textContent || '').trim();
+                    bioTextEl.style.display = 'none';
+                    setMsg('you can edit');
+
+                    btnCancel.addEventListener('click', () => { window.location.reload(); });
+                    btnSave.addEventListener('click', () => {
+                      btnSave.disabled = true;
+                      setMsg('saving…');
+                      fetch('/auth/profile/bio', {
+                        method: 'POST',
+                        headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + tok },
+                        body: JSON.stringify({ bioText: bioInput.value || '' })
+                      })
+                        .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+                        .then(() => { setMsg('saved'); setTimeout(() => window.location.reload(), 350); })
+                        .catch(e => { btnSave.disabled = false; setMsg(e.message || String(e)); });
+                    });
+                  })
+                  .catch(()=>{});
+              } catch {}
+            })();
+          </script>
         </div>
       </div>
     </div>
@@ -920,6 +993,15 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const sess = authGetSession(token);
       if (!sess) ctx.throw(401, 'Unauthorized');
       ctx.body = { ok: true, session: sess };
+      return;
+    }
+
+    // Update your public profile bio (requires auth).
+    if (ctx.path === '/auth/profile/bio' && ctx.method === 'POST') {
+      const sess = requireAuth(ctx);
+      const body = ctx.request.body || {};
+      const bioText = body.bioText == null ? '' : String(body.bioText);
+      ctx.body = setUserBio({ playerId: sess.playerId, bioText });
       return;
     }
 

@@ -49,6 +49,7 @@ function openDatabase() {
       username TEXT PRIMARY KEY,
       player_id TEXT UNIQUE NOT NULL,
       token_hash TEXT NOT NULL,
+      bio_text TEXT,
       created_at INTEGER NOT NULL
     );
 
@@ -202,6 +203,13 @@ function openDatabase() {
     }
   } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_username ON sessions(username)').run(); } catch {}
+
+  // users.bio_text
+  try {
+    if (!hasColumn('users', 'bio_text')) {
+      db.prepare('ALTER TABLE users ADD COLUMN bio_text TEXT').run();
+    }
+  } catch {}
 
   return db;
 }
@@ -742,7 +750,7 @@ export function getPublicProfile({ playerId }) {
   if (!pid) return { ok:false, error:'bad_args' };
   const db = sqlite;
 
-  const ratingRow = db.prepare('SELECT rating, games_played AS games, wins FROM ratings WHERE player_id=?').get(pid);
+  const ratingRow = db.prepare('SELECT rating FROM ratings WHERE player_id=?').get(pid);
   const rating = ratingRow ? Number(ratingRow.rating || 1000) : 1000;
 
   // authoritative counts from finished games table
@@ -766,18 +774,29 @@ export function getPublicProfile({ playerId }) {
     LIMIT 1;
   `).get(pid);
 
-  const usernameRow = db.prepare('SELECT username FROM users WHERE player_id = ?').get(pid);
+  const userRow = db.prepare('SELECT username, bio_text AS bioText FROM users WHERE player_id = ?').get(pid);
 
   return {
     ok: true,
     playerId: pid,
-    username: usernameRow?.username || null,
+    username: userRow?.username || null,
     name: nameRow?.name || null,
     rating,
     games,
     wins,
     winRate: games ? (wins / games) : 0,
+    bioText: userRow?.bioText || null,
   };
+}
+
+export function setUserBio({ playerId, bioText }) {
+  const pid = String(playerId || '').trim();
+  if (!pid) return { ok:false, error:'bad_args' };
+  const bio = String(bioText || '');
+  const clean = bio.replace(/\r/g, '').trim().slice(0, 800);
+  const db = sqlite;
+  db.prepare('UPDATE users SET bio_text = ? WHERE player_id = ?').run(clean || null, pid);
+  return { ok:true, bioText: clean || '' };
 }
 
 export function getGameByMatchId(matchId) {
