@@ -1409,7 +1409,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     >
       {showProfile && (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
-          <div className="w-[min(720px,95vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+          <div className="w-[min(520px,92vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-amber-100 font-black text-sm">Профиль</div>
@@ -4347,7 +4347,7 @@ function PolitikumWelcome({ onJoin }) {
 
       {showProfile && (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
-          <div className="w-[min(720px,95vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+          <div className="w-[min(520px,92vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-amber-100 font-black text-sm">Профиль</div>
