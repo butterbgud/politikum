@@ -1835,6 +1835,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         return;
       }
       if (key === 'escape') {
+        setShowWhereAmI(false);
         setPickTargetForAction4(null);
         setPickTargetForAction9(null);
         setPlacementMode(null);
@@ -4136,12 +4137,49 @@ function PolitikumWelcome({ onJoin }) {
     joinMatch(mid).catch(() => {});
   }, []);
 
+  const [showWhereAmI, setShowWhereAmI] = useState(false);
+
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
     <div
       className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row"
       style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}
     >
+      {showWhereAmI && (
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
+          <div className="w-[min(1100px,95vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Что я? Где я?</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">Как залогиниться и поменять имя</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWhereAmI(false)}
+                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+              >
+                Закрыть (Esc)
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <img
+                src="/assets/ui/tutorial.webp"
+                alt="Tutorial"
+                className="w-full rounded-xl border border-amber-900/20 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+                draggable={false}
+              />
+            </div>
+
+            <div className="mt-4 text-amber-100/90 font-mono text-[12px]">
+              <div>• Введи имя в поле <b>Username</b>.</div>
+              <div>• Введи твой токен/пароль в <b>Token</b> и нажми <b>Login</b>.</div>
+              <div>• Хочешь другое имя — просто поменяй Username и залогинься снова.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top-right links */}
       <div className="fixed top-3 right-3 z-[2000] select-none flex items-center gap-2">
         <a
@@ -4157,7 +4195,16 @@ function PolitikumWelcome({ onJoin }) {
 
       {/* Top bar: alias + beta login */}
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
-        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-row gap-3 items-center justify-end">
+        <div className="pointer-events-auto max-w-3xl mx-auto flex flex-row gap-3 items-center justify-between">
+          <button
+            type="button"
+            className="px-3 py-2 rounded-xl bg-black/60 hover:bg-black/70 border border-amber-900/30 text-amber-100 font-black text-[10px] uppercase tracking-widest"
+            onClick={() => setShowWhereAmI(true)}
+            title="Что я? Где я?"
+          >
+            Что я? Где я?
+          </button>
+
           <div className="flex min-w-0 flex items-center gap-2 justify-end">
             {authToken ? (
               <>
