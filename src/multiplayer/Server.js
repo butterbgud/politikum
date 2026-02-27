@@ -769,8 +769,11 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     .title{display:flex; flex-direction:column; gap:8px; padding-top:6px;}
     .name{font-weight:900; font-size:22px; letter-spacing:.02em}
     .sub{color:var(--muted); font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .stats{display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-top:10px;}
-    .stat{background:transparent; border:none; border-radius:0; padding:0;}
+    .stats{display:none;}
+    .stat{display:none;}
+    .artWrap{position:relative;}
+    .artTop{position:absolute; left:10px; right:10px; top:10px; z-index:2; display:flex; justify-content:center;}
+    .pill{background:rgba(0,0,0,.55); border:1px solid rgba(245,209,122,.18); border-radius:999px; padding:6px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight:900; font-size:12px; color:rgba(255,255,255,.88); letter-spacing:.06em; box-shadow:0 10px 40px rgba(0,0,0,.35);}
     .bio{margin-top:12px; padding:12px; border-radius:14px; background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.08);}
     .bio .k{display:block}
     .bio .text{margin-top:8px; color:rgba(255,255,255,.85); font-size:13px; line-height:1.35; white-space:pre-wrap;}
@@ -789,7 +792,10 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
   <div class="wrap">
     <div class="panel">
       <div class="hero">
-        <div class="art"><img src="${img}" onerror="this.onerror=null;this.src='${fallbackImg}'" alt="persona_${personaN}" /></div>
+        <div class="art artWrap">
+          <div class="artTop"><div class="pill">R:${rating} G:${games} W:${wins} W/R:${winRate}%</div></div>
+          <img src="${img}" onerror="this.onerror=null;this.src='${fallbackImg}'" alt="persona_${personaN}" />
+        </div>
         <div class="title">
           <div class="name">${name || '—'}</div>
           <div class="sub">playerId: ${String(res.playerId || '')}</div>
