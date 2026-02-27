@@ -3045,9 +3045,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 }
               }}
               className="px-4 py-2 rounded-full bg-black/60 border border-amber-900/30 text-amber-100/90 font-mono font-black text-[12px] hover:bg-black/70"
-              title={String(matchID || '').startsWith('t_') ? 'Back to tournament' : 'Back to lobby'}
+              title={String(matchID || '').startsWith('t_') ? 'Назад в турнир' : 'Назад в лобби'}
             >
-              {String(matchID || '').startsWith('t_') ? 'Back to tournament' : 'Back to lobby'}
+              {String(matchID || '').startsWith('t_') ? 'Назад в турнир' : 'Назад в лобби'}
             </button>
           </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
@@ -3092,7 +3092,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest z-[2000] whitespace-nowrap justify-center" style={{ color }}>
                       <span>{p?.name || pid}</span>
                       <span className="opacity-50">•</span>
-                      <span>{scoreNow(pid)}vp</span>
+                      <span>{scoreNow(pid)} очк</span>
                     </div>
                     <div
                       className="relative h-44 pointer-events-auto"
@@ -3220,7 +3220,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   })
                   .map((p) => {
                     const pts = (p.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
-                    return `${p.name}: ${pts} vp (coalition ${(p.coalition || []).length})`;
+                    return `${p.name}: ${pts} очк (коалиция ${(p.coalition || []).length})`;
                   }).join('\n')}
               </div>
             )}
