@@ -1493,6 +1493,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     );
   };
   const [goDetails, setGoDetails] = useState(() => ({})); // pid -> bool
+  const [goHitboxDebug, setGoHitboxDebug] = useState('');
 
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
@@ -3036,7 +3037,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Game over overlay */}
       {G.gameOver && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto">
+        <div
+          className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-auto"
+          onMouseMove={(e) => {
+            try {
+              const el = document.elementFromPoint(e.clientX, e.clientY);
+              const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
+              setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
+            } catch {}
+          }}
+        >
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[3100] pointer-events-auto">
             <button
               type="button"
@@ -3067,6 +3077,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             </button>
           </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
+            {!!goHitboxDebug && (
+              <div className="absolute bottom-3 left-3 z-[999999] px-2 py-1 rounded bg-black/70 border border-red-500/40 text-red-200/80 text-[10px] font-mono pointer-events-none">
+                hit: {goHitboxDebug}
+              </div>
+            )}
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black text-center">КОНЕЦ ИГРЫ</div>
             <div className="mt-2 text-amber-100 font-serif text-2xl font-bold text-center">
               Самый оппозиционер и отец русской демократии: {(G.players || []).find((p) => String(p.id) === String(G.winnerId))?.name || G.winnerId}
