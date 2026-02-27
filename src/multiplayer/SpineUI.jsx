@@ -3108,7 +3108,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       <span>{scoreNow(pid)} очк</span>
                     </div>
                     <div
-                      className="relative h-44 pointer-events-auto"
+                      className="relative h-44 pointer-events-none select-none"
                       style={{ width: Math.max(width, 260) }}
                       // no hover-zoom on win screen
                     >
@@ -3139,10 +3139,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       })}
                     </div>
 
-                    <div className="w-full pointer-events-auto">
+                    <div className="w-full pointer-events-auto relative z-[9999]">
                       <button
                         type="button"
-                        className="w-full h-11 text-center text-[12px] font-mono font-black text-amber-200/80 hover:text-amber-100 underline underline-offset-4 z-[9000] py-2 bg-black/20 hover:bg-black/35 rounded-xl border border-amber-900/20"
+                        className="w-full h-11 text-center text-[12px] font-mono font-black text-amber-200/80 hover:text-amber-100 underline underline-offset-4 py-2 bg-black/20 hover:bg-black/35 rounded-xl border border-amber-900/20"
                         onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
                       >
                         Детали
