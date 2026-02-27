@@ -3444,12 +3444,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     <div className="w-full pointer-events-auto relative isolate">
                       <button
                         type="button"
-                        className={
-                          "relative z-[999999] pointer-events-auto cursor-pointer w-full h-11 text-center text-[12px] font-mono font-black underline underline-offset-4 py-2 rounded-xl border-2 transition-colors " +
-                          (goDetails?.[pid]
-                            ? "text-amber-50 bg-black/55 border-amber-300/60"
-                            : "text-amber-200/80 hover:text-amber-100 bg-black/20 hover:bg-black/35 border-red-500")
-                        }
+                        className="relative z-[999999] pointer-events-auto cursor-pointer w-full h-11 text-center text-[12px] font-mono font-black text-amber-200/80 hover:text-amber-100 underline underline-offset-4 py-2 bg-black/20 hover:bg-black/35 rounded-xl border-2 border-red-500"
                         onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
                       >
                         Детали
@@ -3458,28 +3453,22 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                     {/* Per-card VP breakdown (hidden by default) */}
                     {!!goDetails?.[pid] && (
-                      <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/35 backdrop-blur-sm pointer-events-auto">
-                        <div className="w-[min(720px,94vw)] max-h-[80vh] overflow-auto bg-black/75 border border-amber-900/30 rounded-2xl p-4 shadow-2xl">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Детали</div>
-                            <button type="button" className="px-3 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest" onClick={() => setGoDetails((m) => ({ ...m, [pid]: false }))}>Закрыть</button>
-                          </div>
-                          <div className="mt-3 space-y-1 text-[11px] font-mono text-amber-100/80">
-                            {coal.map((c) => {
-                              const base = Number(c.baseVp ?? 0);
-                              const tok = Number(c.vpDelta || 0);
-                              const pas = Number(c.passiveVpDelta || 0);
-                              const total = Number(c.vp ?? (base + tok + pas));
-                              return (
-                                <div key={c.id} className="flex items-baseline justify-between gap-3">
-                                  <span className="truncate">{String(c.name || c.id)}</span>
-                                  <span className="shrink-0 tabular-nums">
-                                    {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
+                      <div className="w-full max-w-[520px] px-1">
+                        <div className="mt-1 space-y-0.5 text-[10px] font-mono text-amber-100/70">
+                          {coal.map((c) => {
+                            const base = Number(c.baseVp ?? 0);
+                            const tok = Number(c.vpDelta || 0);
+                            const pas = Number(c.passiveVpDelta || 0);
+                            const total = Number(c.vp ?? (base + tok + pas));
+                            return (
+                              <div key={c.id} className="flex items-baseline justify-between gap-3">
+                                <span className="truncate">{String(c.name || c.id)}</span>
+                                <span className="shrink-0 tabular-nums">
+                                  {base}{tok ? ` ${tok > 0 ? '+' : ''}${tok}` : ''}{pas ? ` ${pas > 0 ? '+' : ''}${pas}` : ''} = {total}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
