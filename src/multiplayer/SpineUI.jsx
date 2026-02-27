@@ -4834,7 +4834,7 @@ export default function SpineUI() {
   return (
     <div className="relative">
       <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
-      <div className="fixed bottom-3 right-3 z-[100] pointer-events-auto">
+      <div className="fixed bottom-3 right-3 z-[9999] pointer-events-auto">
         <button
           type="button"
           onClick={() => { if (confirm('Forget this match and return to lobby?')) forgetMatch(); }}
