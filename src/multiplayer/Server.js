@@ -185,6 +185,14 @@ async function syncFinishedGames(db) {
             autoSynced: true,
           },
         });
+
+        // Auto-advance double elimination brackets: once the current round is fully finished,
+        // generate the next round immediately.
+        try {
+          const next = tournamentGenerateNextRound({ id: tid });
+          // ignore expected errors (round_not_finished, tournament_finished, etc)
+          void next;
+        } catch {}
       }
     } catch {}
 
