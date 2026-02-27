@@ -1,6 +1,7 @@
 import { Server, Origins, FlatFile } from 'boardgame.io/dist/cjs/server.js';
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
 
 const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
@@ -19,6 +20,9 @@ let lastAdminSyncAt = null;
 // Persist boardgame.io matches across restarts (required for tournament result sync).
 const FLATFILE_DIR = process.env.FLATFILE_DIR || path.join(process.cwd(), 'var', 'bgio');
 try { fs.mkdirSync(FLATFILE_DIR, { recursive: true }); } catch {}
+
+const PROFILE_IMG_DIR = process.env.PROFILE_IMG_DIR || path.join(process.cwd(), 'var', 'profile_images');
+try { fs.mkdirSync(PROFILE_IMG_DIR, { recursive: true }); } catch {}
 
 const server = Server({
   games: [CitadelGame],
@@ -702,6 +706,19 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       }
     }
 
+    // Public profile image (JPEG)
+    {
+      const m = String(ctx.path || '').match(/^\/public\/profile_image\/([^\/]+)\.jpg$/);
+      if (m && ctx.method === 'GET') {
+        const pid = decodeURIComponent(m[1] || '');
+        const imgPath = path.join(PROFILE_IMG_DIR, `${String(pid)}.jpg`);
+        if (!fs.existsSync(imgPath)) ctx.throw(404, 'not_found');
+        ctx.type = 'image/jpeg';
+        ctx.body = fs.createReadStream(imgPath);
+        return;
+      }
+    }
+
     // Public profile page (pretty HTML): safe to open in a browser.
     {
       const m = String(ctx.path || '').match(/^\/profile\/([^\/]+)$/);
@@ -728,7 +745,9 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
           return (h >>> 0);
         })();
         const personaN = 1 + (hash % 45);
-        const img = `/cards/persona_${personaN}.webp`;
+        const fallbackImg = `/cards/persona_${personaN}.webp`;
+        const userImg = `/public/profile_image/${encodeURIComponent(String(res.playerId || ''))}.jpg`;
+        const img = userImg;
 
         ctx.type = 'text/html; charset=utf-8';
         ctx.body = `<!doctype html>
@@ -751,7 +770,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     .name{font-weight:900; font-size:22px; letter-spacing:.02em}
     .sub{color:var(--muted); font-size:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
     .stats{display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-top:10px;}
-    .stat{background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px;}
+    .stat{background:transparent; border:none; border-radius:0; padding:0;}
     .bio{margin-top:12px; padding:12px; border-radius:14px; background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.08);}
     .bio .k{display:block}
     .bio .text{margin-top:8px; color:rgba(255,255,255,.85); font-size:13px; line-height:1.35; white-space:pre-wrap;}
@@ -770,7 +789,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
   <div class="wrap">
     <div class="panel">
       <div class="hero">
-        <div class="art"><img src="${img}" alt="persona_${personaN}" /></div>
+        <div class="art"><img src="${img}" onerror="this.onerror=null;this.src='${fallbackImg}'" alt="persona_${personaN}" /></div>
         <div class="title">
           <div class="name">${name || '—'}</div>
           <div class="sub">playerId: ${String(res.playerId || '')}</div>
@@ -1016,6 +1035,50 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       const body = ctx.request.body || {};
       const bioText = body.bioText == null ? '' : String(body.bioText);
       ctx.body = setUserBio({ playerId: sess.playerId, bioText });
+      return;
+    }
+
+    // Upload your public profile image (JPEG only; <=1MB; recompress to <=200KB)
+    if (ctx.path === '/auth/profile/image' && ctx.method === 'POST') {
+      const sess = requireAuth(ctx);
+      const body = ctx.request.body || {};
+      const b64 = String(body.jpegBase64 || '').trim();
+      if (!b64) ctx.throw(400, 'no_image');
+
+      // allow optional data URL prefix
+      const raw = b64.startsWith('data:') ? b64.split(',').slice(1).join(',') : b64;
+      let buf = null;
+      try { buf = Buffer.from(raw, 'base64'); } catch { ctx.throw(400, 'bad_base64'); }
+      if (!buf || !buf.length) ctx.throw(400, 'bad_image');
+      if (buf.length > 1_000_000) ctx.throw(413, 'too_large');
+
+      // Validate it's a JPEG.
+      const head = buf.slice(0, 3);
+      const isJpeg = head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+      if (!isJpeg) ctx.throw(415, 'jpeg_only');
+
+      // Recompress aggressively to <=200KB.
+      let out = null;
+      try {
+        // resize down if needed (keep reasonable avatar size)
+        let img = sharp(buf).rotate().resize({ width: 720, height: 720, fit: 'inside', withoutEnlargement: true });
+        for (const q of [82, 74, 66, 58, 50, 42]) {
+          const tmp = await img.jpeg({ quality: q, mozjpeg: true }).toBuffer();
+          out = tmp;
+          if (tmp.length <= 200_000) break;
+        }
+        if (out && out.length > 200_000) {
+          // last resort: smaller
+          const tmp = await sharp(out).resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 58, mozjpeg: true }).toBuffer();
+          out = tmp;
+        }
+      } catch {
+        ctx.throw(400, 'bad_image');
+      }
+
+      const outPath = path.join(PROFILE_IMG_DIR, `${String(sess.playerId)}.jpg`);
+      try { fs.writeFileSync(outPath, out); } catch { ctx.throw(500, 'write_failed'); }
+      ctx.body = { ok: true, bytes: out?.length || 0 };
       return;
     }
 
