@@ -773,7 +773,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     .stat{display:none;}
     .artWrap{position:relative;}
     .artTop{position:absolute; left:10px; right:10px; top:10px; z-index:2; display:flex; justify-content:center;}
-    .pill{background:rgba(0,0,0,.55); border:1px solid rgba(245,209,122,.18); border-radius:999px; padding:10px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight:900; font-size:24px; color:rgba(255,255,255,.88); letter-spacing:.06em; box-shadow:0 10px 40px rgba(0,0,0,.35);}
+    .pill{background:rgba(0,0,0,.55); border:1px solid rgba(245,209,122,.18); border-radius:999px; padding:8px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight:900; font-size:18px; color:rgba(255,255,255,.88); letter-spacing:.06em; box-shadow:0 10px 40px rgba(0,0,0,.35);}
     .bio{margin-top:12px; padding:12px; border-radius:14px; background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.08);}
     .bio .k{display:block}
     .bio .text{margin-top:8px; color:rgba(255,255,255,.85); font-size:13px; line-height:1.35; white-space:pre-wrap;}
