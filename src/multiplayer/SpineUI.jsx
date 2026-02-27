@@ -3128,7 +3128,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                     <button
                       type="button"
-                      className="mt-2 w-full text-center text-[11px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-4 pointer-events-auto"
+                      className="mt-2 w-full text-center text-[11px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-4 pointer-events-auto relative z-[5000] py-2 bg-black/0 hover:bg-black/20 rounded-lg"
                       onClick={() => setGoDetails((m) => ({ ...m, [pid]: !m?.[pid] }))}
                     >
                       Детали
