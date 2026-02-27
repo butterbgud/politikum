@@ -734,6 +734,17 @@ function AdminPage() {
   const [matchLogId, setMatchLogId] = useState('');
   const [matchLogJson, setMatchLogJson] = useState('');
 
+  const [gamesWindow, setGamesWindow] = useState('day'); // hour|day|week|all
+  const filteredGames = (games || []).filter((g) => {
+    const t = Number(g?.finishedAt || g?.createdAt || 0);
+    if (!t) return true;
+    const now = Date.now();
+    if (gamesWindow === 'hour') return (now - t) <= 3600_000;
+    if (gamesWindow === 'day') return (now - t) <= 24 * 3600_000;
+    if (gamesWindow === 'week') return (now - t) <= 7 * 24 * 3600_000;
+    return true;
+  });
+
   const saveToken = (value) => {
     setToken(value);
     try {
@@ -858,7 +869,7 @@ function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
+    <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.jpg')" }}>
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
@@ -1157,9 +1168,23 @@ function AdminPage() {
         <div className="mt-4">
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Last games</div>
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] font-mono text-amber-200/50">show:</div>
+              <select
+                value={gamesWindow}
+                onChange={(e) => setGamesWindow(e.target.value)}
+                className="px-2 py-1 rounded-lg bg-black/40 border border-amber-900/30 text-amber-50/80 font-mono text-[11px]"
+              >
+                <option value="hour">last hour</option>
+                <option value="day">today</option>
+                <option value="week">week</option>
+                <option value="all">all</option>
+              </select>
+            </div>
           </div>
-          <div className="overflow-x-auto -mx-2">
-            <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+          <div className="overflow-x-hidden">
+            <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
+              <table className="w-full text-left text-xs font-mono text-amber-100/90">
               <thead>
                 <tr className="border-b border-amber-900/40">
                   <th className="px-2 py-2 whitespace-nowrap">Finished</th>
@@ -1170,7 +1195,7 @@ function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {games.map((g) => (
+                {filteredGames.slice(0, 10).map((g) => (
                   <tr key={g.matchId} className="border-b border-amber-900/20">
                     <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(g.finishedAt || g.createdAt)}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">
@@ -1206,13 +1231,14 @@ function AdminPage() {
                 ))}
                 {games.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">
+                    <td colSpan="5" className="px-2 py-6 text-center text-amber-300/60 text-xs">
                       {summary ? 'No recorded games yet.' : 'Set token and refresh to load stats.'}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>
