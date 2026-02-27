@@ -793,6 +793,7 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     <div class="panel">
       <div class="hero">
         <div class="art artWrap">
+          <div class="artTop"><div class="pill">R:${rating} G:${games} W:${wins} W/R:${winRate}%</div></div>
           <img src="${img}" onerror="this.onerror=null;this.src='${fallbackImg}'" alt="persona_${personaN}" />
         </div>
         <div class="title">
