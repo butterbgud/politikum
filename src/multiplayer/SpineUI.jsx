@@ -4395,6 +4395,18 @@ export default function SpineUI() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
+  const forgetMatch = () => {
+    try {
+      window.localStorage.removeItem('politikum.lastMatchID');
+      window.localStorage.removeItem('politikum.lastPlayerID');
+      window.localStorage.removeItem('politikum.lastCredentials');
+    } catch {}
+    try { setMatchID(null); } catch {}
+    try { setPlayerID(null); } catch {}
+    try { setCredentials(null); } catch {}
+    try { window.location.hash = ''; } catch {}
+  };
+
   // Persist last joined match so refresh doesn't "lose" the game.
   useEffect(() => {
     try {
@@ -4406,6 +4418,22 @@ export default function SpineUI() {
       else window.localStorage.removeItem('politikum.lastCredentials');
     } catch {}
   }, [matchID, playerID, credentials]);
+
+  // Escape hatch: if match is gone or you get stuck, let the user clear local persistence.
+  useEffect(() => {
+    if (!matchID) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/games/politikum/${encodeURIComponent(String(matchID))}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      } catch {
+        if (!cancelled) forgetMatch();
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchID]);
 
 
   if (hash.startsWith('#/tournament/')) {
@@ -4435,5 +4463,19 @@ export default function SpineUI() {
     );
   }
 
-  return <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />;
+  return (
+    <div className="relative">
+      <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+      <div className="fixed bottom-3 left-3 z-[9999] pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => { if (confirm('Forget this match and return to lobby?')) forgetMatch(); }}
+          className="px-3 py-2 rounded-xl bg-black/55 border border-red-500/40 text-red-200/90 font-mono font-black text-[11px] hover:bg-black/70"
+          title="Clears localStorage politikum.lastMatch*"
+        >
+          Forget match
+        </button>
+      </div>
+    </div>
+  );
 }
