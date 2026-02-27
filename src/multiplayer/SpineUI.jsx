@@ -2995,7 +2995,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Action_4 / Action_9 discard prompt (target chooses) */}
-      {(G.pending?.kind === 'action_4_discard' || G.pending?.kind === 'action_9_discard_persona') && String(playerID) === String(G.pending.targetId) && (
+      {(G.pending?.kind === 'action_4_discard' || G.pending?.kind === 'action_9_discard_persona') && String(playerID) === String(G.pending.targetId) && !(responseActive && responseKind === 'cancel_action' && haveAction14 && responseTargetsMe) && (
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from coalition</div>
