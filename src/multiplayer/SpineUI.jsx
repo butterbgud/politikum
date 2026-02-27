@@ -3342,11 +3342,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               const scores = active.map((p) => ({ id: String(p.id), name: String(p.name || p.id), score: scoreNow(p) }));
               const best = Math.max(...scores.map((x) => x.score), -Infinity);
               const winners = scores.filter((x) => x.score === best);
-              const label = (winners.length >= 2) ? 'Ничья' : 'Победитель';
+              const isTie = winners.length >= 2;
+              const label = isTie ? 'Победила ДРУЖБА!' : 'Победитель';
               const names = winners.map((x) => x.name).join(' · ');
               return (
                 <div className="mt-2 text-amber-100 font-serif text-2xl font-bold text-center">
-                  {label}: {names}
+                  {label} {names}
                 </div>
               );
             })()}
