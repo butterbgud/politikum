@@ -752,6 +752,16 @@ function AdminPage() {
     } catch {}
   };
 
+  const copyAdminText = (txt) => {
+    const s = String(txt ?? '');
+    try {
+      const fn = navigator.clipboard?.writeText;
+      if (fn) { fn.call(navigator.clipboard, s); return true; }
+    } catch {}
+    try { window.prompt('Copy to clipboard:', s); return false; } catch {}
+    return false;
+  };
+
   useEffect(() => {
     if (!token) return;
     fetchAdmin();
@@ -1203,7 +1213,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className="ml-2 text-[10px] font-mono font-black text-amber-200/60 hover:text-amber-50 underline underline-offset-4"
-                        onClick={() => { try { navigator.clipboard?.writeText?.(String(g.matchId || '')); } catch {} }}
+                        onClick={() => { copyAdminText(String(g.matchId || '')); }}
                         title={g.matchId}
                       >
                         copy
