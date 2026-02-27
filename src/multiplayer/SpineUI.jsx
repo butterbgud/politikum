@@ -3323,11 +3323,22 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               setGoHitboxDebug(`${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
             } catch {}
           }}
-          onPointerDown={(e) => {
+          onPointerDownCapture={(e) => {
             try {
               const el = document.elementFromPoint(e.clientX, e.clientY);
               const cls = (el && (el.className || el.getAttribute?.('class'))) ? String(el.className || el.getAttribute('class') || '') : '';
-              setGoHitboxDebug(`DOWN ${(el?.tagName || 'null')} ${cls}`.slice(0, 200));
+              const id = el?.id ? `#${el.id}` : '';
+              const r = el?.getBoundingClientRect ? el.getBoundingClientRect() : null;
+              const rect = r ? ` rect(${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)})` : '';
+              setGoHitboxDebug(`DOWN @${Math.round(e.clientX)},${Math.round(e.clientY)} ${(el?.tagName || 'null')}${id} ${cls}${rect}`.slice(0, 260));
+              try {
+                const prev = window.__goHitEl;
+                if (prev && prev.style) prev.style.outline = '';
+                if (el && el.style) {
+                  el.style.outline = '3px solid rgba(255,0,0,0.85)';
+                  window.__goHitEl = el;
+                }
+              } catch {}
             } catch {}
           }}
         >
@@ -3362,7 +3373,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </div>
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-6 w-[1100px] max-w-[96vw]">
             {!!goHitboxDebug && (
-              <div className="absolute bottom-3 left-3 z-[999999] px-2 py-1 rounded bg-black/70 border border-red-500/40 text-red-200/80 text-[10px] font-mono pointer-events-none">
+              <div className="fixed bottom-4 left-4 z-[999999] max-w-[92vw] px-3 py-2 rounded-xl bg-black/80 border-2 border-red-500/70 text-red-100 text-[12px] font-mono pointer-events-none shadow-2xl">
                 hit: {goHitboxDebug}
               </div>
             )}
