@@ -3111,7 +3111,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       }}
                     >
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
-                        <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] object-cover opacity-80 -z-10" style={{ transform: 'translateY(-30px) rotate(-2deg)' }} draggable={false} />
+                        <img
+                          src={'/cards/action_13.webp'}
+                          alt={'action_13'}
+                          className="absolute z-30 pointer-events-none select-none opacity-95"
+                          style={{
+                            width: '50%',
+                            aspectRatio: '2 / 3',
+                            right: '-20%',
+                            top: '-12%',
+                            transform: 'rotate(-30deg)',
+                          }}
+                          draggable={false}
+                        />
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
@@ -4263,7 +4275,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     }}
                   >
                     {String(c?.shieldedBy || '') === 'action_13' && (
-                      <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] object-cover opacity-80 -z-10" style={{ transform: 'translateY(-30px) rotate(-2deg)' }} draggable={false} />
+                      <img
+                        src={'/cards/action_13.webp'}
+                        alt={'action_13'}
+                        className="absolute z-30 pointer-events-none select-none opacity-95"
+                        style={{
+                          width: '50%',
+                          aspectRatio: '2 / 3',
+                          right: '-20%',
+                          top: '-12%',
+                          transform: 'rotate(-30deg)',
+                        }}
+                        draggable={false}
+                      />
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
