@@ -3512,22 +3512,44 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 </button>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2">
-                {remaining.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className="relative rounded-xl overflow-hidden border border-amber-900/25 hover:border-amber-300/40 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)]"
-                    onClick={() => { try { moves.persona34GuessTopdeck(id); } catch {} }}
-                    title={id}
-                  >
-                    <img src={`/cards/${id}.webp`} alt={id} className="w-full h-auto block" draggable={false} />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/55 text-[10px] font-mono text-amber-100/90 px-1 py-0.5">
-                      {id.replace('persona_', 'p')}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const chunk = (arr, n) => {
+                  const out = [];
+                  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+                  return out;
+                };
+                const fans = chunk(remaining, 10);
+                return (
+                  <div className="mt-3 flex flex-col gap-6">
+                    {fans.map((row, ri) => {
+                      const CARD_W = 96; // px (tailwind w-24)
+                      const STEP = 46; // overlap step
+                      const width = Math.max(CARD_W, (row.length - 1) * STEP + CARD_W);
+                      return (
+                        <div key={ri} className="overflow-x-auto custom-scrollbar">
+                          <div className="relative h-[148px]" style={{ width }}>
+                            {row.map((id, i) => (
+                              <button
+                                key={id}
+                                type="button"
+                                className="absolute top-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/25 hover:border-amber-300/40 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:scale-[1.02] transition-transform"
+                                style={{ left: i * STEP, zIndex: i + 1 }}
+                                onClick={() => { try { moves.persona34GuessTopdeck(id); } catch {} }}
+                                title={id}
+                              >
+                                <img src={`/cards/${id}.webp`} alt={id} className="w-full h-full object-cover block" draggable={false} />
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/55 text-[10px] font-mono text-amber-100/90 px-1 py-0.5">
+                                  {id.replace('persona_', 'p')}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               <div className="mt-3 text-amber-200/60 text-[10px] font-mono text-center">
                 (исключены: сыгранные/в сбросе + те, что у тебя в руке)
