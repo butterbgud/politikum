@@ -2117,7 +2117,21 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                             );
                           })()}
                         </div>
-                        <div className="text-[10px] font-mono text-amber-200/50">id:{p.id}</div>
+                        {(() => {
+                          const pid = String(p?.identity?.playerId || '').trim();
+                          const r = pid ? ratingsMap?.[pid] : null;
+                          if (!pid) return null;
+                          return (
+                            <button
+                              type="button"
+                              className="text-[10px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-2"
+                              title="Открыть профиль"
+                              onClick={() => openProfileById(pid, String(p?.name || ''))}
+                            >
+                              {r == null ? '—' : `${r}`}
+                            </button>
+                          );
+                        })()}
                         {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
                       </div>
 
