@@ -368,8 +368,10 @@ export function authRegisterOrLogin({ username, token, deviceId }) {
     .prepare('SELECT username, player_id AS playerId, token_hash AS tokenHash FROM users WHERE username = ?')
     .get(uname);
 
+  const canonicalPlayerId = uname;
+
   if (!row) {
-    const playerId = randToken();
+    const playerId = canonicalPlayerId;
     const tokenHash = hashUserToken(tok);
     db.prepare('INSERT INTO users (username, player_id, token_hash, created_at) VALUES (?, ?, ?, ?)').run(
       uname,
@@ -384,6 +386,18 @@ export function authRegisterOrLogin({ username, token, deviceId }) {
     const err = new Error('invalid_token');
     err.status = 401;
     throw err;
+  }
+
+  // Canonicalize player_id to username for short profile URLs.
+  // If user was created earlier with a random player_id, migrate once by merging history.
+  if (String(row.playerId || '') !== String(canonicalPlayerId)) {
+    try {
+      adminMergePlayerIds({ fromPlayerId: row.playerId, intoPlayerId: canonicalPlayerId });
+      db.prepare('UPDATE users SET player_id = ? WHERE username = ?').run(canonicalPlayerId, uname);
+      row.playerId = canonicalPlayerId;
+    } catch (e) {
+      // If merge fails (e.g. conflicting existing ids), still allow login with current id.
+    }
   }
 
   return authCreateSessionForPlayer({ playerId: row.playerId, username: uname, deviceId });
