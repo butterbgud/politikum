@@ -720,6 +720,171 @@ function AdminTournamentPage() {
   );
 }
 
+function AdminMobileGamesPage() {
+  const [token, setToken] = useState(() => {
+    try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [games, setGames] = useState([]);
+  const [gamesWindow, setGamesWindow] = useState('day');
+
+  const [matchLogId, setMatchLogId] = useState('');
+  const [matchLogJson, setMatchLogJson] = useState('');
+
+  const saveToken = (value) => {
+    setToken(value);
+    try { window.localStorage.setItem('politikum.adminToken', value); } catch {}
+  };
+
+  const formatTime = (ms) => {
+    if (!ms) return '—';
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
+
+  const formatDuration = (ms) => {
+    if (!ms || ms <= 0) return '—';
+    const minutes = Math.round(ms / 60000);
+    if (minutes < 1) return '<1 min';
+    return `${minutes} min`;
+  };
+
+  const filteredGames = (games || []).filter((g) => {
+    const t = Number(g?.finishedAt || g?.createdAt || 0);
+    if (!t) return true;
+    const now = Date.now();
+    if (gamesWindow === 'hour') return (now - t) <= 3600_000;
+    if (gamesWindow === 'day') return (now - t) <= 24 * 3600_000;
+    if (gamesWindow === 'week') return (now - t) <= 7 * 24 * 3600_000;
+    return true;
+  });
+
+  const fetchGames = async () => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/games?limit=60&offset=0`, { headers: { 'X-Admin-Token': token } });
+      if (!res.ok) throw new Error(`games: HTTP ${res.status}`);
+      const json = await res.json();
+      setGames(json.items || []);
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyText = (txt) => {
+    const s = String(txt ?? '');
+    try {
+      const fn = navigator.clipboard?.writeText;
+      if (fn) { fn.call(navigator.clipboard, s); return; }
+    } catch {}
+    try { window.prompt('Copy to clipboard:', s); } catch {}
+  };
+
+  const fetchMatchLog = async () => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    const mid = String(matchLogId || '').trim();
+    if (!mid) { setError('Set Match ID.'); return; }
+    setLoading(true);
+    setError('');
+    setMatchLogJson('');
+    try {
+      const res = await fetch(`${SERVER}/admin/match/${encodeURIComponent(mid)}/log?limit=200`, { headers: { 'X-Admin-Token': token } });
+      if (!res.ok) throw new Error(`match log: HTTP ${res.status}`);
+      const json = await res.json();
+      setMatchLogJson(JSON.stringify(json, null, 2));
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchGames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  return (
+    <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-start justify-center p-3 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
+      <div className="w-full max-w-xl bg-slate-950/85 border border-amber-900/40 rounded-3xl p-4 shadow-2xl">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em] text-xs">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1 text-sm">Admin (mobile) · Games</div>
+          </div>
+          <button type="button" className="px-3 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-[11px]" onClick={() => { window.location.hash = '#/admin'; }}>
+            Full admin
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-2">
+          <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black">X-Admin-Token</label>
+          <input type="password" value={token} onChange={(e) => saveToken(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={fetchGames} disabled={loading} className="flex-1 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
+            <select value={gamesWindow} onChange={(e) => setGamesWindow(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-xs font-mono">
+              <option value="hour">hour</option>
+              <option value="day">today</option>
+              <option value="week">week</option>
+              <option value="all">all</option>
+            </select>
+          </div>
+        </div>
+
+        {!!error && (
+          <div className="mt-3 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
+        )}
+
+        <div className="mt-4">
+          <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Last games</div>
+          <div className="grid gap-2">
+            {filteredGames.map((g) => (
+              <div key={g.id} className="bg-black/40 border border-amber-900/20 rounded-2xl p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-amber-100/90 font-mono font-black text-xs break-all">{String(g.id || '')}</div>
+                    <div className="mt-1 text-amber-100/65 text-[11px] font-mono">{formatTime(g.finishedAt || g.createdAt)} · {formatDuration((g.finishedAt || 0) - (g.createdAt || 0))}</div>
+                  </div>
+                  <button type="button" className="shrink-0 px-3 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[11px]" onClick={() => copyText(g.id)}>Copy</button>
+                </div>
+              </div>
+            ))}
+            {filteredGames.length === 0 && (
+              <div className="text-amber-200/60 text-xs font-mono">No games in this window.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Fetch log</div>
+          <div className="grid gap-2">
+            <input value={matchLogId} onChange={(e) => setMatchLogId(e.target.value)} placeholder="Match ID" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={fetchMatchLog} disabled={loading} className="flex-1 px-4 py-2 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Fetch</button>
+              {!!matchLogJson && (
+                <>
+                  <button type="button" onClick={() => copyText(matchLogJson)} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Copy</button>
+                  <button type="button" onClick={() => setMatchLogJson('')} className="px-4 py-2 rounded-xl bg-black/30 hover:bg-black/45 border border-amber-900/20 text-amber-100/80 font-black text-xs uppercase tracking-widest">Hide</button>
+                </>
+              )}
+            </div>
+            {!!matchLogJson && (
+              <textarea readOnly value={matchLogJson} className="w-full min-h-[220px] px-3 py-2 rounded-2xl bg-black/60 border border-amber-900/30 text-amber-50/90 text-[11px] font-mono" />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminPage() {
   const [token, setToken] = useState(() => {
     try {
@@ -4820,6 +4985,9 @@ export default function SpineUI() {
 
   if (hash.startsWith('#/tournament')) {
     return <TournamentPage />;
+  }
+  if (hash.startsWith('#/adminm/games')) {
+    return <AdminMobileGamesPage />;
   }
   if (hash.startsWith('#/admin/tournament')) {
     return <AdminTournamentPage />;
