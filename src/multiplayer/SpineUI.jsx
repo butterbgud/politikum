@@ -3693,6 +3693,15 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
+      {/* Hand limit: discard down to 7 (no modal) */}
+      {G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            У тебя больше 7 карт: сбрось лишние кликом по картам на руке
+          </div>
+        </div>
+      )}
+
       {/* Persona prompts (no modals) */}
       {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
@@ -4532,14 +4541,20 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             const baseIs14 = baseId === 'action_14';
             const canCancelEffectOnMe = responseKind === 'cancel_action' && responseTargetsMe && baseIs14;
 
+            const canDiscardDownTo7 = G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId);
+
             const canClickP16 = pendingP16; // select cards to discard
-            const canClick = canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
+            const canClick = canDiscardDownTo7 || canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
 
             return (
               <button
                 key={card.id}
                 onClick={(e) => {
                   if (!canClick) return;
+                  if (canDiscardDownTo7) {
+                    try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(card.id); } catch {}
+                    return;
+                  }
                   if (canClickP16) {
                     setP16DiscardPick((arr) => {
                       const s = new Set(arr || []);
