@@ -874,12 +874,63 @@ function AdminMobileGamesPage() {
           )}
         </div>
 
+        {!!token && (
+          <div className="mt-4">
+            <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Lobby chat</div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={loading || !token}
+                onClick={async () => {
+                  setLoading(true); setError('');
+                  try {
+                    const res = await fetch(`${SERVER}/admin/lobby_chat/disable`, { method: 'POST', headers: { 'X-Admin-Token': token } });
+                    if (!res.ok) throw new Error(`disable: HTTP ${res.status}`);
+                  } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
+                }}
+                className="flex-1 px-4 py-2 rounded-xl bg-red-900/60 hover:bg-red-900/80 disabled:opacity-60 text-red-100 font-black text-xs uppercase tracking-widest"
+              >
+                OFF
+              </button>
+              <button
+                type="button"
+                disabled={loading || !token}
+                onClick={async () => {
+                  setLoading(true); setError('');
+                  try {
+                    const res = await fetch(`${SERVER}/admin/lobby_chat/enable`, { method: 'POST', headers: { 'X-Admin-Token': token } });
+                    if (!res.ok) throw new Error(`enable: HTTP ${res.status}`);
+                  } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
+                }}
+                className="flex-1 px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+              >
+                ON
+              </button>
+              <button
+                type="button"
+                disabled={loading || !token}
+                onClick={async () => {
+                  if (!confirm('Clear all lobby chat messages?')) return;
+                  setLoading(true); setError('');
+                  try {
+                    const res = await fetch(`${SERVER}/admin/lobby_chat/clear`, { method: 'POST', headers: { 'X-Admin-Token': token } });
+                    if (!res.ok) throw new Error(`clear: HTTP ${res.status}`);
+                  } catch (e) { setError(e?.message || String(e)); } finally { setLoading(false); }
+                }}
+                className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-4">
           <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Fetch log</div>
           <div className="grid gap-2">
             <input value={matchLogId} onChange={(e) => setMatchLogId(e.target.value)} placeholder="Match ID" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
             <div className="flex items-center gap-2">
-              <button type="button" onClick={fetchMatchLog} disabled={loading} className="flex-1 px-4 py-2 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Fetch</button>
+              <button type="button" onClick={fetchMatchLog} disabled={loading || !token} className="flex-1 px-4 py-2 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Fetch</button>
               {!!matchLogJson && (
                 <>
                   <button type="button" onClick={() => copyText(matchLogJson)} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Copy</button>
