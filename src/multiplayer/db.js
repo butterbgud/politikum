@@ -757,7 +757,7 @@ export function getSummary() {
   };
 }
 
-export function getLeaderboard({ limit = 20 }) {
+export function getLeaderboard({ limit = 20, registeredOnly = false } = {}) {
   const db = sqlite;
   const lim = Math.min(200, Math.max(1, Number(limit) || 20));
 
@@ -782,9 +782,11 @@ export function getLeaderboard({ limit = 20 }) {
         WHERE g.winner_player_id = r.player_id
       ) AS lastFinishedAt
     FROM ratings r
+    WHERE (@registeredOnly = 0)
+       OR EXISTS (SELECT 1 FROM users u WHERE u.player_id = r.player_id)
     ORDER BY r.rating DESC, r.wins DESC, r.games_played DESC
     LIMIT @limit;
-  `).all({ limit: lim });
+  `).all({ limit: lim, registeredOnly: registeredOnly ? 1 : 0 });
 
   return {
     items: rows.map((r) => ({

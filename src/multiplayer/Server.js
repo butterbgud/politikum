@@ -705,7 +705,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
     // Public leaderboard: safe to embed in lobby screen (no token).
     if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
       const limit = clampLimit(ctx.query.limit, 10, 50);
-      ctx.body = getLeaderboard({ limit });
+      // Only show registered (username+token) accounts in public Top10.
+      ctx.body = getLeaderboard({ limit, registeredOnly: true });
       return;
     }
 
