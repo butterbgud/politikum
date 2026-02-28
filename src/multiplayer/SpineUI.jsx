@@ -2430,15 +2430,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
     // persona_9: must be played into opponent coalition
     if (pickTargetForPersona9) {
-      try {
-        const coalFaces = (only.coalition || []).filter((c) => c.type === 'persona');
-        if (coalFaces.length >= 1) {
-          setPlacementModeOpp({ cardId: pickTargetForPersona9.cardId, targetId: String(only.id), neighborId: null, side: 'right' });
-          setPickTargetForPersona9(null);
-          return;
-        }
-        moves.playPersona(pickTargetForPersona9.cardId, undefined, 'right', String(only.id));
-      } catch {}
+      try { moves.playPersona(pickTargetForPersona9.cardId, undefined, 'right', String(only.id)); } catch {}
       setPickTargetForPersona9(null);
       return;
     }
@@ -3038,13 +3030,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     return;
                   }
                   if (pickTargetForPersona9) {
-                    const coalFaces = (p.coalition || []).filter((c) => c.type === 'persona');
-                    if (coalFaces.length >= 1) {
-                      playSfx('ui', 0.35);
-                      setPlacementModeOpp({ cardId: pickTargetForPersona9.cardId, targetId: String(p.id), neighborId: null, side: 'right' });
-                      setPickTargetForPersona9(null);
-                      return;
-                    }
                     try { playSfx('play'); moves.playPersona(pickTargetForPersona9.cardId, undefined, 'right', String(p.id)); } catch {}
                     setPickTargetForPersona9(null);
                     return;
