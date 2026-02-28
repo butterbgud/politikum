@@ -2003,7 +2003,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Лобби</div>
           </div>
-          <div className="text-xs font-mono text-amber-200/60">Игроки: {activeCount}</div>
+          {/* player count hidden */}
         </div>
 
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
@@ -2068,7 +2068,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
             {/* Seats */}
             <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Места</div>
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Игроки</div>
               <div className="mt-3 grid gap-2">
                 {(G.players || []).filter((p) => !!p?.active).map((p) => {
                   const active = !!p.active;
