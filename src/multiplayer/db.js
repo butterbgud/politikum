@@ -827,7 +827,7 @@ export function getPublicProfile({ playerId }) {
   const counts = db.prepare(`
     SELECT
       COUNT(DISTINCT g.id) AS games,
-      SUM(CASE WHEN g.winner_player_id = @pid THEN 1 ELSE 0 END) AS wins
+      COUNT(DISTINCT CASE WHEN g.winner_player_id = @pid THEN g.id END) AS wins
     FROM games g
     JOIN game_players gp ON gp.game_id = g.id
     WHERE gp.player_id = @pid AND g.finished_at IS NOT NULL;
@@ -847,11 +847,14 @@ export function getPublicProfile({ playerId }) {
   const userRow = db.prepare('SELECT username FROM users WHERE player_id = ?').get(pid);
   const profRow = db.prepare('SELECT bio_text AS bioText FROM player_profiles WHERE player_id = ?').get(pid);
 
+  const username = userRow?.username || null;
+  const displayName = username || (nameRow?.name || null);
+
   return {
     ok: true,
     playerId: pid,
-    username: userRow?.username || null,
-    name: nameRow?.name || null,
+    username,
+    name: displayName,
     rating,
     games,
     wins,
