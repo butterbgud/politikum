@@ -2219,6 +2219,33 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
 
+  // Stable identity even for guests (prevents leaderboard mixing seatId "1" across many people).
+  useEffect(() => {
+    try {
+      const already = String(me?.identity?.playerId || '').trim();
+      if (already) return;
+
+      // Prefer auth-bound player id.
+      let pid = '';
+      try { pid = String(window.localStorage.getItem('politikum.sessionPlayerId') || '').trim(); } catch {}
+
+      if (!pid) {
+        // Guest id: stable per-device.
+        let deviceId = '';
+        try { deviceId = String(window.localStorage.getItem('politikum.deviceId') || '').trim(); } catch {}
+        if (!deviceId) {
+          deviceId = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+          try { window.localStorage.setItem('politikum.deviceId', deviceId); } catch {}
+        }
+        pid = `guest_${deviceId}`;
+        try { window.localStorage.setItem('politikum.sessionPlayerId', pid); } catch {}
+      }
+
+      try { moves.setPlayerIdentity({ playerId: pid, email: null }); } catch {}
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [String(me?.identity?.playerId || ''), playerID]);
+
   // ✓ = fully polished (per IMPLEMENTATION.md)
   const POLISHED = useMemo(() => {
     const s = new Set([
