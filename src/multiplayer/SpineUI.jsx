@@ -2001,9 +2001,9 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
-            <div className="text-amber-100/70 font-serif mt-1">Pregame lobby</div>
+            <div className="text-amber-100/70 font-serif mt-1">Лобби</div>
           </div>
-          <div className="text-xs font-mono text-amber-200/60">Players: {activeCount}</div>
+          <div className="text-xs font-mono text-amber-200/60">Игроки: {activeCount}</div>
         </div>
 
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
@@ -2011,7 +2011,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           <div className="flex flex-col gap-4 min-h-[520px]">
             {/* Lobby chat */}
             <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Lobby chat</div>
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Чат лобби</div>
               <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                 {(G.chat || []).map((m, i) => {
                   const sender = String(m?.sender || '').trim();
@@ -2033,7 +2033,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                     </div>
                   );
                 })}
-                {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">No messages yet.</div>}
+                {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">Пока нет сообщений.</div>}
               </div>
               <form
                 className="mt-3 flex gap-2"
@@ -2048,14 +2048,14 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                 <input
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Say something…"
+                  placeholder="Напиши что-нибудь…"
                   className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
                 />
                 <button
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase"
                 >
-                  Send
+                  Отправить
                 </button>
               </form>
             </div>
@@ -2091,7 +2091,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
 
             {/* Seats */}
             <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Seats</div>
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Места</div>
               <div className="mt-3 grid gap-2">
                 {(G.players || []).filter((p) => !!p?.active).map((p) => {
                   const active = !!p.active;
@@ -2154,20 +2154,20 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                     onClick={() => moves.addBot()}
                     className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
                   >
-                    Add bot
+                    Добавить бота
                   </button>
                   <button
                     onClick={() => moves.startGame()}
                     className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
                   >
-                    Start game
+                    Старт
                   </button>
                 </div>
               )}
             </div>
           </div>
         </div>
-        <div className="mt-5 text-[11px] text-amber-200/40 font-mono">phase: {String(ctx.phase || '')}</div>
+        {/* phase debug hidden */}
       </div>
     </div>
   );
@@ -5301,7 +5301,7 @@ function PolitikumWelcome({ onJoin }) {
                   value={lobbyChatInput}
                   onChange={(e) => setLobbyChatInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendLobbyChat(); } }}
-                  placeholder={authToken ? (lobbyChatEnabled ? 'Say something…' : 'Chat disabled') : 'Login in /#/beta to chat…'}
+                  placeholder={authToken ? (lobbyChatEnabled ? 'Напиши что-нибудь…' : 'Чат выключен') : 'Войди в /#/beta чтобы писать…'}
                   disabled={!authToken || !lobbyChatEnabled}
                   className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-200 font-serif text-sm focus:outline-none disabled:opacity-60"
                 />
@@ -5311,7 +5311,7 @@ function PolitikumWelcome({ onJoin }) {
                   disabled={!authToken || !lobbyChatEnabled || !String(lobbyChatInput||'').trim()}
                   className="flex-none px-4 py-2 bg-amber-600 text-amber-950 font-black rounded-xl uppercase tracking-widest shadow-lg transition-all disabled:opacity-60 hover:bg-amber-500"
                 >
-                  Send
+                  Отправить
                 </button>
               </div>
             </div>
