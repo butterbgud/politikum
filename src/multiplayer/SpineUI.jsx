@@ -2468,6 +2468,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const pendingPersona45 = pending?.kind === 'persona_45_steal_from_opponent' && String(pending?.playerId) === String(playerID);
   const pendingPersona45Source = pendingPersona45 ? String(pending?.sourceCardId || '') : '';
 
+  // Auto-pick opponent when only one choice.
+  useEffect(() => {
+    if (!pendingPersona45) return;
+    try {
+      const opps = (G.players || []).filter((pp) => String(pp?.id) !== String(playerID) && pp?.active);
+      if (opps.length === 1) {
+        moves.persona45StealFromOpponent(String(opps[0].id));
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPersona45]);
+
   const pendingP21 = pending?.kind === 'persona_21_pick_target_invert' && String(pending?.playerId) === String(playerID);
   const pendingP21Source = pendingP21 ? String(pending?.sourceCardId || '') : '';
   const pendingP23 = pending?.kind === 'persona_23_choose_self_inflict_draw' && String(pending?.playerId) === String(playerID);
