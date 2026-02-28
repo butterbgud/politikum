@@ -2503,6 +2503,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       if (tag === 'input' || tag === 'textarea' || e.isComposing) return;
 
       const key = String(e.key || '').toLowerCase();
+
+      if (key === 'escape') {
+        if (pendingP11Offer) {
+          try { playSfx('ui', 0.25); moves.persona11Skip(); } catch {}
+          return;
+        }
+      }
+
       if (key === 'l') {
         setLogCollapsed((v) => !v);
         return;
@@ -3234,6 +3242,28 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingTokensSource || 'EVENT'}: {pendingTokensSingleTarget ? 'choose ONE persona, then place all +1 on it' : 'place +1 tokens on your coalition'} — click a coalition card ({pendingTokensRemaining} left)
+          </div>
+        </div>
+      )}
+
+      {pendingP11Offer && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-auto select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
+            <span>persona_11: use ability or skip (blocks draw)</span>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full bg-emerald-700/70 border border-emerald-300/30 hover:bg-emerald-700/90"
+              onClick={() => { try { playSfx('ui', 0.35); moves.persona11Use(); } catch {} }}
+            >
+              Use
+            </button>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full bg-zinc-700/70 border border-zinc-300/20 hover:bg-zinc-700/90"
+              onClick={() => { try { playSfx('ui', 0.25); moves.persona11Skip(); } catch {} }}
+            >
+              Skip
+            </button>
           </div>
         </div>
       )}
@@ -4227,6 +4257,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${finalScale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
                     onClick={(e) => {
+                      if (canUseP11) {
+                        try { playSfx('ui', 0.35); moves.persona11Use(); } catch {}
+                        return;
+                      }
                       if (placementMode) {
                         // Click left/right half of a coalition card to place before/after it.
                         const rect = e.currentTarget.getBoundingClientRect();
