@@ -1535,15 +1535,28 @@ function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((r, i) => (
+                {leaderboard.map((r, i) => {
+                  const canOpen = !!String(r?.playerId || '').trim();
+                  return (
                   <tr key={i} className="border-b border-amber-900/20">
-                    <td className="px-2 py-2 align-top whitespace-nowrap">{r.name || '(anon)'}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">
+                      <button
+                        type="button"
+                        disabled={!canOpen}
+                        onClick={() => { if (canOpen) openProfileById(r.playerId); }}
+                        className={(canOpen ? 'underline underline-offset-4 hover:text-amber-50 ' : '') + 'text-amber-100/90 font-black'}
+                        title={canOpen ? 'Open profile' : ''}
+                      >
+                        {r.name || '(anon)'}
+                      </button>
+                    </td>
                     <td className="px-2 py-2 align-top whitespace-nowrap text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap text-emerald-300 font-black tabular-nums">{r.wins}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap tabular-nums">{r.games}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">{r.lastFinishedAt ? formatTime(r.lastFinishedAt) : '—'}</td>
                   </tr>
-                ))}
+                );
+                })}
                 {leaderboard.length === 0 && (
                   <tr>
                     <td colSpan="5" className="px-2 py-4 text-center text-amber-300/60 text-xs">
