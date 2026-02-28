@@ -1086,6 +1086,7 @@ function AdminPage() {
   const [games, setGames] = useState([]);
   const [gamesOffset, setGamesOffset] = useState(0);
   const [gamesHasMore, setGamesHasMore] = useState(false);
+  const [gamesTotalFinished, setGamesTotalFinished] = useState(null);
   const [liveMatches, setLiveMatches] = useState([]);
   const [liveTotal, setLiveTotal] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -1228,6 +1229,7 @@ function AdminPage() {
       const matchesJson = await matchesRes.json();
       const lbJson = await lbRes.json();
       setSummary(summaryJson);
+      setGamesTotalFinished(summaryJson?.gamesFinished ?? null);
 
       const newItems = gamesJson.items || [];
       if (loadMore) setGames((prev) => [...prev, ...newItems]);
@@ -1235,7 +1237,10 @@ function AdminPage() {
 
       const nextOffset = offset + newItems.length;
       setGamesOffset(nextOffset);
-      setGamesHasMore(newItems.length >= limitGames);
+
+      const totalFinished = Number(summaryJson?.gamesFinished ?? NaN);
+      if (Number.isFinite(totalFinished)) setGamesHasMore(nextOffset < totalFinished);
+      else setGamesHasMore(newItems.length >= limitGames);
 
       setLiveMatches(matchesJson.items || []);
       setLiveTotal(matchesJson.total ?? null);
@@ -1762,8 +1767,9 @@ function AdminPage() {
                   disabled={loading || !gamesHasMore}
                   onClick={() => fetchAdmin({ loadMore: true })}
                   className="px-4 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[11px] uppercase tracking-widest disabled:opacity-50"
+                  title={(gamesTotalFinished != null) ? `${gamesOffset}/${gamesTotalFinished}` : ''}
                 >
-                  Load more
+                  {gamesHasMore ? 'Load more' : 'No more'}
                 </button>
               </div>
             </div>
