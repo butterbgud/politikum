@@ -1080,6 +1080,30 @@ function AdminPage() {
   const [matchLogJson, setMatchLogJson] = useState('');
 
   const [gamesWindow, setGamesWindow] = useState('day'); // hour|day|week|all
+
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileErr, setProfileErr] = useState('');
+  const [profile, setProfile] = useState(null);
+
+  const openProfileById = async (pid) => {
+    const id = String(pid || '').trim();
+    if (!id) return;
+    setShowProfile(true);
+    setProfileLoading(true);
+    setProfileErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setProfile(json);
+    } catch (e) {
+      setProfileErr(e?.message || String(e));
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   const filteredGames = (games || []).filter((g) => {
     const t = Number(g?.finishedAt || g?.createdAt || 0);
     if (!t) return true;
@@ -1225,6 +1249,46 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
+      {showProfile && (
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
+          <div className="w-[min(520px,92vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Профиль</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">Доступен всем</div>
+              </div>
+              <button type="button" onClick={() => setShowProfile(false)} className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest">Закрыть</button>
+            </div>
+
+            {profileLoading && (
+              <div className="mt-4 text-amber-200/80 font-mono text-[12px]">loading…</div>
+            )}
+            {!profileLoading && profileErr && (
+              <div className="mt-4 text-red-200/90 font-mono text-[12px]">{profileErr}</div>
+            )}
+            {!profileLoading && !profileErr && profile?.ok && (
+              <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
+                <div><span className="opacity-60">Name:</span> {profile.name || profile.playerName || profile.playerId}</div>
+                <div><span className="opacity-60">Elo:</span> {profile.rating ?? '—'}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Games</div><div className="font-black">{profile.games ?? '—'}</div></div>
+                  <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Wins</div><div className="font-black">{profile.wins ?? '—'}</div></div>
+                  <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Win%</div><div className="font-black">{profile.winRate != null ? `${Math.round(Number(profile.winRate) * 100)}%` : '—'}</div></div>
+                </div>
+                {(profile.bioText || '').trim() && (
+                  <div className="mt-2 whitespace-pre-wrap text-amber-100/80">{String(profile.bioText)}</div>
+                )}
+                {!!profile.playerId && (
+                  <a className="inline-block mt-2 px-3 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[11px]" href={`#/`} onClick={(e) => { e.preventDefault(); window.open(`/profile/${encodeURIComponent(String(profile.playerId))}`, '_blank'); }}>
+                    Открыть публичный профиль
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <div>
@@ -1545,7 +1609,6 @@ function AdminPage() {
                   <th className="px-2 py-2 whitespace-nowrap">Finished</th>
                   <th className="px-2 py-2 whitespace-nowrap">Match</th>
                   <th className="px-2 py-2 whitespace-nowrap">Players</th>
-                  <th className="px-2 py-2 whitespace-nowrap">Winner</th>
                   <th className="px-2 py-2 whitespace-nowrap">Duration</th>
                 </tr>
               </thead>
@@ -1566,27 +1629,38 @@ function AdminPage() {
                     </td>
                     <td className="px-2 py-2 align-top">
                       <div className="flex flex-wrap gap-1">
-                        {(g.players || []).map((p, idx) => (
-                          <div
-                            key={idx}
-                            className={
-                              'px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 ' +
-                              (p.isBot ? 'bg-slate-800/80 text-amber-200/80 border border-amber-900/50' : 'bg-amber-700/25 text-amber-50 border border-amber-500/20')
-                            }
-                          >
-                            <span>{p.name || '(anon)'}</span>
-                            {p.isBot && <span className="text-[9px] uppercase tracking-widest">BOT</span>}
-                          </div>
-                        ))}
+                        {(g.players || []).map((p, idx) => {
+                          const label = String(p?.name || '(anon)');
+                          const isWin = !!label && label === String(g.winnerName || '');
+                          const canOpen = !!String(p?.playerId || '').trim();
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              disabled={!canOpen}
+                              onClick={() => { if (canOpen) openProfileById(p.playerId); }}
+                              className={
+                                'px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 border ' +
+                                (isWin
+                                  ? 'bg-emerald-700/25 border-emerald-400/40 text-emerald-100'
+                                  : (p.isBot ? 'bg-slate-800/80 text-amber-200/80 border-amber-900/50' : 'bg-amber-700/25 text-amber-50 border-amber-500/20')) +
+                                (canOpen ? ' hover:opacity-95' : ' opacity-80')
+                              }
+                              title={canOpen ? 'Open profile' : ''}
+                            >
+                              <span>{label}{isWin ? ' ★' : ''}</span>
+                              {p.isBot && <span className="text-[9px] uppercase tracking-widest">BOT</span>}
+                            </button>
+                          );
+                        })}
                       </div>
                     </td>
-                    <td className="px-2 py-2 align-top whitespace-nowrap">{g.winnerName || '—'}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">{formatDuration(g.durationMs)}</td>
                   </tr>
                 ))}
                 {games.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="px-2 py-6 text-center text-amber-300/60 text-xs">
+                    <td colSpan="4" className="px-2 py-6 text-center text-amber-300/60 text-xs">
                       {summary ? 'No recorded games yet.' : 'Set token and refresh to load stats.'}
                     </td>
                   </tr>
