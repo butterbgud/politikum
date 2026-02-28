@@ -1209,7 +1209,7 @@ function AdminPage() {
       const headers = { 'X-Admin-Token': token };
       const [summaryRes, gamesRes, matchesRes, lbRes] = await Promise.all([
         fetch(`${SERVER}/admin/summary`, { headers }),
-        fetch(`${SERVER}/admin/games?limit=50&offset=0`, { headers }),
+        fetch(`${SERVER}/admin/games?limit=200&offset=0`, { headers }),
         fetch(`${SERVER}/admin/matches?limit=20`, { headers }),
         fetch(`${SERVER}/admin/leaderboard?limit=20`, { headers }),
       ]);
