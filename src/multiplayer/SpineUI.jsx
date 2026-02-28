@@ -729,6 +729,7 @@ function AdminMobileGamesPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authed, setAuthed] = useState(false);
   const [games, setGames] = useState([]);
   const [gamesWindow, setGamesWindow] = useState('day');
 
@@ -763,6 +764,7 @@ function AdminMobileGamesPage() {
     setToken(v);
     try { window.localStorage.setItem('politikum.adminToken', v); } catch {}
     // Clear cached results when token changes.
+    try { setAuthed(false); } catch {}
     try { setGames([]); } catch {}
     try { setMatchLogJson(''); } catch {}
     try { setError(''); } catch {}
@@ -793,7 +795,7 @@ function AdminMobileGamesPage() {
   });
 
   const fetchGames = async () => {
-    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    if (!token) { setAuthed(false); setError('Set X-Admin-Token first.'); return; }
     setLoading(true);
     setError('');
     try {
@@ -801,7 +803,9 @@ function AdminMobileGamesPage() {
       if (!res.ok) throw new Error(`games: HTTP ${res.status}`);
       const json = await res.json();
       setGames(json.items || []);
+      setAuthed(true);
     } catch (e) {
+      setAuthed(false);
       setError(e?.message || String(e));
     } finally {
       setLoading(false);
@@ -914,10 +918,10 @@ function AdminMobileGamesPage() {
 
         <div className="mt-4">
           <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Last games</div>
-          {!token && (
-            <div className="text-amber-200/60 text-xs font-mono">Enter token and tap Use.</div>
+          {!authed && (
+            <div className="text-amber-200/60 text-xs font-mono">Enter token and tap Use (then Refresh).</div>
           )}
-          {!!token && (
+          {!!authed && (
           <div className="grid gap-2">
             {filteredGames.map((g) => (
               <div key={g.matchId} className="bg-black/40 border border-amber-900/20 rounded-2xl p-3">
@@ -963,7 +967,7 @@ function AdminMobileGamesPage() {
           )}
         </div>
 
-        {!!token && (
+        {!!authed && (
           <div className="mt-4">
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Lobby chat</div>
             <div className="flex items-center gap-2">
@@ -1014,24 +1018,26 @@ function AdminMobileGamesPage() {
           </div>
         )}
 
-        <div className="mt-4">
-          <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Fetch log</div>
-          <div className="grid gap-2">
-            <input value={matchLogId} onChange={(e) => setMatchLogId(e.target.value)} placeholder="Match ID" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={fetchMatchLog} disabled={loading || !token} className="flex-1 px-4 py-2 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Fetch</button>
+        {!!authed && (
+          <div className="mt-4">
+            <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Fetch log</div>
+            <div className="grid gap-2">
+              <input value={matchLogId} onChange={(e) => setMatchLogId(e.target.value)} placeholder="Match ID" className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" />
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={fetchMatchLog} disabled={loading || !token} className="flex-1 px-4 py-2 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest">Fetch</button>
+                {!!matchLogJson && (
+                  <>
+                    <button type="button" onClick={() => copyText(matchLogJson)} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Copy</button>
+                    <button type="button" onClick={() => setMatchLogJson('')} className="px-4 py-2 rounded-xl bg-black/30 hover:bg-black/45 border border-amber-900/20 text-amber-100/80 font-black text-xs uppercase tracking-widest">Hide</button>
+                  </>
+                )}
+              </div>
               {!!matchLogJson && (
-                <>
-                  <button type="button" onClick={() => copyText(matchLogJson)} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Copy</button>
-                  <button type="button" onClick={() => setMatchLogJson('')} className="px-4 py-2 rounded-xl bg-black/30 hover:bg-black/45 border border-amber-900/20 text-amber-100/80 font-black text-xs uppercase tracking-widest">Hide</button>
-                </>
+                <textarea readOnly value={matchLogJson} className="w-full min-h-[220px] px-3 py-2 rounded-2xl bg-black/60 border border-amber-900/30 text-amber-50/90 text-[11px] font-mono" />
               )}
             </div>
-            {!!matchLogJson && (
-              <textarea readOnly value={matchLogJson} className="w-full min-h-[220px] px-3 py-2 rounded-2xl bg-black/60 border border-amber-900/30 text-amber-50/90 text-[11px] font-mono" />
-            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
