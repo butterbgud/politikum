@@ -462,7 +462,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);
       const limit = clampLimit(ctx.query.limit, 20, 200);
-      ctx.body = getLeaderboard({ limit });
+      // Keep admin leaderboard consistent with public Top10: show only registered accounts.
+      ctx.body = getLeaderboard({ limit, registeredOnly: true });
       return;
     }
 
