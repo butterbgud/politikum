@@ -895,7 +895,7 @@ function AdminMobileGamesPage() {
             {!profileLoading && !profileErr && profile?.ok && (
               <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
                 <div><span className="opacity-60">Name:</span> {profile.name || profile.playerName || profile.playerId}</div>
-                <div><span className="opacity-60">Elo:</span> {profile.rating ?? '—'}</div>
+                <div><span className="opacity-60">Рейтинг:</span> {profile.rating ?? '—'}</div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Games</div><div className="font-black">{profile.games ?? '—'}</div></div>
                   <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Wins</div><div className="font-black">{profile.wins ?? '—'}</div></div>
@@ -1330,7 +1330,7 @@ function AdminPage() {
             {!profileLoading && !profileErr && profile?.ok && (
               <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
                 <div><span className="opacity-60">Name:</span> {profile.name || profile.playerName || profile.playerId}</div>
-                <div><span className="opacity-60">Elo:</span> {profile.rating ?? '—'}</div>
+                <div><span className="opacity-60">Рейтинг:</span> {profile.rating ?? '—'}</div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Games</div><div className="font-black">{profile.games ?? '—'}</div></div>
                   <div className="bg-black/30 border border-amber-900/20 rounded-xl p-2"><div className="opacity-60 text-[10px]">Wins</div><div className="font-black">{profile.wins ?? '—'}</div></div>
@@ -1558,7 +1558,7 @@ function AdminPage() {
               <thead>
                 <tr className="border-b border-amber-900/40">
                   <th className="px-2 py-2 whitespace-nowrap">Player</th>
-                  <th className="px-2 py-2 whitespace-nowrap">Elo</th>
+                  <th className="px-2 py-2 whitespace-nowrap">Рейтинг</th>
                   <th className="px-2 py-2 whitespace-nowrap">Wins</th>
                   <th className="px-2 py-2 whitespace-nowrap">Игры</th>
                   <th className="px-2 py-2 whitespace-nowrap">Last win</th>
@@ -1880,7 +1880,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
       setAuthToken(tok);
       try { window.localStorage.setItem('politikum.authToken', tok); } catch {}
 
-      // Bind stable player identity into match state (for Elo/rankings).
+      // Bind stable player identity into match state (for Рейтинг/rankings).
       try {
         const pid = json?.playerId;
         if (pid) {
