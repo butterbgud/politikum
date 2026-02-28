@@ -2079,36 +2079,21 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                         <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2'}>
                           <span>{p.name || `Seat ${p.id}`}</span>
                           {(() => {
-                            const pid = String(p?.identity?.playerId || '');
-                            const r = pid ? ratingsMap[pid] : null;
-                            if (r == null) return null;
+                            const pid = String(p?.identity?.playerId || '').trim();
+                            const r = pid ? ratingsMap?.[pid] : null;
+                            if (!pid || r == null) return null;
                             return (
                               <button
                                 type="button"
-                                className="px-2 py-0.5 rounded-lg bg-black/35 hover:bg-black/45 border border-amber-900/20 text-amber-100/80 font-black text-[10px]"
+                                className="text-amber-100/80 hover:text-amber-100 underline underline-offset-2 text-[11px] font-mono"
                                 title="Открыть профиль"
-                                onClick={() => openProfileById(pid)}
+                                onClick={() => openProfileById(pid, String(p?.name || ''))}
                               >
-                                {r}
+                                ({r})
                               </button>
                             );
                           })()}
                         </div>
-                        {(() => {
-                          const pid = String(p?.identity?.playerId || '').trim();
-                          const r = pid ? ratingsMap?.[pid] : null;
-                          if (!pid) return null;
-                          return (
-                            <button
-                              type="button"
-                              className="text-[10px] font-mono text-amber-200/70 hover:text-amber-100 underline underline-offset-2"
-                              title="Открыть профиль"
-                              onClick={() => openProfileById(pid, String(p?.name || ''))}
-                            >
-                              {r == null ? '—' : `${r}`}
-                            </button>
-                          );
-                        })()}
                         {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
                       </div>
 
