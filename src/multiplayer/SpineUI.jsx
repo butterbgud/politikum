@@ -744,13 +744,23 @@ function AdminMobileGamesPage() {
   const openProfileById = async (pid, expectedName = '') => {
     const id = String(pid || '').trim();
     if (!id) return;
-    setShowProfile(true);
+
+    // If profile doesn't exist, do nothing (no modal).
     setProfileLoading(true);
     setProfileErr('');
-    try {
-      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    setProfile(null);
+
+    const fetchProfile = async (playerId) => {
+      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(String(playerId))}`, { cache: 'no-store' });
+      if (!res.ok) return null;
       const json = await res.json();
+      if (!json?.ok) return null;
+      return json;
+    };
+
+    try {
+      let json = await fetchProfile(id);
+      if (!json) return;
 
       const exp = String(expectedName || '').trim().toLowerCase();
       const got = String(json?.name || json?.playerName || '').trim().toLowerCase();
@@ -765,20 +775,16 @@ function AdminMobileGamesPage() {
             const hit = items.find((r) => String(r?.name || '').trim().toLowerCase() === exp);
             const alt = String(hit?.playerId || '').trim();
             if (alt && alt !== id) {
-              const res2 = await fetch(`${SERVER}/public/profile/${encodeURIComponent(alt)}`, { cache: 'no-store' });
-              if (res2.ok) {
-                const json2 = await res2.json();
-                setProfile(json2);
-                return;
-              }
+              const json2 = await fetchProfile(alt);
+              if (json2) json = json2;
             }
           }
         } catch {}
       }
 
+      // Open modal only on success.
       setProfile(json);
-    } catch (e) {
-      setProfileErr(e?.message || String(e));
+      setShowProfile(true);
     } finally {
       setProfileLoading(false);
     }
