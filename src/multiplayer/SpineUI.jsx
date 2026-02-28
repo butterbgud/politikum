@@ -2450,11 +2450,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       setPickTargetForAction4(null);
       return;
     }
-    if (pickTargetForAction9) {
-      try { moves.playAction(pickTargetForAction9.cardId, String(only.id)); } catch {}
-      setPickTargetForAction9(null);
-      return;
-    }
+    // action_9 can target yourself too → no auto-pick.
 
     // persona_9: must be played into opponent coalition
     if (pickTargetForPersona9) {
