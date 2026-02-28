@@ -4647,16 +4647,27 @@ function PolitikumWelcome({ onJoin }) {
     (async () => {
       try {
         // Build a rating map for the whole page (chat badges etc)
-        const res = await fetch(`${SERVER}/public/leaderboard?limit=200`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const json = await res.json();
-        const items = Array.isArray(json?.items) ? json.items : [];
+        // Use public profile endpoint so it works even when leaderboard filters guests.
+        const uniq = (arr) => Array.from(new Set((arr || []).filter(Boolean)));
+
+        const ids = uniq([
+          ...((lobbyChat || []).map((m) => String(m?.playerId || '').trim())),
+          (() => { try { return String(window.localStorage.getItem('politikum.sessionPlayerId') || ''); } catch { return ''; } })(),
+        ]);
+
         const m = {};
-        for (const r of items) {
-          const pid = String(r?.playerId || '').trim();
-          if (!pid) continue;
-          m[pid] = Math.round(Number(r?.rating || 0));
-        }
+        await Promise.all(ids.map(async (pid) => {
+          if (!pid) return;
+          try {
+            const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(pid)}`, { cache: 'no-store' });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (!json?.ok) return;
+            const rating = Math.round(Number(json?.rating || 0));
+            if (Number.isFinite(rating)) m[String(pid)] = rating;
+          } catch {}
+        }));
+
         setRatingsMap(m);
 
         if (!authToken) { setAuthRating(null); return; }
@@ -4669,7 +4680,7 @@ function PolitikumWelcome({ onJoin }) {
         setAuthRating(Number(rating));
       } catch {}
     })();
-  }, [authToken]);
+  }, [authToken, lobbyChat]);
 
   const [betaPassword, setBetaPassword] = useState('');
   const [betaLoading, setBetaLoading] = useState(false);
