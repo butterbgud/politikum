@@ -784,6 +784,12 @@ export function getLeaderboard({ limit = 20, registeredOnly = false } = {}) {
       r.wins AS wins,
       r.updated_at AS updatedAt,
       (
+        SELECT u.username
+        FROM users u
+        WHERE u.player_id = r.player_id
+        LIMIT 1
+      ) AS username,
+      (
         SELECT gp.name
         FROM game_players gp
         WHERE gp.player_id = r.player_id AND gp.name IS NOT NULL AND TRIM(gp.name) <> ''
@@ -805,7 +811,7 @@ export function getLeaderboard({ limit = 20, registeredOnly = false } = {}) {
   return {
     items: rows.map((r) => ({
       playerId: r.playerId,
-      name: r.name || null,
+      name: (r.username || r.name) || null,
       rating: Number(r.rating || 1000),
       games: Number(r.games || 0),
       wins: Number(r.wins || 0),
@@ -824,6 +830,7 @@ export function getPublicProfile({ playerId }) {
   const rating = ratingRow ? Number(ratingRow.rating || 1000) : 1000;
 
   // authoritative counts from finished games table
+  // NOTE: we must count wins only for games where this player participated (join via game_players).
   const counts = db.prepare(`
     SELECT
       COUNT(DISTINCT g.id) AS games,
