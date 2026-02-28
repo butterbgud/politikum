@@ -724,6 +724,9 @@ function AdminMobileGamesPage() {
   const [token, setToken] = useState(() => {
     try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
   });
+  const [tokenDraft, setTokenDraft] = useState(() => {
+    try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [games, setGames] = useState([]);
@@ -732,9 +735,14 @@ function AdminMobileGamesPage() {
   const [matchLogId, setMatchLogId] = useState('');
   const [matchLogJson, setMatchLogJson] = useState('');
 
-  const saveToken = (value) => {
-    setToken(value);
-    try { window.localStorage.setItem('politikum.adminToken', value); } catch {}
+  const applyToken = (value) => {
+    const v = String(value || '').trim();
+    setToken(v);
+    try { window.localStorage.setItem('politikum.adminToken', v); } catch {}
+    // Clear cached results when token changes.
+    try { setGames([]); } catch {}
+    try { setMatchLogJson(''); } catch {}
+    try { setError(''); } catch {}
   };
 
   const formatTime = (ms) => {
@@ -805,11 +813,7 @@ function AdminMobileGamesPage() {
     }
   };
 
-  useEffect(() => {
-    if (!token) return;
-    fetchGames();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  // No auto-refresh on every keystroke; user taps Refresh explicitly.
 
   return (
     <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-start justify-center p-3 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
@@ -826,9 +830,12 @@ function AdminMobileGamesPage() {
 
         <div className="mt-3 grid gap-2">
           <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black">X-Admin-Token</label>
-          <input type="password" value={token} onChange={(e) => saveToken(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
           <div className="flex items-center gap-2">
-            <button type="button" onClick={fetchGames} disabled={loading} className="flex-1 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
+            <input type="password" value={tokenDraft} onChange={(e) => setTokenDraft(e.target.value)} className="flex-1 px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
+            <button type="button" onClick={() => applyToken(tokenDraft)} disabled={loading} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Use</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={fetchGames} disabled={loading || !token} className="flex-1 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
             <select value={gamesWindow} onChange={(e) => setGamesWindow(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-xs font-mono">
               <option value="hour">hour</option>
               <option value="day">today</option>
@@ -844,6 +851,10 @@ function AdminMobileGamesPage() {
 
         <div className="mt-4">
           <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Last games</div>
+          {!token && (
+            <div className="text-amber-200/60 text-xs font-mono">Enter token and tap Use.</div>
+          )}
+          {!!token && (
           <div className="grid gap-2">
             {filteredGames.map((g) => (
               <div key={g.id} className="bg-black/40 border border-amber-900/20 rounded-2xl p-3">
@@ -860,6 +871,7 @@ function AdminMobileGamesPage() {
               <div className="text-amber-200/60 text-xs font-mono">No games in this window.</div>
             )}
           </div>
+          )}
         </div>
 
         <div className="mt-4">
