@@ -3393,24 +3393,25 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {pendingP34 && (() => {
         const ALL = Array.from({ length: 45 }, (_, i) => `persona_${i + 1}`);
-        const seen = new Set();
+        const playedOrDiscarded = new Set();
+        const myHand = new Set();
         try {
           for (const pp of (G.players || [])) {
-            for (const c of (pp.hand || [])) seen.add(String(c.id).split('#')[0]);
-            for (const c of (pp.coalition || [])) seen.add(String(c.id).split('#')[0]);
+            for (const c of (pp.coalition || [])) playedOrDiscarded.add(String(c.id).split('#')[0]);
           }
-          for (const c of (G.discard || [])) seen.add(String(c.id).split('#')[0]);
+          for (const c of (G.discard || [])) playedOrDiscarded.add(String(c.id).split('#')[0]);
+          const me = (G.players || []).find((pp) => String(pp.id) === String(playerID));
+          for (const c of (me?.hand || [])) myHand.add(String(c.id).split('#')[0]);
         } catch {}
-        const remaining = ALL.filter((id) => !seen.has(id));
-        const show = remaining.slice(0, 9);
+
+        const remaining = ALL.filter((id) => !playedOrDiscarded.has(id) && !myHand.has(id));
 
         return (
-          <div className="fixed inset-0 z-[6000] pointer-events-none select-none">
-            <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/70 border border-amber-900/30 rounded-2xl px-5 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl pointer-events-auto">
+          <div className="fixed inset-0 z-[6000] pointer-events-auto select-none bg-black/40 backdrop-blur-sm">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1100px,95vw)] max-h-[90vh] overflow-auto bg-black/70 border border-amber-900/30 rounded-2xl px-5 py-4 text-amber-100/90 shadow-2xl">
               <div className="flex items-center justify-between gap-4">
-                <div>
-                  <span className="opacity-80">{pendingP34Source}:</span> p34 guess persona
-                  <span className="ml-3 text-amber-200/70">(press 1..{Math.max(1, show.length)})</span>
+                <div className="font-mono text-[12px]">
+                  <span className="opacity-80">{pendingP34Source}:</span> Милов — выбери персонажа (следующая персона в колоде, события/действия пропускаются)
                 </div>
                 <button
                   type="button"
@@ -3420,21 +3421,26 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   Skip
                 </button>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2 justify-center">
-                {show.map((id, i) => (
+
+              <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2">
+                {remaining.map((id) => (
                   <button
                     key={id}
                     type="button"
-                    className="px-3 py-1 rounded-full bg-amber-600/80 hover:bg-amber-500/80 border border-amber-200/20 text-amber-950 font-black text-[11px] pointer-events-auto"
+                    className="relative rounded-xl overflow-hidden border border-amber-900/25 hover:border-amber-300/40 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)]"
                     onClick={() => { try { moves.persona34GuessTopdeck(id); } catch {} }}
-                    title={`(${i + 1})`}
+                    title={id}
                   >
-                    {i + 1} · {id.replace('persona_', 'p')}
+                    <img src={`/cards/${id}.webp`} alt={id} className="w-full h-auto block" draggable={false} />
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/55 text-[10px] font-mono text-amber-100/90 px-1 py-0.5">
+                      {id.replace('persona_', 'p')}
+                    </div>
                   </button>
                 ))}
               </div>
-              <div className="mt-2 text-amber-200/60 text-[10px] text-center">
-                (showing first 9 unseen personas; Esc/Skip clears)
+
+              <div className="mt-3 text-amber-200/60 text-[10px] font-mono text-center">
+                (исключены: сыгранные/в сбросе + те, что у тебя в руке)
               </div>
             </div>
           </div>
