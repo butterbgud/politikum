@@ -4157,6 +4157,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                 const pendingEvent16 = pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(pending?.playerId) === String(playerID);
                 const pendingA4A9Discard = (pending?.kind === 'action_4_discard' || pending?.kind === 'action_9_discard_persona') && String(pending?.targetId) === String(playerID);
+                const pendingA13Here = pending?.kind === 'action_13_shield_persona' && String(pending?.attackerId) === String(playerID) && c.type === 'persona' && !isImmovablePersona(c);
                 const pendingP21Here = pendingP21;
                 const pendingP26Here = pendingP26;
                 const pendingP28Here = pendingP28;
@@ -4178,10 +4179,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       "absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-visible border-2 shadow-2xl transition-colors " +
                       (canUseP11
                         ? "border-emerald-300/80 ring-4 ring-emerald-400/25 shadow-[0_0_50px_rgba(16,185,129,0.35)] cursor-pointer"
-                        : (placementMode || pendingTokens || pendingEvent16 || pendingA4A9Discard || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
+                        : (placementMode || pendingTokens || pendingEvent16 || pendingA4A9Discard || pendingA13Here || pendingP21Here || pendingP26Here || pendingP28Here || pendingP32Here || pendingP12Here || pendingP7Here || canUseP39Here || pendingP14Here
                           ? (canUseP39Here
                             ? "border-emerald-300/80 hover:border-emerald-200 cursor-pointer ring-4 ring-emerald-400/25 shadow-[0_0_45px_rgba(16,185,129,0.28)]"
-                            : (pendingP14Here ? "border-emerald-400/60 hover:border-emerald-300 cursor-pointer" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer"))
+                            : ((pendingP14Here || pendingA13Here) ? "border-emerald-400/60 hover:border-emerald-300 cursor-pointer" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer"))
                           : "border-black/40 cursor-default"))
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${finalScale})`, transformOrigin: 'bottom center' }}
@@ -4244,6 +4245,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       }
                       if (pendingP14Here) {
                         try { moves.discardPersonaFromCoalition(String(playerID), c.id); } catch {}
+                        return;
+                      }
+                      if (pendingA13Here) {
+                        try { moves.shieldPersonaForAction13(c.id); } catch {}
                         return;
                       }
                       if (!pendingTokens) return;
