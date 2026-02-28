@@ -2509,6 +2509,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           try { playSfx('ui', 0.25); moves.persona11Skip(); } catch {}
           return;
         }
+        if (G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId)) {
+          try { playSfx('ui', 0.25); moves.persona3Skip(); } catch {}
+          return;
+        }
       }
 
       if (key === 'l') {
@@ -3052,6 +3056,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   const canClickFaceForP28 = pendingP28 && it.kind === 'face' && it.card?.type === 'persona' && !(Array.isArray(it.card?.tags) && it.card.tags.includes('faction:fbk')) && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP37 = pendingP37 && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
                   const canClickFaceForP3A = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && it.kind === 'face' && it.card?.type === 'persona' && Array.isArray(it.card?.tags) && it.card.tags.includes('faction:leftwing') && !it.card?.shielded && !isImmovablePersona(it.card);
+                  const pendingP3Choice = G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId);
                   const pendingA7 = G.pending?.kind === 'action_7_block_persona' && String(playerID) === String(G.pending.attackerId);
                   const canClickFaceForA7 = pendingA7 && it.kind === 'face' && it.card?.type === 'persona' && !isImmovablePersona(it.card);
 
@@ -3106,6 +3111,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         }
                         if (canClickFaceForP3A) {
                           try { playSfx('ui', 0.35); moves.persona3ChooseOption('a', String(p.id), it.card.id); } catch {}
+                          return;
+                        }
+                        if (pendingP3Choice) {
+                          // Option B: click any opponent card to apply the global token-removal effect.
+                          try { playSfx('ui', 0.35); moves.persona3ChooseOption('b'); } catch {}
                           return;
                         }
                         if (canClickFaceForA7) {
@@ -3261,6 +3271,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               type="button"
               className="px-3 py-1 rounded-full bg-zinc-700/70 border border-zinc-300/20 hover:bg-zinc-700/90"
               onClick={() => { try { playSfx('ui', 0.25); moves.persona11Skip(); } catch {} }}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
+      {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-auto select-none">
+          <div className="bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
+            <span>SVTV: click leftwing persona to discard (A) OR click any opponent card for -tokens (B)</span>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full bg-zinc-700/70 border border-zinc-300/20 hover:bg-zinc-700/90"
+              onClick={() => { try { playSfx('ui', 0.25); moves.persona3Skip(); } catch {} }}
             >
               Skip
             </button>
