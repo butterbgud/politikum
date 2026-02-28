@@ -2439,6 +2439,50 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       });
   }, [G.players, playerID]);
 
+  // Auto-pick sole opponent for flows that start with “choose opponent”.
+  useEffect(() => {
+    const only = opponents?.length === 1 ? opponents[0] : null;
+    if (!only) return;
+
+    // action_4/action_9: target player
+    if (pickTargetForAction4) {
+      try { moves.playAction(pickTargetForAction4.cardId, String(only.id)); } catch {}
+      setPickTargetForAction4(null);
+      return;
+    }
+    if (pickTargetForAction9) {
+      try { moves.playAction(pickTargetForAction9.cardId, String(only.id)); } catch {}
+      setPickTargetForAction9(null);
+      return;
+    }
+
+    // persona_9: must be played into opponent coalition
+    if (pickTargetForPersona9) {
+      try {
+        const coalFaces = (only.coalition || []).filter((c) => c.type === 'persona');
+        if (coalFaces.length >= 1) {
+          setPlacementModeOpp({ cardId: pickTargetForPersona9.cardId, targetId: String(only.id), neighborId: null, side: 'right' });
+          setPickTargetForPersona9(null);
+          return;
+        }
+        moves.playPersona(pickTargetForPersona9.cardId, undefined, 'right', String(only.id));
+      } catch {}
+      setPickTargetForPersona9(null);
+      return;
+    }
+
+    // persona_17/p45: target player
+    if (pending?.kind === 'persona_17_pick_opponent' && String(pending?.playerId) === String(playerID)) {
+      try { moves.persona17PickOpponent(String(only.id)); } catch {}
+      return;
+    }
+    if (pending?.kind === 'persona_45_steal_from_opponent' && String(pending?.playerId) === String(playerID)) {
+      try { moves.persona45StealFromOpponent(String(only.id)); } catch {}
+      return;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opponents, pickTargetForAction4, pickTargetForAction9, pickTargetForPersona9, pending?.kind]);
+
   const myVpBase = (me?.coalition || []).reduce((s, c) => s + Number(c.baseVp ?? c.vp ?? 0), 0);
   const myVpTokens = (me?.coalition || []).reduce((s, c) => s + Number(c.vpDelta || 0), 0);
   const myVpPassives = (me?.coalition || []).reduce((s, c) => s + Number(c.passiveVpDelta || 0), 0);
