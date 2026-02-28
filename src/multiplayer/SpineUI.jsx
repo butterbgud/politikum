@@ -2819,6 +2819,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
+      {showHotkeys && (
       <div className="fixed top-3 left-3 z-[2000] select-none">
         <div className="mb-1 pointer-events-none select-none text-amber-200/70 font-black tracking-[0.35em] uppercase text-[10px]">Politikum</div>
         <div className="flex flex-col items-start gap-1">
@@ -2864,6 +2865,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* (admin link removed from in-game UI) */}
 
@@ -4457,12 +4459,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       </div>
 
-      {/* Turn status (under hashes + matchId/report) */}
-      <div className="fixed top-[82px] left-3 z-[900] pointer-events-none select-none">
-        <div className="bg-black/45 border border-amber-900/20 rounded-xl px-3 py-2 text-[10px] font-mono text-amber-200/70 whitespace-pre">
-          turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}{(G && G.debugLastEndTurnReject) ? `\nendTurn blocked: ${G.debugLastEndTurnReject}` : ''}
+      {/* Turn status (only when hotkeys visible) */}
+      {showHotkeys && (
+        <div className="fixed top-[82px] left-3 z-[900] pointer-events-none select-none">
+          <div className="bg-black/45 border border-amber-900/20 rounded-xl px-3 py-2 text-[10px] font-mono text-amber-200/70 whitespace-pre">
+            turn: {String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}{(G && G.debugLastEndTurnReject) ? `\nendTurn blocked: ${G.debugLastEndTurnReject}` : ''}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -5317,7 +5321,7 @@ export default function SpineUI() {
   return (
     <div className="relative">
       <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
-      <div className="fixed bottom-3 right-3 z-[9999] pointer-events-auto">
+      <div className="fixed bottom-3 left-3 z-[9999] pointer-events-auto">
         <button
           type="button"
           onClick={() => { if (confirm('Forget this match and return to lobby?')) forgetMatch(); }}
