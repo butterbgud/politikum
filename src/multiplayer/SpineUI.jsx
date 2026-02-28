@@ -1084,6 +1084,8 @@ function AdminPage() {
   });
   const [summary, setSummary] = useState(null);
   const [games, setGames] = useState([]);
+  const [gamesOffset, setGamesOffset] = useState(0);
+  const [gamesHasMore, setGamesHasMore] = useState(false);
   const [liveMatches, setLiveMatches] = useState([]);
   const [liveTotal, setLiveTotal] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -1198,18 +1200,22 @@ function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const fetchAdmin = async () => {
+  const fetchAdmin = async (opts = {}) => {
     if (!token) {
       setError('Set X-Admin-Token first.');
       return;
     }
+    const loadMore = !!opts.loadMore;
+    const limitGames = 20;
+    const offset = loadMore ? Number(gamesOffset || 0) : 0;
+
     setLoading(true);
     setError('');
     try {
       const headers = { 'X-Admin-Token': token };
       const [summaryRes, gamesRes, matchesRes, lbRes] = await Promise.all([
         fetch(`${SERVER}/admin/summary`, { headers }),
-        fetch(`${SERVER}/admin/games?limit=200&offset=0`, { headers }),
+        fetch(`${SERVER}/admin/games?limit=${limitGames}&offset=${offset}`, { headers }),
         fetch(`${SERVER}/admin/matches?limit=20`, { headers }),
         fetch(`${SERVER}/admin/leaderboard?limit=20`, { headers }),
       ]);
@@ -1222,7 +1228,15 @@ function AdminPage() {
       const matchesJson = await matchesRes.json();
       const lbJson = await lbRes.json();
       setSummary(summaryJson);
-      setGames(gamesJson.items || []);
+
+      const newItems = gamesJson.items || [];
+      if (loadMore) setGames((prev) => [...prev, ...newItems]);
+      else setGames(newItems);
+
+      const nextOffset = offset + newItems.length;
+      setGamesOffset(nextOffset);
+      setGamesHasMore(newItems.length >= limitGames);
+
       setLiveMatches(matchesJson.items || []);
       setLiveTotal(matchesJson.total ?? null);
       setLeaderboard(lbJson.items || []);
@@ -1687,7 +1701,7 @@ function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredGames.slice(0, 10).map((g) => (
+                {filteredGames.map((g) => (
                   <tr key={g.matchId} className="border-b border-amber-900/20">
                     <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(g.finishedAt || g.createdAt)}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">
@@ -1741,6 +1755,17 @@ function AdminPage() {
                 )}
               </tbody>
             </table>
+
+              <div className="mt-2 flex items-center justify-center">
+                <button
+                  type="button"
+                  disabled={loading || !gamesHasMore}
+                  onClick={() => fetchAdmin({ loadMore: true })}
+                  className="px-4 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[11px] uppercase tracking-widest disabled:opacity-50"
+                >
+                  Load more
+                </button>
+              </div>
             </div>
           </div>
         </div>
