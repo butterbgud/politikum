@@ -741,7 +741,7 @@ function AdminMobileGamesPage() {
   const [profileErr, setProfileErr] = useState('');
   const [profile, setProfile] = useState(null);
 
-  const openProfileById = async (pid) => {
+  const openProfileById = async (pid, expectedName = '') => {
     const id = String(pid || '').trim();
     if (!id) return;
     setShowProfile(true);
@@ -751,6 +751,31 @@ function AdminMobileGamesPage() {
       const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
+
+      const exp = String(expectedName || '').trim().toLowerCase();
+      const got = String(json?.name || json?.playerName || '').trim().toLowerCase();
+
+      // Rare: game_players mapping can be wrong (name->playerId). Fallback resolve by name.
+      if (exp && got && exp !== got) {
+        try {
+          const lb = await fetch(`${SERVER}/public/leaderboard?limit=200`, { cache: 'no-store' });
+          if (lb.ok) {
+            const lbJson = await lb.json();
+            const items = Array.isArray(lbJson?.items) ? lbJson.items : [];
+            const hit = items.find((r) => String(r?.name || '').trim().toLowerCase() === exp);
+            const alt = String(hit?.playerId || '').trim();
+            if (alt && alt !== id) {
+              const res2 = await fetch(`${SERVER}/public/profile/${encodeURIComponent(alt)}`, { cache: 'no-store' });
+              if (res2.ok) {
+                const json2 = await res2.json();
+                setProfile(json2);
+                return;
+              }
+            }
+          }
+        } catch {}
+      }
+
       setProfile(json);
     } catch (e) {
       setProfileErr(e?.message || String(e));
@@ -943,7 +968,7 @@ function AdminMobileGamesPage() {
                         key={String(p?.playerId || p?.name || Math.random())}
                         type="button"
                         disabled={!canOpen}
-                        onClick={() => { if (canOpen) openProfileById(p.playerId); }}
+                        onClick={() => { if (canOpen) openProfileById(p.playerId, p.name); }}
                         className={
                           "px-2 py-1 rounded-full border text-[11px] font-mono font-black " +
                           (isWin
