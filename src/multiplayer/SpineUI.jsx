@@ -832,7 +832,7 @@ function AdminMobileGamesPage() {
           <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black">X-Admin-Token</label>
           <div className="flex items-center gap-2">
             <input type="password" value={tokenDraft} onChange={(e) => setTokenDraft(e.target.value)} className="flex-1 px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
-            <button type="button" onClick={() => applyToken(tokenDraft)} disabled={loading} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Use</button>
+            <button type="button" onClick={() => { applyToken(tokenDraft); setTimeout(() => { try { fetchGames(); } catch {} }, 0); }} disabled={loading} className="px-4 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-xs uppercase tracking-widest">Use</button>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={fetchGames} disabled={loading || !token} className="flex-1 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
