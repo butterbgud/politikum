@@ -1117,19 +1117,49 @@ function AdminPage() {
   const [profileErr, setProfileErr] = useState('');
   const [profile, setProfile] = useState(null);
 
-  const openProfileById = async (pid) => {
+  const openProfileById = async (pid, expectedName = '') => {
     const id = String(pid || '').trim();
     if (!id) return;
-    setShowProfile(true);
+
+    const fetchProfile = async (playerId) => {
+      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(String(playerId))}`, { cache: 'no-store' });
+      if (!res.ok) return null;
+      const json = await res.json();
+      if (!json?.ok) return null;
+      return json;
+    };
+
     setProfileLoading(true);
     setProfileErr('');
+    setProfile(null);
+
     try {
-      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      let json = await fetchProfile(id);
+      if (!json) return;
+
+      const exp = String(expectedName || '').trim().toLowerCase();
+      const got = String(json?.name || json?.playerName || '').trim().toLowerCase();
+
+      if (exp && got && exp !== got) {
+        let resolved = false;
+        try {
+          const lb = await fetch(`${SERVER}/public/leaderboard?limit=200`, { cache: 'no-store' });
+          if (lb.ok) {
+            const lbJson = await lb.json();
+            const items = Array.isArray(lbJson?.items) ? lbJson.items : [];
+            const hit = items.find((r) => String(r?.name || '').trim().toLowerCase() === exp);
+            const alt = String(hit?.playerId || '').trim();
+            if (alt) {
+              const json2 = await fetchProfile(alt);
+              if (json2) { json = json2; resolved = true; }
+            }
+          }
+        } catch {}
+        if (!resolved) return;
+      }
+
       setProfile(json);
-    } catch (e) {
-      setProfileErr(e?.message || String(e));
+      setShowProfile(true);
     } finally {
       setProfileLoading(false);
     }
@@ -1543,7 +1573,7 @@ function AdminPage() {
                       <button
                         type="button"
                         disabled={!canOpen}
-                        onClick={() => { if (canOpen) openProfileById(r.playerId); }}
+                        onClick={() => { if (canOpen) openProfileById(r.playerId, r.name); }}
                         className={(canOpen ? 'underline underline-offset-4 hover:text-amber-50 ' : '') + 'text-amber-100/90 font-black'}
                         title={canOpen ? 'Open profile' : ''}
                       >
@@ -1682,7 +1712,7 @@ function AdminPage() {
                               key={idx}
                               type="button"
                               disabled={!canOpen}
-                              onClick={() => { if (canOpen) openProfileById(p.playerId); }}
+                              onClick={() => { if (canOpen) openProfileById(p.playerId, p.name); }}
                               className={
                                 'px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 border ' +
                                 (isWin
