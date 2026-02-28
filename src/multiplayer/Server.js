@@ -21,7 +21,8 @@ let lastAdminSyncAt = null;
 const FLATFILE_DIR = process.env.FLATFILE_DIR || path.join(process.cwd(), 'var', 'bgio');
 try { fs.mkdirSync(FLATFILE_DIR, { recursive: true }); } catch {}
 
-const PROFILE_IMG_DIR = process.env.PROFILE_IMG_DIR || path.join(process.cwd(), 'var', 'profile_images');
+// Prefer explicit absolute default (VPS layout). process.cwd() can be surprising under PM2.
+const PROFILE_IMG_DIR = process.env.PROFILE_IMG_DIR || '/opt/politikum/var/profile_images';
 try { fs.mkdirSync(PROFILE_IMG_DIR, { recursive: true }); } catch {}
 
 const server = Server({
