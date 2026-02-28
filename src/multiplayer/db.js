@@ -2,6 +2,15 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { Glicko2 } = require('glicko2');
+
+const GLICKO2_DEFAULT_RATING = 1500;
+const GLICKO2_DEFAULT_RD = 350;
+const GLICKO2_DEFAULT_VOL = 0.06;
+const GLICKO2_TAU = 0.5;
 
 const DEFAULT_DB_PATH = process.env.POLITIKUM_DB_PATH || path.resolve('var', 'politikum.sqlite');
 
@@ -81,6 +90,8 @@ function openDatabase() {
     CREATE TABLE IF NOT EXISTS ratings (
       player_id TEXT PRIMARY KEY,
       rating INTEGER NOT NULL,
+      rd REAL NOT NULL,
+      vol REAL NOT NULL,
       games_played INTEGER NOT NULL,
       wins INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
@@ -185,8 +196,20 @@ function openDatabase() {
     }
   };
 
-  try { db.prepare('CREATE TABLE IF NOT EXISTS ratings (player_id TEXT PRIMARY KEY, rating INTEGER NOT NULL, games_played INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run(); } catch {}
+  try { db.prepare('CREATE TABLE IF NOT EXISTS ratings (player_id TEXT PRIMARY KEY, rating INTEGER NOT NULL, rd REAL NOT NULL, vol REAL NOT NULL, games_played INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run(); } catch {}
   try { db.prepare('CREATE INDEX IF NOT EXISTS idx_ratings_updated_at ON ratings(updated_at)').run(); } catch {}
+
+  // ratings.rd + ratings.vol (Glicko-2)
+  try {
+    if (!hasColumn('ratings', 'rd')) {
+      db.prepare('ALTER TABLE ratings ADD COLUMN rd REAL NOT NULL DEFAULT 350').run();
+    }
+  } catch {}
+  try {
+    if (!hasColumn('ratings', 'vol')) {
+      db.prepare('ALTER TABLE ratings ADD COLUMN vol REAL NOT NULL DEFAULT 0.06').run();
+    }
+  } catch {}
 
   // games.elo_applied
   try {
@@ -435,39 +458,55 @@ export function adminMergePlayerIds({ fromPlayerId, intoPlayerId }) {
 
 function getRating(playerId) {
   const db = sqlite;
-  const row = db.prepare('SELECT player_id AS playerId, rating, games_played AS gamesPlayed, wins, updated_at AS updatedAt FROM ratings WHERE player_id = ?').get(String(playerId));
-  if (row) return { ...row, rating: Number(row.rating) };
-  return { playerId: String(playerId), rating: 1000, gamesPlayed: 0, wins: 0, updatedAt: null };
+  const row = db.prepare('SELECT player_id AS playerId, rating, rd, vol, games_played AS gamesPlayed, wins, updated_at AS updatedAt FROM ratings WHERE player_id = ?').get(String(playerId));
+  if (row) {
+    return {
+      ...row,
+      rating: Number(row.rating),
+      rd: Number(row.rd),
+      vol: Number(row.vol),
+    };
+  }
+  return {
+    playerId: String(playerId),
+    rating: GLICKO2_DEFAULT_RATING,
+    rd: GLICKO2_DEFAULT_RD,
+    vol: GLICKO2_DEFAULT_VOL,
+    gamesPlayed: 0,
+    wins: 0,
+    updatedAt: null,
+  };
 }
 
-function setRating({ playerId, rating, gamesPlayed, wins }) {
+function setRating({ playerId, rating, rd, vol, gamesPlayed, wins }) {
   const db = sqlite;
   const now = nowMs();
   db.prepare(`
-    INSERT INTO ratings (player_id, rating, games_played, wins, updated_at)
-    VALUES (@player_id, @rating, @games_played, @wins, @updated_at)
+    INSERT INTO ratings (player_id, rating, rd, vol, games_played, wins, updated_at)
+    VALUES (@player_id, @rating, @rd, @vol, @games_played, @wins, @updated_at)
     ON CONFLICT(player_id) DO UPDATE SET
       rating=excluded.rating,
+      rd=excluded.rd,
+      vol=excluded.vol,
       games_played=excluded.games_played,
       wins=excluded.wins,
       updated_at=excluded.updated_at
   `).run({
     player_id: String(playerId),
-    rating: Math.round(Number(rating) || 1000),
+    rating: Math.round(Number(rating) || GLICKO2_DEFAULT_RATING),
+    rd: Number.isFinite(Number(rd)) ? Number(rd) : GLICKO2_DEFAULT_RD,
+    vol: Number.isFinite(Number(vol)) ? Number(vol) : GLICKO2_DEFAULT_VOL,
     games_played: Number(gamesPlayed) || 0,
     wins: Number(wins) || 0,
     updated_at: now,
   });
 }
 
-function eloExpected(ra, rb) {
-  return 1 / (1 + Math.pow(10, (rb - ra) / 400));
-}
-
-function applyEloForGameId(gameId) {
+function applyGlicko2ForGameId(gameId) {
   const db = sqlite;
-  const game = db.prepare('SELECT id, elo_applied AS eloApplied, winner_player_id AS winnerPlayerId, winner_name AS winnerName FROM games WHERE id = ?').get(gameId);
-  if (!game || Number(game.eloApplied || 0) === 1) return;
+  // NOTE: column is still named elo_applied for migration simplicity; now it means “rating applied”.
+  const game = db.prepare('SELECT id, elo_applied AS ratingApplied, winner_player_id AS winnerPlayerId, winner_name AS winnerName FROM games WHERE id = ?').get(gameId);
+  if (!game || Number(game.ratingApplied || 0) === 1) return;
 
   const players = db.prepare('SELECT player_id AS playerId, name, is_bot AS isBot FROM game_players WHERE game_id = ?').all(gameId);
   const humans = players.filter((p) => !p.isBot && p.playerId);
@@ -486,53 +525,61 @@ function applyEloForGameId(gameId) {
     if (byName) winnerId = String(byName.playerId);
   }
 
-  // If we still don't know a HUMAN winner (e.g. bots won), don't change ratings,
-  // but still count the game for human participants.
-  if (!winnerId) {
-    for (const p of humans) {
-      const pid = String(p.playerId);
-      const cur = getRating(pid);
-      setRating({
-        playerId: pid,
-        rating: cur.rating,
-        gamesPlayed: Number(cur.gamesPlayed || 0) + 1,
-        wins: Number(cur.wins || 0),
-      });
-    }
-    db.prepare('UPDATE games SET elo_applied = 1 WHERE id = ?').run(gameId);
-    return;
-  }
+  // Glicko-2 engine
+  const ranking = new Glicko2({
+    tau: GLICKO2_TAU,
+    rating: GLICKO2_DEFAULT_RATING,
+    rd: GLICKO2_DEFAULT_RD,
+    vol: GLICKO2_DEFAULT_VOL,
+  });
 
-  const K = 24;
-
-  // Winner-vs-each-other pairwise (simple FFA MVP).
-  const deltas = new Map();
-  for (const p of humans) deltas.set(String(p.playerId), 0);
-
-  for (const p of humans) {
-    const pid = String(p.playerId);
-    if (pid === winnerId) continue;
-
-    const rw = getRating(winnerId).rating;
-    const rl = getRating(pid).rating;
-    const ew = eloExpected(rw, rl);
-    const el = eloExpected(rl, rw);
-    const dw = K * (1 - ew);
-    const dl = K * (0 - el);
-
-    deltas.set(winnerId, (deltas.get(winnerId) || 0) + dw);
-    deltas.set(pid, (deltas.get(pid) || 0) + dl);
-  }
-
+  const objs = new Map();
   for (const p of humans) {
     const pid = String(p.playerId);
     const cur = getRating(pid);
-    const isWinner = pid === winnerId;
+    const pl = ranking.makePlayer(Number(cur.rating), Number(cur.rd), Number(cur.vol));
+    objs.set(pid, { cur, pl });
+  }
+
+  const matches = [];
+
+  if (winnerId) {
+    // Winner-vs-each-other pairwise (simple FFA MVP)
+    for (const p of humans) {
+      const pid = String(p.playerId);
+      if (pid === winnerId) continue;
+      matches.push([objs.get(winnerId).pl, objs.get(pid).pl, 1]);
+    }
+  } else {
+    // No known winner: treat as draw (only meaningful for 2 humans)
+    if (humans.length === 2) {
+      const a = String(humans[0].playerId);
+      const b = String(humans[1].playerId);
+      matches.push([objs.get(a).pl, objs.get(b).pl, 0.5]);
+    }
+  }
+
+  if (matches.length) {
+    ranking.updateRatings(matches);
+  }
+
+  // Persist updated ratings; if no matches (e.g. 1 human), just count the game.
+  for (const p of humans) {
+    const pid = String(p.playerId);
+    const o = objs.get(pid);
+    const isWinner = winnerId && pid === winnerId;
+
+    const newRating = matches.length ? o.pl.getRating() : o.cur.rating;
+    const newRd = matches.length ? o.pl.getRd() : o.cur.rd;
+    const newVol = matches.length ? o.pl.getVol() : o.cur.vol;
+
     setRating({
       playerId: pid,
-      rating: cur.rating + (deltas.get(pid) || 0),
-      gamesPlayed: Number(cur.gamesPlayed || 0) + 1,
-      wins: Number(cur.wins || 0) + (isWinner ? 1 : 0),
+      rating: newRating,
+      rd: newRd,
+      vol: newVol,
+      gamesPlayed: Number(o.cur.gamesPlayed || 0) + 1,
+      wins: Number(o.cur.wins || 0) + (isWinner ? 1 : 0),
     });
   }
 
@@ -545,7 +592,7 @@ export function eloRecomputeAll() {
     db.prepare('DELETE FROM ratings').run();
     db.prepare('UPDATE games SET elo_applied = 0').run();
     const ids = db.prepare('SELECT id FROM games WHERE finished_at IS NOT NULL ORDER BY finished_at ASC').all();
-    for (const r of ids) applyEloForGameId(r.id);
+    for (const r of ids) applyGlicko2ForGameId(r.id);
   });
   txn();
 }
@@ -681,7 +728,7 @@ export function recordGameFinished({
   const gameRow = db.prepare('SELECT id FROM games WHERE match_id = ?').get(matchId);
   if (gameRow) {
     try {
-      applyEloForGameId(gameRow.id);
+      applyGlicko2ForGameId(gameRow.id);
     } catch {}
     console.log(
       `Recorded game matchId=${matchId} winner=${winnerName ?? 'n/a'} finishedAt=${finishedAt}`,
