@@ -2718,6 +2718,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         return;
       }
 
+      // p13 retaliation (out-of-turn): allow skipping with Esc
+      if (pendingP13 && key === 'escape') {
+        try { moves.persona13Skip(); } catch {}
+        return;
+      }
+
       // p23 choice: 0..3 tokens
       if (pendingP23 && (key === '0' || key === '1' || key === '2' || key === '3')) {
         try { moves.persona23ChooseSelfInflict(Number(key)); } catch {}
@@ -3402,8 +3408,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {pendingP13 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            p13 ({pendingP13Source}): click attacker persona to give -1
+          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] pointer-events-auto">
+            p13 ({pendingP13Source}): кликни по персоне атакующего чтобы дать -1 · Esc пропустить
           </div>
         </div>
       )}
