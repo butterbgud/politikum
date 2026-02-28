@@ -3245,7 +3245,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         }
                       }}
                     >
-                      {/* shieldedBy action_13 visual removed (too noisy) */}
+                      {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
+                        <img
+                          src={'/cards/action_13.webp'}
+                          alt={'action_13'}
+                          className="absolute z-30 pointer-events-none select-none opacity-95"
+                          style={{
+                            width: '50%',
+                            aspectRatio: '2 / 3',
+                            right: '-20%',
+                            top: '-12%',
+                            transform: 'rotate(-30deg)',
+                          }}
+                          draggable={false}
+                        />
+                      )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                       {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
                         <div className={
@@ -3260,7 +3274,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       )}
                       {it.kind === 'face' && (it.card?.shielded || it.card?.blockedAbilities) && (
                         <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
-                          {it.card?.shielded && (
+                          {it.card?.shielded && String(it.card?.shieldedBy || '') !== 'action_13' && (
                             <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                           )}
                           {it.card?.blockedAbilities && (
@@ -4437,7 +4451,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     )}
                     {(c.shielded || c.blockedAbilities) && (
                       <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
-                        {c.shielded && (
+                        {c.shielded && String(c?.shieldedBy || '') !== 'action_13' && (
                           <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                         )}
                         {c.blockedAbilities && (
