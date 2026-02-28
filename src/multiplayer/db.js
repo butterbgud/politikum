@@ -112,6 +112,7 @@ function openDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_games_finished_at ON games(finished_at);
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_game_players_game_player ON game_players(game_id, player_id);
 
     -- tournaments (MVP)
     CREATE TABLE IF NOT EXISTS tournaments (
@@ -641,7 +642,7 @@ export function recordGameFinished({
   `);
 
   const insertPlayer = db.prepare(`
-    INSERT INTO game_players (game_id, player_id, name, is_bot)
+    INSERT OR IGNORE INTO game_players (game_id, player_id, name, is_bot)
     VALUES (@game_id, @player_id, @name, @is_bot);
   `);
 
