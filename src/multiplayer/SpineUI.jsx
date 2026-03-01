@@ -3091,6 +3091,15 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
 
+  // Mobile: when the hand drawer is closed, reset any zoom/selection so cards return to small size.
+  useEffect(() => {
+    if (!MOBILE) return;
+    if (mobileHandOpen) return;
+    setMobileHandSelected(null);
+    setHoverHandIndex(null);
+    setHoverMyCoalition(null);
+  }, [MOBILE, mobileHandOpen]);
+
   const [bugModal, setBugModal] = useState(false);
   const [bugText, setBugText] = useState('');
   const [bugContact, setBugContact] = useState('');
@@ -5156,8 +5165,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {/* My coalition (built row fan) */}
       <div className={"fixed -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
         style={(() => {
-          const dx = 'min(50px, 6vw)';
-          const dy = 'min(50px, 6vh)';
+          const dx = 'calc(min(50px, 6vw) + min(50px, 6vw))'; // +50 more right
+          const dy = 'calc(min(50px, 6vh) + min(100px, 12vh))'; // +100 more down
           if (MOBILE) {
             return {
               left: `calc(50% + ${dx})`,
