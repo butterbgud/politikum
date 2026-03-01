@@ -5995,13 +5995,24 @@ export default function SpineUI() {
       const p = String(window.location.pathname || '');
       const h = String(window.location.hash || '');
 
+      const urlParams = (() => { try { return new URLSearchParams(String(window.location.search || '')); } catch { return new URLSearchParams(''); } })();
+      const forceUi = String(urlParams.get('ui') || '').trim(); // 'desktop' | 'mobile'
+      try {
+        if (forceUi === 'desktop') window.localStorage.setItem('politikum.forceUi', 'desktop');
+        if (forceUi === 'mobile') window.localStorage.setItem('politikum.forceUi', 'mobile');
+      } catch {}
+      const forcedUi = (() => { try { return String(window.localStorage.getItem('politikum.forceUi') || ''); } catch { return ''; } })();
+
       const isMobileDevice = (() => {
-        try {
-          if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
-        } catch {}
+        if (forcedUi === 'desktop') return false;
+        if (forcedUi === 'mobile') return true;
         try {
           const ua = String(navigator.userAgent || '');
-          return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+          // Prefer UA over pointer: coarse triggers on some touch laptops.
+          if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+        } catch {}
+        try {
+          if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
         } catch {}
         return false;
       })();
