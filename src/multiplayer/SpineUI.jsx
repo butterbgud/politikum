@@ -2093,24 +2093,24 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                     return (
                       <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
                         <div className="flex items-center gap-2">
-                          <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2'}>
+                          <button
+                            type="button"
+                            className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2 hover:text-amber-50'}
+                            onClick={() => {
+                              const pid = String(p?.identity?.playerId || '').trim();
+                              if (pid) openProfileById(pid, String(p?.name || ''));
+                            }}
+                            disabled={!String(p?.identity?.playerId || '').trim()}
+                            title={String(p?.identity?.playerId || '').trim() ? 'Открыть профиль' : ''}
+                          >
                             <span>{p.name || `Seat ${p.id}`}</span>
                             {(() => {
                               const pid = String(p?.identity?.playerId || '').trim();
                               const r = pid ? ratingsMap?.[pid] : null;
                               if (!pid || r == null) return null;
-                              return (
-                                <button
-                                  type="button"
-                                  className="text-amber-100/80 hover:text-amber-100 underline underline-offset-2 text-[11px] font-mono"
-                                  title="Открыть профиль"
-                                  onClick={() => openProfileById(pid, String(p?.name || ''))}
-                                >
-                                  ({r})
-                                </button>
-                              );
+                              return <span className="text-amber-100/80 font-mono text-[11px]">({r})</span>;
                             })()}
-                          </div>
+                          </button>
                           {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
                         </div>
                       </div>
