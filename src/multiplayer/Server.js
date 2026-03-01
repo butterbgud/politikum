@@ -7,7 +7,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound, bugreportInsert, bugreportsList, bugreportSetStatus } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -54,6 +54,9 @@ const server = Server({
 });
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "12qw12";
+
+const BUGREPORT_TG_TOKEN = process.env.BUGREPORT_TG_TOKEN || '';
+const BUGREPORT_TG_CHAT_ID = process.env.BUGREPORT_TG_CHAT_ID || '';
 
 const BETA_PASSWORDS_RAW = process.env.BETA_PASSWORDS || process.env.BETA_PASSWORD || '';
 const BETA_PASSWORDS = String(BETA_PASSWORDS_RAW)
@@ -330,6 +333,68 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
   });
 
   app.use(async (ctx, next) => {
+    if (ctx.path === '/public/bugreport' && ctx.method === 'POST') {
+      const body = ctx.request.body || {};
+      const text = String(body.text || '').trim();
+      if (!text) ctx.throw(400, 'Missing text');
+
+      const matchId = body.matchId != null ? String(body.matchId) : null;
+      const playerId = body.playerId != null ? String(body.playerId) : null;
+      const name = body.name != null ? String(body.name) : null;
+      const contact = body.contact != null ? String(body.contact) : null;
+      const contextJson = body.context != null ? JSON.stringify(body.context) : (body.contextJson != null ? String(body.contextJson) : null);
+
+      const userAgent = String(ctx.request.headers['user-agent'] || '').trim();
+      const url = String(body.url || ctx.request.headers['referer'] || '').trim();
+
+      const ins = bugreportInsert({ matchId, playerId, name, contact, text, contextJson, userAgent, url });
+
+      // Optional Telegram forward (non-blocking)
+      try {
+        if (BUGREPORT_TG_TOKEN && BUGREPORT_TG_CHAT_ID) {
+          const msg = [
+            '🪲 Politikum bugreport',
+            ins?.id ? `#${ins.id}` : '',
+            matchId ? `match: ${matchId}` : '',
+            name ? `from: ${name}` : (playerId ? `playerId: ${playerId}` : ''),
+            contact ? `contact: ${contact}` : '',
+            url ? `url: ${url}` : '',
+            '',
+            text,
+          ].filter(Boolean).join('\n');
+
+          fetch(`https://api.telegram.org/bot${BUGREPORT_TG_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ chat_id: BUGREPORT_TG_CHAT_ID, text: msg.slice(0, 3800) }),
+          }).catch(() => {});
+        }
+      } catch {}
+
+      ctx.body = { ok: true, id: ins?.id ?? null };
+      return;
+    }
+
+    if (ctx.path === '/admin/bugreports' && ctx.method === 'GET') {
+      requireAdmin(ctx);
+      const limit = Math.min(200, Number.parseInt(ctx.query.limit ?? '50', 10) || 50);
+      const offset = Number.parseInt(ctx.query.offset ?? '0', 10) || 0;
+      const status = ctx.query.status != null ? String(ctx.query.status) : null;
+      ctx.body = bugreportsList({ limit, offset, status });
+      return;
+    }
+
+    {
+      const m = String(ctx.path || '').match(/^\/admin\/bugreport\/(\d+)\/status$/);
+      if (m && ctx.method === 'POST') {
+        requireAdmin(ctx);
+        const id = Number.parseInt(m[1], 10);
+        const body = ctx.request.body || {};
+        ctx.body = bugreportSetStatus({ id, status: body.status });
+        return;
+      }
+    }
+
     if (ctx.path === '/admin/summary' && ctx.method === 'GET') {
       requireAdmin(ctx);
       await syncFinishedGames(ctx.db);

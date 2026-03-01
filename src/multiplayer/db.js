@@ -185,6 +185,25 @@ function openDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_lobby_chat_messages_created_at ON lobby_chat_messages(created_at);
+
+    -- bug reports (MVP)
+    CREATE TABLE IF NOT EXISTS bugreports (
+      id INTEGER PRIMARY KEY,
+      created_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'new',
+      match_id TEXT,
+      player_id TEXT,
+      name TEXT,
+      contact TEXT,
+      text TEXT NOT NULL,
+      context_json TEXT,
+      user_agent TEXT,
+      url TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_bugreports_created_at ON bugreports(created_at);
+    CREATE INDEX IF NOT EXISTS idx_bugreports_status ON bugreports(status);
+    CREATE INDEX IF NOT EXISTS idx_bugreports_match_id ON bugreports(match_id);
   `);
 
   // Migrate older DBs (best effort, but avoid throwing during startup)
@@ -1467,3 +1486,60 @@ export function tournamentGenerateNextRound({ id }) {
 
   return { ok: true, round: { id: roundId, roundIndex: nextRoundIndex }, tables, tournament: tournamentGet({ id: tid }) };
 }
+
+// --- bugreports ---
+export function bugreportInsert({
+  matchId,
+  playerId,
+  name,
+  contact,
+  text,
+  contextJson,
+  userAgent,
+  url,
+} = {}) {
+  const db = sqlite;
+  const now = nowMs();
+  const row = db.prepare(`
+    INSERT INTO bugreports (created_at, status, match_id, player_id, name, contact, text, context_json, user_agent, url)
+    VALUES (@created_at, 'new', @match_id, @player_id, @name, @contact, @text, @context_json, @user_agent, @url)
+    RETURNING id
+  `).get({
+    created_at: now,
+    match_id: matchId ? String(matchId) : null,
+    player_id: playerId ? String(playerId) : null,
+    name: name ? String(name) : null,
+    contact: contact ? String(contact) : null,
+    text: String(text || '').slice(0, 4000),
+    context_json: contextJson ? String(contextJson).slice(0, 20000) : null,
+    user_agent: userAgent ? String(userAgent).slice(0, 512) : null,
+    url: url ? String(url).slice(0, 512) : null,
+  });
+  return { ok: true, id: row?.id ?? null };
+}
+
+export function bugreportsList({ limit = 50, offset = 0, status = null } = {}) {
+  const db = sqlite;
+  const lim = Math.min(200, Math.max(1, Number.parseInt(limit, 10) || 50));
+  const off = Math.max(0, Number.parseInt(offset, 10) || 0);
+  const st = status ? String(status) : null;
+  const where = st ? 'WHERE status=@status' : '';
+  const rows = db.prepare(`SELECT * FROM bugreports ${where} ORDER BY created_at DESC LIMIT @limit OFFSET @offset`).all({
+    status: st,
+    limit: lim,
+    offset: off,
+  });
+  const totalRow = db.prepare(`SELECT COUNT(*) as n FROM bugreports ${where}`).get({ status: st });
+  return { ok: true, total: totalRow?.n ?? 0, rows };
+}
+
+export function bugreportSetStatus({ id, status } = {}) {
+  const db = sqlite;
+  const sid = Number.parseInt(id, 10);
+  const st = String(status || '').trim();
+  if (!Number.isFinite(sid)) return { ok: false, error: 'bad_id' };
+  if (!['new','seen','done'].includes(st)) return { ok: false, error: 'bad_status' };
+  db.prepare('UPDATE bugreports SET status=@s WHERE id=@id').run({ s: st, id: sid });
+  return { ok: true };
+}
+

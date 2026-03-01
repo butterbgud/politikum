@@ -2549,6 +2549,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileHandOpen, setMobileHandOpen] = useState(false);
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
+
+  const [bugModal, setBugModal] = useState(false);
+  const [bugText, setBugText] = useState('');
+  const [bugContact, setBugContact] = useState('');
+  const [bugSent, setBugSent] = useState(null);
+
   useEffect(() => {
     if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3075,6 +3081,78 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
+      {bugModal && (
+        <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setBugModal(false)}>
+          <div className="w-[min(720px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Сообщить баг</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">match: {String(matchID || '').slice(0, 12) || '—'}</div>
+              </div>
+              <button type="button" onClick={() => setBugModal(false)} className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest">Закрыть</button>
+            </div>
+
+            <div className="mt-3 grid gap-2">
+              <textarea
+                value={bugText}
+                onChange={(e) => setBugText(e.target.value)}
+                placeholder="Опиши что случилось (что нажал, что ожидал, что увидел)…"
+                className="w-full h-28 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+              />
+              <input
+                value={bugContact}
+                onChange={(e) => setBugContact(e.target.value)}
+                placeholder="Контакт (опционально): telegram @ / email"
+                className="w-full px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyText(JSON.stringify(buildBugReport(), null, 2))}
+                  className="px-3 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-[11px]"
+                >
+                  Скопировать тех.данные
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const text = String(bugText || '').trim();
+                    if (!text) { setBugSent('Напиши текст'); return; }
+                    setBugSent('Отправляю…');
+                    try {
+                      const payload = {
+                        text,
+                        contact: String(bugContact || '').trim() || null,
+                        matchId: matchID || null,
+                        playerId: (me?.identity?.playerId || me?.name || playerID || null),
+                        name: (me?.name || null),
+                        context: buildBugReport(),
+                        url: String(window.location.href || ''),
+                      };
+                      const res = await fetch('/public/bugreport', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify(payload),
+                      });
+                      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                      const j = await res.json().catch(() => ({}));
+                      setBugSent(j?.id ? `Отправлено (#${j.id})` : 'Отправлено');
+                      setBugText('');
+                    } catch (e) {
+                      setBugSent(e?.message || String(e));
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-[11px] uppercase tracking-widest"
+                >
+                  Отправить
+                </button>
+              </div>
+              {!!bugSent && <div className="text-[12px] font-mono text-amber-200/80">{bugSent}</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showHotkeys && (
       <div className="fixed top-3 left-3 z-[2000] select-none">
         <div className="mb-1 pointer-events-none select-none text-amber-200/70 font-black tracking-[0.35em] uppercase text-[10px]">Politikum</div>
@@ -3106,11 +3184,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
             <button
               type="button"
-              onClick={() => copyText(JSON.stringify(buildBugReport(), null, 2))}
+              onClick={() => { try { setBugModal(true); setBugSent(null); } catch {} }}
               className="pointer-events-auto bg-slate-800/60 hover:bg-slate-700/70 border border-amber-900/20 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-100/90"
-              title="Report bug (copies JSON: matchId + versions + pending/response)"
+              title="Report bug"
             >
-              Report bug
+              Bug
             </button>
 
             {hudToast && (
