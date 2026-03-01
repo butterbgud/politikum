@@ -4009,7 +4009,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         {MOBILE ? (
           <>
             {/* Mobile text buttons */}
-            <div className="fixed top-3 z-[20000] pointer-events-auto select-none flex flex-col gap-2" style={{ right: 'min(12px, 1vw)', transform: 'translateX(-18px)' }}>
+            <div className="fixed top-3 z-[20000] pointer-events-auto select-none flex flex-col gap-2" style={{ right: 'min(12px, 1vw)', transform: 'translateX(-118px)' }}>
               <button
                 type="button"
                 onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
