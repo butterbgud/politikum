@@ -5143,11 +5143,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className={"fixed left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
-        style={MOBILE
-          ? { bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + min(50px, 6vh))`, transform: 'translateX(calc(-50% - 300px + min(50px, 6vw)))' }
-          : { bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' }
-        }>
+      <div className={"fixed -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
+        style={(() => {
+          const dx = 'min(50px, 6vw)';
+          const dy = 'min(50px, 6vh)';
+          if (MOBILE) {
+            return {
+              left: `calc(50% + ${dx})`,
+              bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + ${dy})`,
+              transform: 'translateX(calc(-50% - 300px))',
+            };
+          }
+          return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
+        })()}>
 
         {(() => {
           const coal = (me?.coalition || []);
