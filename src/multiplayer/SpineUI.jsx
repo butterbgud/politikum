@@ -1994,6 +1994,8 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     }
   };
 
+  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+
   return (
     <div
       className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
@@ -2066,19 +2068,77 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
       )}
 
       <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
-        <div className="flex items-baseline justify-between">
-          <div>
-            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
-            <div className="text-amber-100/70 font-serif mt-1">Лобби</div>
+        {!MOBILE && (
+          <div className="flex items-baseline justify-between">
+            <div>
+              <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+              <div className="text-amber-100/70 font-serif mt-1">Лобби</div>
+            </div>
+            {/* player count hidden */}
           </div>
-          {/* player count hidden */}
-        </div>
+        )}
 
-        <div className="mt-6 grid grid-cols-1 gap-4">
+        <div className={"mt-6 grid grid-cols-1 gap-4 " + (MOBILE ? "" : "") }>
           {/* Main column */}
-          <div className="flex flex-col gap-4 min-h-[520px]">
+          <div className={"flex flex-col gap-4 min-h-[520px] " + (MOBILE ? "" : "") }>
+
+            {/* Seats (mobile: top) */}
+            {MOBILE && (
+              <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Игроки</div>
+                <div className="mt-3 grid gap-2">
+                  {(G.players || []).filter((p) => !!p?.active).map((p) => {
+                    const active = !!p.active;
+                    const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                    return (
+                      <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                        <div className="flex items-center gap-2">
+                          <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2'}>
+                            <span>{p.name || `Seat ${p.id}`}</span>
+                            {(() => {
+                              const pid = String(p?.identity?.playerId || '').trim();
+                              const r = pid ? ratingsMap?.[pid] : null;
+                              if (!pid || r == null) return null;
+                              return (
+                                <button
+                                  type="button"
+                                  className="text-amber-100/80 hover:text-amber-100 underline underline-offset-2 text-[11px] font-mono"
+                                  title="Открыть профиль"
+                                  onClick={() => openProfileById(pid, String(p?.name || ''))}
+                                >
+                                  ({r})
+                                </button>
+                              );
+                            })()}
+                          </div>
+                          {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {isHost && (
+                  <div className="mt-4 flex gap-2 items-center">
+                    <button
+                      onClick={() => moves.addBot()}
+                      className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                    >
+                      Добавить бота
+                    </button>
+                    <button
+                      onClick={() => moves.startGame()}
+                      className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                    >
+                      Старт
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Lobby chat */}
-            <div className="bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0">
+            <div className={"bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0 " + (MOBILE ? "min-h-[62vh]" : "")}>
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Чат лобби</div>
               <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                 {(G.chat || []).map((m, i) => {
@@ -2121,16 +2181,18 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase"
+                  className="w-12 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-lg"
+                  title="Отправить"
                 >
-                  Отправить
+                  &gt;
                 </button>
               </form>
             </div>
 
           </div>
 
-          {/* Side panel */}
+          {/* Side panel hidden on mobile (players moved to top) */}
+          {!MOBILE && (
           <div className="grid gap-4">
             {/* Beta login block removed from pregame lobby (register on main page). */}
 
@@ -2196,6 +2258,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
               )}
             </div>
           </div>
+          )}
         </div>
         {/* phase debug hidden */}
       </div>
