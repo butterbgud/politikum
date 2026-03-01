@@ -1991,23 +1991,23 @@ function AdminBugreportsPage() {
           <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
         )}
 
-        <div className="overflow-x-auto -mx-2">
-          <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+        <div className="overflow-x-hidden -mx-2">
+          <table className="w-full text-left text-xs font-mono text-amber-100/90" style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr className="border-b border-amber-900/40">
-                <th className="px-2 py-2 whitespace-nowrap">When</th>
-                <th className="px-2 py-2 whitespace-nowrap">Status</th>
-                <th className="px-2 py-2 whitespace-nowrap">Match</th>
-                <th className="px-2 py-2 whitespace-nowrap">From</th>
+                <th className="px-2 py-2 whitespace-nowrap w-[140px]">When</th>
+                <th className="px-2 py-2 whitespace-nowrap w-[64px]">Status</th>
+                <th className="px-2 py-2 whitespace-nowrap w-[96px]">Match</th>
+                <th className="px-2 py-2 whitespace-nowrap w-[90px]">From</th>
                 <th className="px-2 py-2">Text</th>
-                <th className="px-2 py-2 whitespace-nowrap">Actions</th>
+                <th className="px-2 py-2 whitespace-nowrap w-[160px]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.map((r) => {
                 const isOpen = String(expandedId) === String(r.id);
                 const txt = String(r.text || '').trim();
-                const oneLine = txt.replace(/\s+/g, ' ').slice(0, 140);
+                const oneLine = txt.replace(/\s+/g, ' ').slice(0, 100);
                 const matchShort = String(r.match_id || '').slice(0, 12) || '—';
                 const from = r.name || r.player_id || '—';
                 return (
@@ -2022,7 +2022,7 @@ function AdminBugreportsPage() {
                       <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{matchShort}</td>
                       <td className="px-2 py-2 whitespace-nowrap">{from}</td>
                       <td className="px-2 py-2">
-                        <div className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[520px]">{oneLine}{txt.length > oneLine.length ? '…' : ''}</div>
+                        <div className="whitespace-nowrap overflow-hidden text-ellipsis">{oneLine}{txt.length > oneLine.length ? '…' : ''}</div>
                       </td>
                       <td className="px-2 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
