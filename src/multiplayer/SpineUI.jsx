@@ -5672,6 +5672,28 @@ export default function SpineUI() {
     }
   });
   const [hash, setHash] = useState(() => window.location.hash || '');
+  const isMobileRoute = String(hash || '').startsWith('#/m');
+  const [showRotateHint, setShowRotateHint] = useState(false);
+
+  useEffect(() => {
+    if (!isMobileRoute) { if (showRotateHint) setShowRotateHint(false); return; }
+    const check = () => {
+      try {
+        const w = window.innerWidth || 0;
+        const h = window.innerHeight || 0;
+        // Treat landscape as "rotate hint".
+        setShowRotateHint(w > h);
+      } catch {}
+    };
+    check();
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobileRoute]);
 
   useEffect(() => {
     const onHashChange = () => setHash(window.location.hash || '');
@@ -5768,6 +5790,19 @@ export default function SpineUI() {
   return (
     <div className="relative">
       <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+
+      {/* Mobile: landscape warning */}
+      {isMobileRoute && showRotateHint && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto select-none">
+          <div className="w-[min(520px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-5 text-amber-100">
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em] text-xs">Politikum</div>
+            <div className="mt-2 text-lg font-black">Поверни телефон вертикально</div>
+            <div className="mt-2 text-sm text-amber-100/80">Мы делаем мобильную версию под портретный режим. Пожалуйста, включи блокировку поворота экрана.</div>
+            <div className="mt-4 text-[12px] font-mono text-amber-200/70">(Окно исчезнет само, когда вернёшься в вертикальный режим)</div>
+          </div>
+        </div>
+      )}
+
       <div className="fixed bottom-3 left-3 z-[9999] pointer-events-auto">
         <button
           type="button"
