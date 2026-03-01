@@ -3047,7 +3047,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   
   const [mobileHandSelected, setMobileHandSelected] = useState(null);
   const [mobileHandOpen, setMobileHandOpen] = useState(false);
-  const [mobilePlayedOpen, setMobilePlayedOpen] = useState(false);
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
 
@@ -5092,7 +5091,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      {!MOBILE && (
       <div className={"fixed bottom-6 left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
         style={{ transform: 'translateX(calc(-50% - 300px))' }}>
 
@@ -5273,7 +5271,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           );
         })()}
       </div>
-      )}
 
       {/* Placement mode prompt (no modal) */}
       {!!placementMode && (
@@ -5371,16 +5368,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {/* Mobile: bottom toggles */}
+      {/* Mobile: hand toggle */}
       {MOBILE && (
-        <div className="fixed left-1/2 -translate-x-1/2 z-[3000] pointer-events-auto select-none flex items-center gap-2" style={{ bottom: `calc(10px + env(safe-area-inset-bottom, 0px))` }}>
-          <button
-            type="button"
-            onClick={() => { try { setMobilePlayedOpen((v) => !v); } catch {} }}
-            className="px-4 py-2 rounded-full bg-black/65 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
-          >
-            {mobilePlayedOpen ? 'Скрыть сыграно' : 'Сыграно'}
-          </button>
+        <div className="fixed left-1/2 -translate-x-1/2 z-[3000] pointer-events-auto select-none" style={{ bottom: `calc(10px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
             onClick={() => { try { setMobileHandOpen((v) => !v); } catch {} }}
@@ -5388,36 +5378,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           >
             {mobileHandOpen ? 'Скрыть руку' : 'Рука'}
           </button>
-        </div>
-      )}
-
-      {/* Mobile: played cards drawer (bottom) */}
-      {MOBILE && (
-        <div
-          className="fixed left-1/2 -translate-x-1/2 z-[1200] pointer-events-auto"
-          style={{
-            bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
-            transform: `translateX(-50%) translateY(${mobilePlayedOpen ? '-260px' : '200px'})`,
-            transition: 'transform 200ms ease-out',
-          }}
-        >
-          <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20 w-[min(92vw,560px)]">
-            <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Сыграно</div>
-            <div className="mt-2 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-              {(me?.coalition || []).map((c) => (
-                <div
-                  key={c.id}
-                  className="shrink-0 w-28 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
-                  title={c.name || c.id}
-                >
-                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                </div>
-              ))}
-              {(!(me?.coalition || []).length) && (
-                <div className="text-amber-200/40 italic text-sm font-serif">Пока пусто.</div>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
