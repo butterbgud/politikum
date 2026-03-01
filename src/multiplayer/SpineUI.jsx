@@ -1532,6 +1532,13 @@ function AdminPage() {
             </button>
             <button
               type="button"
+              onClick={() => { window.location.hash = '#/admin/bugreports'; }}
+              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+            >
+              Bugreports
+            </button>
+            <button
+              type="button"
               onClick={() => { window.location.hash = ''; }}
               className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
             >
@@ -1873,6 +1880,148 @@ function Card({ card, onClick, disabled, showCheck }) {
         </div>
       )}
     </button>
+  );
+}
+
+
+function AdminBugreportsPage() {
+  const [token, setToken] = useState(() => {
+    try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
+  });
+  const saveToken = (t) => {
+    const v = String(t || '');
+    setToken(v);
+    try { window.localStorage.setItem('politikum.adminToken', v); } catch {}
+  };
+
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState(''); // '' | new | seen | done
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchList = async () => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const q = status ? `?status=${encodeURIComponent(status)}&limit=100` : `?limit=100`;
+      const res = await fetch(`${SERVER}/admin/bugreports${q}`, { headers: { 'X-Admin-Token': token } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setItems(Array.isArray(json?.rows) ? json.rows : []);
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, []);
+
+  const setItemStatus = async (id, st) => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/bugreport/${encodeURIComponent(String(id))}/status`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: st }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchList();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fmt = (ms) => {
+    if (!ms) return '—';
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
+
+  return (
+    <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
+      <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Admin / bugreports</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
+            <button type="button" onClick={() => { window.location.hash = '#/admin/tournament'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Tournaments</button>
+            <button type="button" disabled className="text-xs font-mono text-amber-50/90 font-black">Bugreports</button>
+            <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black block mb-1">X-Admin-Token</label>
+            <input type="password" value={token} onChange={(e) => saveToken(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
+          </div>
+          <div className="flex items-end gap-2">
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono">
+              <option value="">all</option>
+              <option value="new">new</option>
+              <option value="seen">seen</option>
+              <option value="done">done</option>
+            </select>
+            <button type="button" onClick={fetchList} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
+        )}
+
+        <div className="overflow-x-auto -mx-2">
+          <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+            <thead>
+              <tr className="border-b border-amber-900/40">
+                <th className="px-2 py-2 whitespace-nowrap">When</th>
+                <th className="px-2 py-2 whitespace-nowrap">Status</th>
+                <th className="px-2 py-2 whitespace-nowrap">Match</th>
+                <th className="px-2 py-2 whitespace-nowrap">From</th>
+                <th className="px-2 py-2">Text</th>
+                <th className="px-2 py-2 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((r) => (
+                <tr key={r.id} className="border-b border-amber-900/20 align-top">
+                  <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{fmt(r.created_at)}</td>
+                  <td className="px-2 py-2 whitespace-nowrap">{r.status}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{String(r.match_id || '').slice(0, 12) || '—'}</td>
+                  <td className="px-2 py-2 whitespace-nowrap">{r.name || r.player_id || '—'}</td>
+                  <td className="px-2 py-2">
+                    <div className="whitespace-pre-wrap">{String(r.text || '')}</div>
+                    {(r.contact || '').trim() && <div className="mt-1 text-[10px] text-amber-200/60">contact: {r.contact}</div>}
+                  </td>
+                  <td className="px-2 py-2 whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'seen')} className="px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-slate-700/70 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Seen</button>
+                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'done')} className="px-2 py-1 rounded-lg bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-[10px] uppercase tracking-widest">Done</button>
+                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'new')} className="px-2 py-1 rounded-lg bg-amber-700/40 hover:bg-amber-600/50 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">New</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-2 py-6 text-center text-amber-300/60 text-xs">No bugreports.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -5965,6 +6114,9 @@ export default function SpineUI() {
   }
   if (hash.startsWith('#/admin/tournament')) {
     return <AdminTournamentPage />;
+  }
+  if (hash.startsWith('#/admin/bugreports')) {
+    return <AdminBugreportsPage />;
   }
   if (hash.startsWith('#/admin')) {
     return <AdminPage />;
