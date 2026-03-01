@@ -2026,7 +2026,6 @@ function AdminBugreportsPage() {
                       </td>
                       <td className="px-2 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
-                          <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'new')} className="px-2 py-1 rounded-lg bg-amber-700/40 hover:bg-amber-600/50 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">New</button>
                           <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'seen')} className="px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-slate-700/70 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Seen</button>
                           <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'done')} className="px-2 py-1 rounded-lg bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-[10px] uppercase tracking-widest">Done</button>
                         </div>
