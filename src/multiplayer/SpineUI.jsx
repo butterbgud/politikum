@@ -3771,7 +3771,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
           const show = oppFanCards.length;
           const stepBack = 6;  // tight
-          const stepFace = MOBILE ? 22 : 24; // slightly tighter on mobile
+          const flatP5 = MOBILE && opponents.length === 1 && G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending?.playerId);
+          const stepFace = flatP5 ? 34 : (MOBILE ? 22 : 24); // flat row for p5 targeting
 
           const calcWidth = () => {
             const shown = oppFanCards.slice(0, show);
@@ -3782,7 +3783,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             return w;
           };
           const width = calcWidth();
-          const hoverIdx = hoverOppCoalition?.[p.id] ?? null;
+          const hoverIdx = flatP5 ? null : (hoverOppCoalition?.[p.id] ?? null);
 
           const scaleByDist2 = (dist) => {
             if (dist === 0) return 1.8;
@@ -3808,7 +3809,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
-                  (MOBILE ? "scale-[0.55] origin-top" : "") +
+                  (MOBILE ? (flatP5 ? "scale-[0.62] origin-top" : "scale-[0.55] origin-top") : "") +
                   ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
@@ -3839,6 +3840,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   if (MOBILE) setMobileOppInspect(String(p.id));
                 }}
                 onPointerMove={(e) => {
+                  if (flatP5) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = (e.clientX ?? 0) - rect.left;
                   // Note: opponent fan has variable spacing; use proportional index for hover.
@@ -3852,11 +3854,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: idx }));
                 }}
                 onPointerEnter={() => {
+                  if (flatP5) return;
                   const shown = oppFanCards.slice(0, show);
                   const firstFace = shown.findIndex((it) => it.kind === 'face');
                   setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: firstFace >= 0 ? firstFace : null }));
                 }}
-                onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
+                onPointerLeave={() => { if (!flatP5) setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null })); }}
                 title={`Total: ${nTotal}`}
               >
                 {/* count hidden on mobile (was overlapping) */}
@@ -3866,7 +3869,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                 {oppFanCards.slice(0, show).map((it, i) => {
                   const t = show <= 1 ? 0.5 : i / (show - 1);
-                  const rot = (t - 0.5) * 12;
+                  const rot = flatP5 ? 0 : (t - 0.5) * 12;
 
                   // variable spacing: backs tighter, faces looser
                   const shown = oppFanCards.slice(0, show);
@@ -3877,7 +3880,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                   const dist = (hoverIdx == null) ? 99 : Math.abs(i - hoverIdx);
                   const isBack = it.kind === 'back';
-                  const scale = (hoverIdx == null) ? 1 : (isBack ? 1 : scaleByDist2(dist));
+                  const scale = (flatP5 || hoverIdx == null) ? 1 : (isBack ? 1 : scaleByDist2(dist));
                   const z = (hoverIdx == null) ? i : (1000 - dist);
 
                   const imgRaw = it.kind === 'back' ? '/assets/backing.jpg' : it.card.img;
