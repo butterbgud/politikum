@@ -4158,8 +4158,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pendingP23 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP23Source}: choose self-inflict (-1) tokens then draw
-            <span className="ml-3 text-amber-200/70">(keys 0..3)</span>
+            {pendingP23Source}: tap Волков to take -1 & draw (up to 3). (0 finishes)
           </div>
         </div>
       )}
@@ -5193,6 +5192,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         if (pending?.kind === 'action_9_discard_persona' && c.type !== 'persona') return;
                         if (c.shielded || isImmovablePersona(c)) return;
                         try { moves.discardFromCoalition(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP23Here && String(c.id).split('#')[0] === 'persona_23') {
+                        // Tap-friendly: each tap takes 1 × (-1) and draws 1 (up to 3).
+                        try { moves.persona23ChooseSelfInflict(1); } catch {}
                         return;
                       }
                       if (pendingP21Here) {
