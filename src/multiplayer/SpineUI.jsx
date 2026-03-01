@@ -2149,7 +2149,13 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
     }
   };
 
-  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  const MOBILE = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    return String(window.location.hash || '').startsWith('#/m');
+  })();
 
   return (
     <div
@@ -2694,7 +2700,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const ENABLE_EVENT_SPLASH = true;
   const ENABLE_ACTION_SPLASH = false;
 
-  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  const MOBILE = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    return String(window.location.hash || '').startsWith('#/m');
+  })();
   const [logCollapsed, setLogCollapsed] = useState(() => MOBILE);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
   const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
@@ -5533,7 +5545,13 @@ function PolitikumWelcome({ onJoin }) {
   const [profile, setProfile] = useState(null);
   const [ratingsMap, setRatingsMap] = useState(() => ({}));
 
-  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  const MOBILE = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    return String(window.location.hash || '').startsWith('#/m');
+  })();
 
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
