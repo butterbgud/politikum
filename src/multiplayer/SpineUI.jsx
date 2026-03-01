@@ -4326,8 +4326,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         };
 
         return (
-          <div className="fixed inset-0 z-[6000] pointer-events-auto select-none bg-black/40 backdrop-blur-sm">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1100px,95vw)] max-h-[90vh] overflow-auto bg-black/70 border border-amber-900/30 rounded-2xl px-5 py-4 text-amber-100/90 shadow-2xl">
+          <div className="fixed inset-0 z-[6000] pointer-events-auto select-none bg-transparent">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1100px,95vw)] max-h-[90vh] overflow-auto bg-transparent border-0 rounded-2xl px-5 py-4 text-amber-100/90 shadow-none">
               <div className="flex items-center justify-between gap-4">
                 <div className="font-mono text-[12px]">
                   <span className="opacity-80">{pendingP34Source}:</span> Милов — выбери персонажа (следующая персона в колоде, события/действия пропускаются)
@@ -4342,7 +4342,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-4">
-                <div className="relative w-[220px] max-w-[60vw]">
+                <div className="relative w-[440px] max-w-[90vw]">
                   <img src="/assets/ui/milov.webp" alt="Milov" className="w-full h-auto block opacity-95" draggable={false} />
                   <div
                     className="absolute left-[12%] right-[12%] top-[22%] h-[28%] rounded-lg bg-black/70 border border-amber-400/40 flex items-center justify-center text-[12px] font-mono text-amber-100/90 px-2 cursor-pointer"
@@ -4356,44 +4356,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <div className="text-[11px] opacity-80">Колесо мыши: листай варианты. Клик по окошку — подтвердить.</div>
               </div>
 
-              {(() => {
-                const chunk = (arr, n) => {
-                  const out = [];
-                  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
-                  return out;
-                };
-                const fans = chunk(remaining, 10);
-                return (
-                  <div className="mt-3 flex flex-col gap-6">
-                    {fans.map((row, ri) => {
-                      const CARD_W = 96; // px (tailwind w-24)
-                      const STEP = 46; // overlap step
-                      const width = Math.max(CARD_W, (row.length - 1) * STEP + CARD_W);
-                      return (
-                        <div key={ri} className="overflow-x-auto custom-scrollbar">
-                          <div className="relative h-[148px]" style={{ width }}>
-                            {row.map((id, i) => (
-                              <button
-                                key={id}
-                                type="button"
-                                className="absolute top-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/25 hover:border-amber-300/40 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:scale-[1.02] transition-transform"
-                                style={{ left: i * STEP, zIndex: i + 1 }}
-                                onClick={() => { try { moves.persona34GuessTopdeck(id); } catch {} }}
-                                title={id}
-                              >
-                                <img src={`/cards/${id}.webp`} alt={id} className="w-full h-full object-cover block" draggable={false} />
-                                <div className="absolute bottom-0 left-0 right-0 bg-black/55 text-[10px] font-mono text-amber-100/90 px-1 py-0.5">
-                                  {id.replace('persona_', 'p')}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+
 
               <div className="mt-3 text-amber-200/60 text-[10px] font-mono text-center">
                 (исключены: сыгранные/в сбросе + те, что у тебя в руке)
@@ -4557,7 +4520,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Event_12b: each affected player discards 1 card from hand */}
       {G.pending?.kind === 'event_12b_discard_from_hand' && Array.isArray(G.pending.targetIds) && G.pending.targetIds.includes(String(playerID)) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-transparent pointer-events-auto">
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from hand</div>
             <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 card from your hand to discard.</div>
@@ -4773,7 +4736,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_18: return persona from discard to hand */}
       {G.pending?.kind === 'action_18_pick_persona_from_discard' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm backdrop-filter pointer-events-auto">
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-transparent backdrop-filter pointer-events-auto">
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 18 — Return from discard</div>
             <div className="mt-2 text-amber-100/80 text-sm">Choose a persona from the discard pile to return to your hand.</div>
@@ -4798,7 +4761,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_20: take any card from discard to hand */}
       {G.pending?.kind === 'persona_20_pick_from_discard' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm backdrop-filter pointer-events-auto">
+        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-transparent backdrop-filter pointer-events-auto">
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Bykov (p20) — Take from discard</div>
             <div className="mt-2 text-amber-100/80 text-sm">Choose 1 ACTION card from the discard pile to take into your hand.</div>
