@@ -5914,7 +5914,15 @@ function PolitikumWelcome({ onJoin }) {
                       <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-amber-900/20">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
-                          <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
+                          <button
+                            type="button"
+                            className="font-serif text-amber-100 text-sm font-bold truncate hover:opacity-90 text-left"
+                            onClick={() => { const pid = String(r?.playerId || r?.player_id || '').trim(); if (pid) openProfileById(pid); }}
+                            disabled={!String(r?.playerId || r?.player_id || '').trim()}
+                            title={String(r?.playerId || r?.player_id || '').trim() ? 'Открыть профиль' : ''}
+                          >
+                            {r.name}
+                          </button>
                         </div>
                         <div className="flex items-baseline gap-3 font-mono tabular-nums">
                           <span className="text-[12px] text-amber-200/75">G:{Number(r.games ?? 0) || 0}</span>
