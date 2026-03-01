@@ -5196,6 +5196,7 @@ function PolitikumWelcome({ onJoin }) {
       </div>
 
       {/* Top bar: alias + beta login */}
+      {!MOBILE && (
       <div className="fixed top-3 left-3 right-3 z-[1999] pointer-events-none">
         <button
           type="button"
@@ -5276,7 +5277,42 @@ function PolitikumWelcome({ onJoin }) {
         </div>
       </div>
 
-      <div className={"bg-transparent flex items-center justify-center w-full " + (MOBILE ? "p-3 pt-20" : "p-8 pt-28") }>
+      )}
+
+      {/* Mobile login (2 lines) */}
+      {MOBILE && !authToken && (
+        <div className="w-full px-3 pt-3">
+          <div className="max-w-xl mx-auto bg-black/55 border border-amber-900/20 rounded-2xl p-3">
+            <div className="grid gap-2">
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className="w-full bg-amber-100/85 border border-amber-900/20 rounded-xl px-3 py-3 text-black font-serif text-sm focus:outline-none"
+                placeholder="Логин"
+              />
+              <input
+                value={betaPassword}
+                onChange={(e) => setBetaPassword(e.target.value)}
+                type="password"
+                className="w-full bg-amber-100/85 border border-amber-900/20 rounded-xl px-3 py-3 text-black font-mono text-sm focus:outline-none"
+                placeholder="Токен"
+              />
+              <button
+                type="button"
+                onClick={doBetaLogin}
+                disabled={betaLoading || !String(betaPassword || '').trim()}
+                className="w-full py-3 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
+              >
+                {betaLoading ? '…' : 'Войти'}
+              </button>
+              {!!betaErr && <div className="text-[11px] font-mono text-red-200/80">{betaErr}</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={"bg-transparent flex items-center justify-center w-full " + (MOBILE ? "p-3 pt-5" : "p-8 pt-28") }>
         <div className={"flex items-start w-full mx-auto " + (MOBILE ? "flex-col gap-4 max-w-xl" : "flex-row gap-8 max-w-7xl px-4 max-h-[85vh]")}>
           {/* LEFT: NEWS + CHAT */}
           <div className="flex-1 min-w-0 space-y-6">
