@@ -2546,6 +2546,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   
   const [mobileHandSelected, setMobileHandSelected] = useState(null);
+  const [mobileHandOpen, setMobileHandOpen] = useState(false);
   useEffect(() => {
     if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4697,10 +4698,27 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
+      {/* Mobile: hand toggle */}
+      {MOBILE && (
+        <div className="fixed left-1/2 -translate-x-1/2 z-[3000] pointer-events-auto select-none" style={{ bottom: `calc(10px + env(safe-area-inset-bottom, 0px))` }}>
+          <button
+            type="button"
+            onClick={() => { try { setMobileHandOpen((v) => !v); } catch {} }}
+            className="px-4 py-2 rounded-full bg-black/65 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+          >
+            {mobileHandOpen ? 'Скрыть руку' : 'Рука'}
+          </button>
+        </div>
+      )}
+
       {/* Hand fan */}
       <div
-        className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "left-1/2 -translate-x-1/2" : "bottom-6 right-[410px]")}
-        style={MOBILE ? { bottom: `calc(12px + env(safe-area-inset-bottom, 0px))` } : undefined}
+        className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "left-1/2" : "bottom-6 right-[410px]")}
+        style={MOBILE ? {
+          bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
+          transform: `translateX(-50%) translateY(${mobileHandOpen ? '-240px' : '180px'})`,
+          transition: 'transform 200ms ease-out',
+        } : undefined}
       >
         <div
           className="relative h-56 overflow-visible"
