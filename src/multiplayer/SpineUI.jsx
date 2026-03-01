@@ -5282,6 +5282,7 @@ function PolitikumWelcome({ onJoin }) {
           <div className="flex-1 min-w-0 space-y-6">
             {!MOBILE && <NewsPanel />}
 
+            {!MOBILE && (
             <div className={"bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col " + (MOBILE ? "h-[56vh]" : "h-[460px] max-h-[60vh]")}>
               <div className="text-[10px] uppercase tracking-[0.35em] text-amber-500/70 font-black">TAVERN BANTER</div>
               <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2 min-h-0">
@@ -5356,11 +5357,11 @@ function PolitikumWelcome({ onJoin }) {
                 </button>
               </div>
             </div>
+          )}
           </div>
 
           {/* RIGHT: MODULES */}
-          {!MOBILE && (
-          <div className="w-[360px] max-w-full space-y-6">
+          <div className={"max-w-full space-y-6 " + (MOBILE ? "w-full" : "w-[360px]")}>
             <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit">
               <h2 className="text-xl font-serif text-amber-500 font-bold mb-4 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">Список игр</h2>
 
@@ -5478,7 +5479,6 @@ function PolitikumWelcome({ onJoin }) {
               )}
             </div>
           </div>
-          )}
         </div>
       </div>
     </div>
