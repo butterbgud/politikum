@@ -1917,7 +1917,7 @@ function AdminBugreportsPage() {
     }
   };
 
-  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [status]);
 
   const setItemStatus = async (id, st) => {
     if (!token) { setError('Set X-Admin-Token first.'); return; }
