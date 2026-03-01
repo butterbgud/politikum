@@ -3817,8 +3817,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
                 title={`Total: ${nTotal}`}
               >
-                {/* count */}
-                {nTotal > 0 && (
+                {/* count hidden on mobile (was overlapping) */}
+                {!MOBILE && nTotal > 0 && (
                   <div className="absolute -top-15 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{nTotal}</div>
                 )}
 
