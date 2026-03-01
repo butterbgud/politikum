@@ -2074,7 +2074,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           {/* player count hidden */}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-4">
           {/* Main column */}
           <div className="flex flex-col gap-4 min-h-[520px]">
             {/* Lobby chat */}
