@@ -5820,16 +5820,32 @@ export default function SpineUI() {
 
   return (
     <div className="relative">
-      <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+      {isMobileRoute ? (
+        <div className="fixed inset-0 overflow-hidden">
+          {/* Render the game in landscape inside a portrait phone (rotate the whole game) */}
+          <div
+            className="absolute top-0 left-0 origin-top-left"
+            style={{
+              width: '100vh',
+              height: '100vw',
+              transform: 'rotate(90deg) translateY(-100%)',
+            }}
+          >
+            <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+          </div>
+        </div>
+      ) : (
+        <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+      )}
 
-      {/* Mobile: landscape warning */}
+      {/* Mobile: if user actually rotates device to landscape, warn to go back */}
       {isMobileRoute && showRotateHint && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto select-none">
           <div className="w-[min(520px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-5 text-amber-100">
             <div className="text-amber-600 font-black uppercase tracking-[0.3em] text-xs">Politikum</div>
             <div className="mt-2 text-lg font-black">Поверни телефон вертикально</div>
-            <div className="mt-2 text-sm text-amber-100/80">Мы делаем мобильную версию под портретный режим. Пожалуйста, включи блокировку поворота экрана.</div>
-            <div className="mt-4 text-[12px] font-mono text-amber-200/70">(Окно исчезнет само, когда вернёшься в вертикальный режим)</div>
+            <div className="mt-2 text-sm text-amber-100/80">Держим телефон вертикально, а игру рисуем горизонтально. Включи блокировку поворота.</div>
+            <div className="mt-4 text-[12px] font-mono text-amber-200/70">(Окно исчезнет само, когда вернёшься в портрет)</div>
           </div>
         </div>
       )}
