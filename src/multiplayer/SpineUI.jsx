@@ -5068,10 +5068,15 @@ function PolitikumWelcome({ onJoin }) {
   const [profile, setProfile] = useState(null);
   const [ratingsMap, setRatingsMap] = useState(() => ({}));
 
+  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
     <div
-      className="h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex flex-row"
+      className={
+        "h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat flex " +
+        (MOBILE ? "flex-col overflow-auto" : "flex-row overflow-hidden")
+      }
       style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
     >
       {showWhereAmI && (
@@ -5271,13 +5276,13 @@ function PolitikumWelcome({ onJoin }) {
         </div>
       </div>
 
-      <div className="bg-transparent p-8 pt-28 flex items-center justify-center w-full">
-        <div className="flex gap-8 items-start max-w-7xl w-full mx-auto px-4 max-h-[85vh]">
+      <div className={"bg-transparent flex items-center justify-center w-full " + (MOBILE ? "p-3 pt-20" : "p-8 pt-28") }>
+        <div className={"flex items-start w-full mx-auto " + (MOBILE ? "flex-col gap-4 max-w-xl" : "flex-row gap-8 max-w-7xl px-4 max-h-[85vh]")}>
           {/* LEFT: NEWS + CHAT */}
           <div className="flex-1 min-w-0 space-y-6">
-            <NewsPanel />
+            {!MOBILE && <NewsPanel />}
 
-            <div className="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col h-[460px] max-h-[60vh]">
+            <div className={"bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl flex flex-col " + (MOBILE ? "h-[56vh]" : "h-[460px] max-h-[60vh]")}>
               <div className="text-[10px] uppercase tracking-[0.35em] text-amber-500/70 font-black">TAVERN BANTER</div>
               <div className="mt-3 flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2 min-h-0">
                 {!lobbyChatEnabled && (
@@ -5354,6 +5359,7 @@ function PolitikumWelcome({ onJoin }) {
           </div>
 
           {/* RIGHT: MODULES */}
+          {!MOBILE && (
           <div className="w-[360px] max-w-full space-y-6">
             <div className="bg-black/75 backdrop-blur-xl p-8 rounded-3xl border border-amber-900/40 shadow-2xl flex flex-col h-fit">
               <h2 className="text-xl font-serif text-amber-500 font-bold mb-4 text-center uppercase tracking-widest border-b border-amber-500/20 pb-2">Список игр</h2>
@@ -5472,6 +5478,7 @@ function PolitikumWelcome({ onJoin }) {
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
