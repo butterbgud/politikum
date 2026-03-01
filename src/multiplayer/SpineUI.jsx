@@ -2027,6 +2027,11 @@ function AdminBugreportsPage() {
 
 function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
+  const _uiBadge = (
+    <div className="fixed top-2 left-2 z-[9999] pointer-events-none select-none">
+      <div className="px-2 py-1 rounded-lg bg-emerald-700/70 border border-emerald-400/30 text-emerald-50 font-mono font-black text-[10px]">DESKTOP LOBBY</div>
+    </div>
+  );
   const isHost = String(playerID) === '0' || String(me?.name || '') === 'You';
   const [name, setName] = useState(() => {
     const cur = String(me?.name || '').trim();
@@ -2154,6 +2159,7 @@ function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
       className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
       style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
     >
+      {_uiBadge}
       {showProfile && (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
           <div className="w-[min(520px,92vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
@@ -2360,6 +2366,11 @@ function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
 
 function MobileLobbyBoard({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
+  const _uiBadge = (
+    <div className="fixed top-2 left-2 z-[9999] pointer-events-none select-none">
+      <div className="px-2 py-1 rounded-lg bg-fuchsia-700/70 border border-fuchsia-400/30 text-fuchsia-50 font-mono font-black text-[10px]">MOBILE LOBBY</div>
+    </div>
+  );
   const isHost = String(playerID) === '0' || String(me?.name || '') === 'You';
   const [name, setName] = useState(() => {
     const cur = String(me?.name || '').trim();
@@ -2495,6 +2506,7 @@ function MobileLobbyBoard({ G, ctx, moves, playerID }) {
       className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
       style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
     >
+      {_uiBadge}
       {showProfile && (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
           <div className="w-[min(520px,92vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
