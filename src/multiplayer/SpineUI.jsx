@@ -2226,7 +2226,7 @@ function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
+      <div className="w-full max-w-5xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
@@ -2235,7 +2235,7 @@ function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
           {/* player count hidden */}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Main column */}
           <div className="flex flex-col gap-4 min-h-[520px]">
             {/* Lobby chat */}
