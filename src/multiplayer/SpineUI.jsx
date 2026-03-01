@@ -2092,10 +2092,10 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                     const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
                     return (
                       <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <button
                             type="button"
-                            className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2 hover:text-amber-50'}
+                            className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2 hover:text-amber-50 min-w-0'}
                             onClick={() => {
                               const pid = String(p?.identity?.playerId || '').trim();
                               if (pid) openProfileById(pid, String(p?.name || ''));
@@ -2103,7 +2103,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                             disabled={!String(p?.identity?.playerId || '').trim()}
                             title={String(p?.identity?.playerId || '').trim() ? 'Открыть профиль' : ''}
                           >
-                            <span>{p.name || `Seat ${p.id}`}</span>
+                            <span className="truncate">{p.name || `Seat ${p.id}`}</span>
                             {(() => {
                               const pid = String(p?.identity?.playerId || '').trim();
                               const r = pid ? ratingsMap?.[pid] : null;
@@ -2113,6 +2113,16 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
                           </button>
                           {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
                         </div>
+
+                        {isHost && String(p.id) !== '0' && active && (
+                          <button
+                            type="button"
+                            onClick={() => { if (confirm(`Remove ${p.name || p.id}?`)) moves.removePlayer(String(p.id)); }}
+                            className="ml-2 px-2 py-1 rounded-lg bg-red-900/60 hover:bg-red-900/80 border border-red-900/30 text-red-100 font-black text-[10px] uppercase tracking-widest"
+                          >
+                            Убрать
+                          </button>
+                        )}
                       </div>
                     );
                   })}
