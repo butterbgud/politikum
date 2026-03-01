@@ -4592,7 +4592,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Mobile: cancel hand selection */}
       {MOBILE && mobileHandSelected && (
-        <div className="fixed bottom-24 left-3 z-[2600] pointer-events-auto select-none">
+        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(96px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
             onClick={() => setMobileHandSelected(null)}
@@ -4604,7 +4604,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Hand fan */}
-      <div className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "bottom-3 left-1/2 -translate-x-1/2" : "bottom-6 right-[410px]")}>
+      <div
+        className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "left-1/2 -translate-x-1/2" : "bottom-6 right-[410px]")}
+        style={MOBILE ? { bottom: `calc(12px + env(safe-area-inset-bottom, 0px))` } : undefined}
+      >
         <div
           className="relative h-56 overflow-visible"
           style={{ width: `${handWidth}px`, marginLeft: 'auto' }}
