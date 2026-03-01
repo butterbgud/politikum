@@ -5488,6 +5488,14 @@ function PolitikumWelcome({ onJoin }) {
 export default function SpineUI() {
   useEffect(() => {
     try { document.title = 'Politikum'; } catch {}
+    // Nginx likely serves SPA directly for /m, so enforce hash-route on client.
+    try {
+      const p = String(window.location.pathname || '');
+      const h = String(window.location.hash || '');
+      if (p === '/m' || p.startsWith('/m/')) {
+        if (!h.startsWith('#/m')) window.location.hash = '#/m';
+      }
+    } catch {}
   }, []);
 
   const [matchID, setMatchID] = useState(() => {
@@ -5556,7 +5564,7 @@ export default function SpineUI() {
 
 
   if (hash.startsWith('#/m')) {
-    // Mobile page (separate URL /m redirects here)
+    // Mobile page
     return (
       <div className="min-h-screen w-screen">
         <PolitikumWelcome
