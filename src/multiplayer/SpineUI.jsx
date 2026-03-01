@@ -2408,6 +2408,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   const response = G.response || null;
   const pending = G.pending || null;
+
+  // Mobile: show a persistent cancel to exit local targeting modes.
+  const mobileCancelTargeting = () => {
+    try { setPlacementMode(null); } catch {}
+    try { setPlacementModeOpp(null); } catch {}
+    try { setPickTargetForAction4(null); } catch {}
+    try { setPickTargetForAction9(null); } catch {}
+    try { setPickTargetForPersona9(null); } catch {}
+    try { setP7FirstPick(null); } catch {}
+    try { setP16DiscardPick([]); } catch {}
+    try { setMobileHandSelected(null); } catch {}
+  };
   const responseKind = response?.kind || null;
   const responseExpiresAt = Number(response?.expiresAtMs || 0);
   const responseSecondsLeft = Math.max(0, Math.ceil((responseExpiresAt - Date.now()) / 1000));
@@ -3701,6 +3713,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {/* Mobile: cancel local targeting modes */}
+      {MOBILE && (placementMode || placementModeOpp || pickTargetForAction4 || pickTargetForAction9 || pickTargetForPersona9 || (p7FirstPick != null)) && (
+        <div className="fixed top-3 right-3 z-[6000] pointer-events-auto select-none">
+          <button
+            type="button"
+            onClick={mobileCancelTargeting}
+            className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+          >
+            Отмена
+          </button>
         </div>
       )}
 
