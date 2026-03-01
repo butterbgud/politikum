@@ -846,22 +846,13 @@ export function getPublicProfile({ playerId }) {
   if (!pid) return { ok:false, error:'bad_args' };
   const db = sqlite;
 
-  const ratingRow = db.prepare('SELECT rating FROM ratings WHERE player_id=?').get(pid);
+  const ratingRow = db.prepare('SELECT rating, games_played AS games, wins FROM ratings WHERE player_id=?').get(pid);
   const rating = ratingRow ? Number(ratingRow.rating || 1000) : 1000;
 
-  // authoritative counts from finished games table
-  // NOTE: we must count wins only for games where this player participated (join via game_players).
-  const counts = db.prepare(`
-    SELECT
-      COUNT(DISTINCT g.id) AS games,
-      COUNT(DISTINCT CASE WHEN g.winner_player_id = @pid THEN g.id END) AS wins
-    FROM games g
-    JOIN game_players gp ON gp.game_id = g.id
-    WHERE gp.player_id = @pid AND g.finished_at IS NOT NULL;
-  `).get({ pid });
-
-  const games = Number(counts?.games || 0);
-  const wins = Number(counts?.wins || 0);
+  // Prefer ratings table counts so leaderboard + profile are consistent.
+  // (games table can lag if a match wasn't synced/recorded yet.)
+  const games = ratingRow ? Number(ratingRow.games || 0) : 0;
+  const wins = ratingRow ? Number(ratingRow.wins || 0) : 0;
 
   const nameRow = db.prepare(`
     SELECT gp.name AS name
