@@ -4060,9 +4060,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                           style={{
                             width: '50%',
                             aspectRatio: '2 / 3',
-                            right: '-20%',
-                            top: '-12%',
-                            transform: 'rotate(-30deg)',
+                            right: '6%',
+                            top: '-6%',
+                            transform: 'rotate(-18deg)',
                           }}
                           draggable={false}
                         />
@@ -4079,14 +4079,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       {(it.kind === 'face' && Number(it.card?.passiveVpDelta || 0) !== 0) && (
                         <TokenPips delta={it.card.passiveVpDelta} compact right dim />
                       )}
-                      {it.kind === 'face' && (it.card?.shielded || it.card?.blockedAbilities) && (
+                      {it.kind === 'face' && it.card?.blockedAbilities && (
                         <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
-                          {it.card?.shielded && String(it.card?.shieldedBy || '') !== 'action_13' && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
-                          )}
-                          {it.card?.blockedAbilities && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
-                          )}
+                          <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
                         </div>
                       )}
                     </div>
@@ -5365,7 +5360,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       try { moves.applyPendingToken(c.id); } catch {}
                     }}
                   >
-                    {/* shieldedBy action_13 visual removed (too noisy) */}
+                    {String(c?.shieldedBy || '') === 'action_13' && (
+                      <img
+                        src={'/cards/action_13.webp'}
+                        alt={'action_13'}
+                        className="absolute z-30 pointer-events-none select-none opacity-95"
+                        style={{
+                          width: '50%',
+                          aspectRatio: '2 / 3',
+                          right: '6%',
+                          top: '-6%',
+                          transform: 'rotate(-18deg)',
+                        }}
+                        draggable={false}
+                      />
+                    )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {(Number(c.vpDelta || 0) !== 0) && (
                       <div className={
