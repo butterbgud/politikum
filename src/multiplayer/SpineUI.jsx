@@ -5027,7 +5027,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           >
             {logCollapsed ? 'LOG' : 'LOG ×'}
           </button>
-          <div className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]">VP: {myCoalitionPoints}</div>
         </div>
       )}
       <div className={
