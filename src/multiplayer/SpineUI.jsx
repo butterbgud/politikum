@@ -6020,6 +6020,14 @@ export default function SpineUI() {
         return false;
       })();
 
+      // Force desktop override: leave /m + #/m routes.
+      if (forcedUi === 'desktop') {
+        if (p === '/m' || p.startsWith('/m/') || h.startsWith('#/m')) {
+          window.location.href = '/?ui=desktop';
+          return;
+        }
+      }
+
       if (p === '/m' || p.startsWith('/m/')) {
         if (!h.startsWith('#/m')) window.location.hash = '#/m';
         return;
