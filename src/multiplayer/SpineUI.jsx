@@ -4009,18 +4009,33 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         {MOBILE ? (
           <>
             {/* Mobile text buttons */}
-            <button
-              type="button"
-              onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
-              className={
-                "fixed top-3 right-3 pointer-events-auto select-none px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
-                ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-50" : "")
-              }
-              title="Взять карту"
-              aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
-            >
-              Взять карту
-            </button>
+            <div className="fixed top-3 right-3 z-[20000] pointer-events-auto select-none flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
+                className={
+                  "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
+                  ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-50" : "")
+                }
+                title="Взять карту"
+                aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
+              >
+                Взять карту
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { if (!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
+                className={
+                  "px-3 py-2 rounded-xl bg-amber-600/90 border border-amber-500/30 text-amber-950 font-mono font-black text-[11px] " +
+                  ((!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) ? "opacity-50" : "")
+                }
+                title="Закончить ход"
+                aria-disabled={!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed}
+              >
+                Закончить ход
+              </button>
+            </div>
           </>
         ) : (
           <>
