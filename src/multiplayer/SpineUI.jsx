@@ -5142,6 +5142,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 const pendingA4A9Discard = (pending?.kind === 'action_4_discard' || pending?.kind === 'action_9_discard_persona') && String(pending?.targetId) === String(playerID);
                 const pendingA13Here = pending?.kind === 'action_13_shield_persona' && String(pending?.attackerId) === String(playerID) && c.type === 'persona' && !isImmovablePersona(c);
                 const pendingP21Here = pendingP21;
+                const pendingP23Here = pendingP23;
                 const pendingP26Here = pendingP26;
                 const pendingP28Here = pendingP28;
                 const pendingP32Here = pendingP32;
