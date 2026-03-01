@@ -851,6 +851,16 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       }
     }
 
+    // Desktop entrypoint: force desktop UI even on touch devices.
+    if ((ctx.path === '/desk' || ctx.path === '/desk/') && ctx.method === 'GET') {
+      ctx.type = 'text/html; charset=utf-8';
+      ctx.body = `<!doctype html><html lang="ru"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Politikum · Desktop</title></head><body style="margin:0;background:#0b0f17;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <div>Redirecting…</div>
+      <script>location.replace('/?ui=desktop');</script>
+      </body></html>`;
+      return;
+    }
+
     // Mobile entrypoint: simple redirect to the SPA mobile route.
     if ((ctx.path === '/m' || ctx.path === '/m/') && ctx.method === 'GET') {
       ctx.type = 'text/html; charset=utf-8';

@@ -6059,6 +6059,12 @@ export default function SpineUI() {
         }
       }
 
+      if (p === '/desk' || p.startsWith('/desk/')) {
+        try { window.localStorage.setItem('politikum.forceUi', 'desktop'); } catch {}
+        if (h.startsWith('#/m')) { window.location.hash = ''; }
+        return;
+      }
+
       if (p === '/m' || p.startsWith('/m/')) {
         if (!h.startsWith('#/m')) window.location.hash = '#/m';
         return;
