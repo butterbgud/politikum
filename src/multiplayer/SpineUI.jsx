@@ -4164,7 +4164,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pendingP11Offer && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-auto select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
-            <span>persona_11: use ability or skip (blocks draw)</span>
+            <span>Соловьёв: использовать способность или пропустить? (блокирует добор)</span>
             <button
               type="button"
               className="px-3 py-1 rounded-full bg-emerald-700/70 border border-emerald-300/30 hover:bg-emerald-700/90"
