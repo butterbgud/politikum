@@ -421,6 +421,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         const log = Array.isArray(state?.G?.log) ? state.G.log : [];
         const tail = log.slice(Math.max(0, log.length - limit));
 
+        const trace = Array.isArray(state?.G?.trace) ? state.G.trace.slice(Math.max(0, state.G.trace.length - limit)) : [];
+
         // Fallback: if match is missing from boardgame.io storage (FlatFile), try SQLite record.
         let dbGame = null;
         try { dbGame = getGameByMatchId(matchId); } catch {}
@@ -442,6 +444,8 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
           response: state?.G?.response ?? null,
           log: tail,
           logTotal: log.length,
+          trace,
+          traceTotal: Array.isArray(state?.G?.trace) ? state.G.trace.length : 0,
           db: dbGame ? { hasRecord: true, winnerName: dbGame.winnerName ?? null, finishedAt: dbGame.finishedAt ?? null } : { hasRecord: false },
         };
         return;
