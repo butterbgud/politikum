@@ -4110,6 +4110,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             <div className="fixed top-3 z-[20000] pointer-events-auto select-none flex flex-col gap-2" style={{ right: 'min(16px, 1vw)' }}>
               <button
                 type="button"
+                onClick={() => { if (!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
+                className={
+                  "px-4 py-2 rounded-xl bg-amber-600/90 border border-amber-500/30 text-amber-950 font-mono font-black text-[12px] shadow-lg " +
+                  ((!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) ? "opacity-50" : "")
+                }
+                title="Закончить ход"
+                aria-disabled={!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed}
+              >
+                Закончить ход
+              </button>
+
+              <button
+                type="button"
                 onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
                 className={
                   "px-4 py-2 rounded-xl border text-amber-100/90 font-mono font-black text-[12px] transition-colors shadow-lg " +
@@ -4124,19 +4137,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
               >
                 Взять карту
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { if (!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
-                className={
-                  "px-4 py-2 rounded-xl bg-amber-600/90 border border-amber-500/30 text-amber-950 font-mono font-black text-[12px] shadow-lg " +
-                  ((!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) ? "opacity-50" : "")
-                }
-                title="Закончить ход"
-                aria-disabled={!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed}
-              >
-                Закончить ход
               </button>
             </div>
           </>
