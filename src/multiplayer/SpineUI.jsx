@@ -1574,55 +1574,6 @@ function AdminPage() {
           </div>
         </div>
 
-        <div className="mb-6 bg-black/40 border border-amber-900/20 rounded-2xl p-4">
-          <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Bugreports → Telegram</div>
-          <div className="mt-3 grid md:grid-cols-3 gap-2">
-            <input
-              value={bugTgChatId}
-              onChange={(e) => { setBugTgChatId(e.target.value); try { window.localStorage.setItem('politikum.bugTgChatId', e.target.value); } catch {} }}
-              placeholder="chat_id (например -526...)"
-              className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono"
-            />
-            <input
-              value={bugTgToken}
-              onChange={(e) => setBugTgToken(e.target.value)}
-              placeholder="bot token (BotFather)"
-              className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono"
-            />
-            <button
-              type="button"
-              disabled={loading || !token}
-              onClick={async () => {
-                if (!token) { setError('Set X-Admin-Token first.'); return; }
-                setLoading(true);
-                setBugTgStatus('Saving…');
-                setError('');
-                try {
-                  const res = await fetch(`${SERVER}/admin/bugreports/telegram`, {
-                    method: 'POST',
-                    headers: { 'X-Admin-Token': token, 'content-type': 'application/json' },
-                    body: JSON.stringify({ chatId: String(bugTgChatId || '').trim(), token: String(bugTgToken || '').trim() }),
-                  });
-                  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                  setBugTgStatus('✅ Enabled (sent test message)');
-                  setBugTgToken('');
-                } catch (e) {
-                  setBugTgStatus('');
-                  setError(e?.message || String(e));
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              className="px-4 py-2 rounded-xl bg-emerald-700/70 hover:bg-emerald-600/80 disabled:opacity-60 text-emerald-50 font-black text-xs uppercase tracking-widest"
-              title={token ? 'Save & test' : 'Set admin token first'}
-            >
-              Save & Test
-            </button>
-          </div>
-          {!!bugTgStatus && <div className="mt-2 text-xs font-mono text-amber-200/80">{bugTgStatus}</div>}
-          <div className="mt-1 text-[11px] font-mono text-amber-200/50">Токен не сохраняем в браузере; хранится на VPS в var/bugreport_tg.json.</div>
-        </div>
-
         {error && (
           <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">
             Error: {error}
