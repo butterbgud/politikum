@@ -1181,6 +1181,12 @@ function AdminPage() {
   const [matchLogId, setMatchLogId] = useState('');
   const [matchLogJson, setMatchLogJson] = useState('');
 
+  const [bugTgChatId, setBugTgChatId] = useState(() => {
+    try { return window.localStorage.getItem('politikum.bugTgChatId') || ''; } catch { return ''; }
+  });
+  const [bugTgToken, setBugTgToken] = useState('');
+  const [bugTgStatus, setBugTgStatus] = useState('');
+
   const [gamesWindow, setGamesWindow] = useState('day'); // hour|day|week|all
 
   const [showProfile, setShowProfile] = useState(false);
@@ -1523,6 +1529,13 @@ function AdminPage() {
               className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
             >
               Tournaments
+            </button>
+            <button
+              type="button"
+              onClick={() => { window.location.hash = '#/admin/bugreports'; }}
+              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+            >
+              Bugreports
             </button>
             <button
               type="button"
@@ -1870,7 +1883,149 @@ function Card({ card, onClick, disabled, showCheck }) {
   );
 }
 
-function LobbyBoard({ G, ctx, moves, playerID }) {
+
+function AdminBugreportsPage() {
+  const [token, setToken] = useState(() => {
+    try { return window.localStorage.getItem('politikum.adminToken') || ''; } catch { return ''; }
+  });
+  const saveToken = (t) => {
+    const v = String(t || '');
+    setToken(v);
+    try { window.localStorage.setItem('politikum.adminToken', v); } catch {}
+  };
+
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState(''); // '' | new | seen | done
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchList = async () => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const q = status ? `?status=${encodeURIComponent(status)}&limit=100` : `?limit=100`;
+      const res = await fetch(`${SERVER}/admin/bugreports${q}`, { headers: { 'X-Admin-Token': token } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setItems(Array.isArray(json?.rows) ? json.rows : []);
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, []);
+
+  const setItemStatus = async (id, st) => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/bugreport/${encodeURIComponent(String(id))}/status`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: st }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchList();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fmt = (ms) => {
+    if (!ms) return '—';
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
+
+  return (
+    <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
+      <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-baseline justify-between gap-4 mb-6">
+          <div>
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+            <div className="text-amber-100/70 font-serif mt-1">Admin / bugreports</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
+            <button type="button" onClick={() => { window.location.hash = '#/admin/tournament'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Tournaments</button>
+            <button type="button" disabled className="text-xs font-mono text-amber-50/90 font-black">Bugreports</button>
+            <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-widest text-amber-400 font-black block mb-1">X-Admin-Token</label>
+            <input type="password" value={token} onChange={(e) => saveToken(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono" placeholder="Paste shared secret" />
+          </div>
+          <div className="flex items-end gap-2">
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/40 text-amber-50 text-sm font-mono">
+              <option value="">all</option>
+              <option value="new">new</option>
+              <option value="seen">seen</option>
+              <option value="done">done</option>
+            </select>
+            <button type="button" onClick={fetchList} disabled={loading} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-amber-950 font-black text-xs uppercase tracking-widest">{loading ? 'Loading…' : 'Refresh'}</button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
+        )}
+
+        <div className="overflow-x-auto -mx-2">
+          <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
+            <thead>
+              <tr className="border-b border-amber-900/40">
+                <th className="px-2 py-2 whitespace-nowrap">When</th>
+                <th className="px-2 py-2 whitespace-nowrap">Status</th>
+                <th className="px-2 py-2 whitespace-nowrap">Match</th>
+                <th className="px-2 py-2 whitespace-nowrap">From</th>
+                <th className="px-2 py-2">Text</th>
+                <th className="px-2 py-2 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((r) => (
+                <tr key={r.id} className="border-b border-amber-900/20 align-top">
+                  <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{fmt(r.created_at)}</td>
+                  <td className="px-2 py-2 whitespace-nowrap">{r.status}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{String(r.match_id || '').slice(0, 12) || '—'}</td>
+                  <td className="px-2 py-2 whitespace-nowrap">{r.name || r.player_id || '—'}</td>
+                  <td className="px-2 py-2">
+                    <div className="whitespace-pre-wrap">{String(r.text || '')}</div>
+                    {(r.contact || '').trim() && <div className="mt-1 text-[10px] text-amber-200/60">contact: {r.contact}</div>}
+                  </td>
+                  <td className="px-2 py-2 whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'seen')} className="px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-slate-700/70 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Seen</button>
+                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'done')} className="px-2 py-1 rounded-lg bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-[10px] uppercase tracking-widest">Done</button>
+                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'new')} className="px-2 py-1 rounded-lg bg-amber-700/40 hover:bg-amber-600/50 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">New</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-2 py-6 text-center text-amber-300/60 text-xs">No bugreports.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
   const isHost = String(playerID) === '0' || String(me?.name || '') === 'You';
   const [name, setName] = useState(() => {
@@ -2065,7 +2220,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
         </div>
       )}
 
-      <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
+      <div className="w-full max-w-5xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
@@ -2074,7 +2229,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
           {/* player count hidden */}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Main column */}
           <div className="flex flex-col gap-4 min-h-[520px]">
             {/* Lobby chat */}
@@ -2196,6 +2351,418 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
               )}
             </div>
           </div>
+        </div>
+        {/* phase debug hidden */}
+      </div>
+    </div>
+  );
+}
+
+function MobileLobbyBoard({ G, ctx, moves, playerID }) {
+  const me = (G.players || []).find((p) => String(p.id) === String(playerID));
+  const isHost = String(playerID) === '0' || String(me?.name || '') === 'You';
+  const [name, setName] = useState(() => {
+    const cur = String(me?.name || '').trim();
+    if (!cur) return '';
+    if (cur.startsWith('[H] Seat')) return '';
+    return cur;
+  });
+
+  // Auto-apply saved alias into the match lobby (seat name) on first load.
+  useEffect(() => {
+    try {
+      const cur = String(me?.name || '').trim();
+      if (cur && !cur.startsWith('[H] Seat') && cur !== 'You') return;
+      const saved = String(window.localStorage.getItem('politikum.playerName') || '').trim();
+      if (!saved) return;
+      if (saved.startsWith('[H] Seat')) return;
+      // Only auto-set for your own seat.
+      if (String(playerID) !== String(me?.id ?? playerID)) return;
+      try { moves.setPlayerName(saved); } catch {}
+      setName(saved);
+    } catch {}
+  }, [me?.name, playerID]);
+  const [chatInput, setChatInput] = useState('');
+  const [ratingsMap, setRatingsMap] = useState(() => ({}));
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileErr, setProfileErr] = useState('');
+  const [profile, setProfile] = useState(null);
+
+  const openProfileById = async (pid) => {
+    const id = String(pid || '').trim();
+    if (!id) return;
+    setShowProfile(true);
+    setProfileLoading(true);
+    setProfileErr('');
+    try {
+      const res = await fetch(`${SERVER}/public/profile/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setProfile(json);
+    } catch (e) {
+      setProfileErr(e?.message || String(e));
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${SERVER}/public/leaderboard?limit=200`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const items = Array.isArray(json?.items) ? json.items : [];
+        const m = {};
+        for (const r of items) {
+          const pid = String(r?.playerId || '').trim();
+          if (!pid) continue;
+          m[pid] = Math.round(Number(r?.rating || 0));
+        }
+        setRatingsMap(m);
+      } catch {}
+    })();
+  }, []);
+
+  // (Top10 moved to the Guest List screen; keep lobby light.)
+
+  const [betaPassword, setBetaPassword] = useState('');
+  const [authToken, setAuthToken] = useState(() => {
+    try { return window.localStorage.getItem('politikum.authToken') || ''; } catch { return ''; }
+  });
+  const [authStatus, setAuthStatus] = useState('');
+
+  const activeCount = (G.activePlayerIds || []).length;
+
+  // Top10 moved to Guest List screen.
+
+  const doBetaLogin = async () => {
+    try {
+      setAuthStatus('');
+      const res = await fetch(`${SERVER}/auth/register_or_login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: String(name || '').trim() || '',
+          token: betaPassword,
+          deviceId: (() => {
+            try {
+              let id = window.localStorage.getItem('politikum.deviceId');
+              if (!id) {
+                id = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+                window.localStorage.setItem('politikum.deviceId', id);
+              }
+              return id;
+            } catch {
+              return null;
+            }
+          })(),
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const tok = String(json?.token || '');
+      if (!tok) throw new Error('No token returned');
+      setAuthToken(tok);
+      try { window.localStorage.setItem('politikum.authToken', tok); } catch {}
+
+      // Bind stable player identity into match state (for Рейтинг/rankings).
+      try {
+        const pid = json?.playerId;
+        if (pid) {
+          try { window.localStorage.setItem('politikum.sessionPlayerId', String(pid)); } catch {}
+          try { moves.setPlayerIdentity({ playerId: pid, email: null }); } catch {}
+        }
+      } catch {}
+
+      setAuthStatus('Logged in');
+    } catch (e) {
+      setAuthStatus(`Login failed: ${e?.message || String(e)}`);
+    }
+  };
+
+  const MOBILE = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    return String(window.location.hash || '').startsWith('#/m');
+  })();
+
+  return (
+    <div
+      className="min-h-screen w-screen text-slate-100 font-sans bg-cover bg-center bg-fixed bg-no-repeat overflow-hidden flex items-center justify-center p-6"
+      style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}
+    >
+      {showProfile && (
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/55 backdrop-blur-sm pointer-events-auto">
+          <div className="w-[min(520px,92vw)] max-h-[92vh] overflow-auto rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Профиль</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">Доступен всем</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowProfile(false)}
+                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+              >
+                Закрыть
+              </button>
+            </div>
+
+            {profileLoading && (
+              <div className="mt-4 text-amber-200/80 font-mono text-[12px]">loading…</div>
+            )}
+            {!profileLoading && profileErr && (
+              <div className="mt-4 text-red-200/90 font-mono text-[12px]">{profileErr}</div>
+            )}
+            {!profileLoading && !profileErr && profile?.ok && (
+              <div className="mt-4 text-amber-100/90 font-mono text-[12px] space-y-2">
+                <div className="flex items-center gap-4">
+                  <div className="w-24 aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/20 bg-black/30">
+                    <img
+                      src={`/public/profile_image/${encodeURIComponent(String(profile.playerId || ''))}.jpg`}
+                      onError={(e) => { try { e.currentTarget.src = `/cards/persona_${1 + ((Number(String(profile.playerId || '').split('').reduce((a,c)=>a+c.charCodeAt(0),0)) || 0) % 45)}.webp`; } catch {} }}
+                      className="w-full h-full object-cover"
+                      alt="avatar"
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <div><span className="text-amber-200/70">PlayerId:</span> {String(profile.playerId || '')}</div>
+                      <a
+                        className="px-3 py-2 rounded-xl bg-black/45 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+                        href={`/profile/${encodeURIComponent(String(profile.playerId || ''))}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Открыть публичный профиль
+                      </a>
+                    </div>
+                    <div><span className="text-amber-200/70">Имя:</span> {String(profile.name || profile.username || '—')}</div>
+                    <div><span className="text-amber-200/70">Рейтинг:</span> {Math.round(Number(profile.rating || 0))}</div>
+                    <div><span className="text-amber-200/70">Игр:</span> {Number(profile.games || 0)}</div>
+                    <div><span className="text-amber-200/70">Побед:</span> {Number(profile.wins || 0)} ({profile.games ? Math.round((Number(profile.wins || 0) / Math.max(1, Number(profile.games || 0))) * 100) : 0}%)</div>
+
+                    {String(profile.bioText || '').trim() && (
+                      <div className="mt-3 pt-3 border-t border-amber-900/20">
+                        <div className="text-amber-200/70 text-[10px] uppercase tracking-[0.3em] font-black">about</div>
+                        <div className="mt-2 whitespace-pre-wrap text-amber-50/85">{String(profile.bioText || '').trim()}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-3xl bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-amber-900/20 shadow-2xl">
+        {!MOBILE && (
+          <div className="flex items-baseline justify-between">
+            <div>
+              <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
+              <div className="text-amber-100/70 font-serif mt-1">Лобби</div>
+            </div>
+            {/* player count hidden */}
+          </div>
+        )}
+
+        <div className={"mt-6 grid grid-cols-1 gap-4 " + (MOBILE ? "" : "") }>
+          {/* Main column */}
+          <div className={"flex flex-col gap-4 min-h-[520px] " + (MOBILE ? "" : "") }>
+
+            {/* Seats (mobile: top) */}
+            {MOBILE && (
+              <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Игроки</div>
+                <div className="mt-3 grid gap-2">
+                  {(G.players || []).filter((p) => !!p?.active).map((p) => {
+                    const active = !!p.active;
+                    const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                    return (
+                      <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <button
+                            type="button"
+                            className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2 hover:text-amber-50 min-w-0'}
+                            onClick={() => {
+                              const pid = String(p?.identity?.playerId || '').trim();
+                              if (pid) openProfileById(pid, String(p?.name || ''));
+                            }}
+                            disabled={!String(p?.identity?.playerId || '').trim()}
+                            title={String(p?.identity?.playerId || '').trim() ? 'Открыть профиль' : ''}
+                          >
+                            <span className="truncate">{p.name || `Seat ${p.id}`}</span>
+                            {(() => {
+                              const pid = String(p?.identity?.playerId || '').trim();
+                              const r = pid ? ratingsMap?.[pid] : null;
+                              if (!pid || r == null) return null;
+                              return <span className="text-amber-100/80 font-mono text-[11px]">({r})</span>;
+                            })()}
+                          </button>
+                          {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                        </div>
+
+                        {isHost && String(p.id) !== '0' && active && (
+                          <button
+                            type="button"
+                            onClick={() => { if (confirm(`Remove ${p.name || p.id}?`)) moves.removePlayer(String(p.id)); }}
+                            className="ml-2 px-2 py-1 rounded-lg bg-red-900/60 hover:bg-red-900/80 border border-red-900/30 text-red-100 font-black text-[10px] uppercase tracking-widest"
+                          >
+                            Убрать
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {isHost && (
+                  <div className="mt-4 flex gap-2 items-center">
+                    <button
+                      onClick={() => moves.addBot()}
+                      className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                    >
+                      Добавить бота
+                    </button>
+                    <button
+                      onClick={() => moves.startGame()}
+                      className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                    >
+                      Старт
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Lobby chat */}
+            <div className={"bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0 " + (MOBILE ? ((G.chat || []).length ? "min-h-[62vh]" : "min-h-[30vh]") : "")}>
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Чат лобби</div>
+              <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                {(G.chat || []).map((m, i) => {
+                  const sender = String(m?.sender || '').trim();
+                  const p = (G.players || []).find((pp) => String(pp?.name || '').trim() === sender);
+                  const pid = String(p?.identity?.playerId || '');
+                  const r = pid ? ratingsMap[pid] : null;
+                  return (
+                    <div key={i} className="text-sm font-serif">
+                      <button
+                        type="button"
+                        className="text-amber-200/60 font-mono text-[11px] mr-2 hover:text-amber-100"
+                        onClick={() => { if (pid) openProfileById(pid); }}
+                        disabled={!pid}
+                        title={pid ? 'Открыть профиль' : ''}
+                      >
+                        {m.sender}{(r != null) ? ` (${r})` : ''}:
+                      </button>
+                      <span className="text-amber-50/90">{m.text}</span>
+                    </div>
+                  );
+                })}
+                {(!(G.chat || []).length) && <div className="text-amber-200/40 italic text-sm font-serif">Пока нет сообщений.</div>}
+              </div>
+              <form
+                className="mt-3 flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const msg = String(chatInput || '').trim();
+                  if (!msg) return;
+                  try { moves.submitChat(msg, String(me?.name || playerID)); } catch {}
+                  setChatInput('');
+                }}
+              >
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Напиши что-нибудь…"
+                  className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="w-12 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-lg"
+                  title="Отправить"
+                >
+                  &gt;
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+          {/* Side panel hidden on mobile (players moved to top) */}
+          {!MOBILE && (
+          <div className="grid gap-4">
+            {/* Beta login block removed from pregame lobby (register on main page). */}
+
+            {/* Seats */}
+            <div className="bg-slate-900/40 rounded-2xl p-3 border border-amber-900/20">
+              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Игроки</div>
+              <div className="mt-3 grid gap-2">
+                {(G.players || []).filter((p) => !!p?.active).map((p) => {
+                  const active = !!p.active;
+                  const bot = !!p.isBot || String(p.name || '').startsWith('[B]');
+                  return (
+                    <div key={p.id} className="flex items-center justify-between bg-black/40 rounded-xl px-3 py-2 border border-amber-900/10">
+                      <div className="flex items-center gap-2">
+                        <div className={(active ? 'text-amber-100' : 'text-amber-900/50') + ' font-serif text-sm flex items-center gap-2'}>
+                          <span>{p.name || `Seat ${p.id}`}</span>
+                          {(() => {
+                            const pid = String(p?.identity?.playerId || '').trim();
+                            const r = pid ? ratingsMap?.[pid] : null;
+                            if (!pid || r == null) return null;
+                            return (
+                              <button
+                                type="button"
+                                className="text-amber-100/80 hover:text-amber-100 underline underline-offset-2 text-[11px] font-mono"
+                                title="Открыть профиль"
+                                onClick={() => openProfileById(pid, String(p?.name || ''))}
+                              >
+                                ({r})
+                              </button>
+                            );
+                          })()}
+                        </div>
+                        {active && bot && <div className="text-[10px] font-mono text-amber-200/50">(bot)</div>}
+                      </div>
+
+                      {isHost && String(p.id) !== '0' && active && bot && (
+                        <button
+                          onClick={() => moves.removePlayer(String(p.id))}
+                          className="text-amber-600 hover:text-amber-400 font-black text-xs uppercase"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {isHost && (
+                <div className="mt-4 flex gap-2 items-center">
+                  <button
+                    onClick={() => moves.addBot()}
+                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-100 font-black text-xs uppercase tracking-widest"
+                  >
+                    Добавить бота
+                  </button>
+                  <button
+                    onClick={() => moves.startGame()}
+                    className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-xs uppercase tracking-widest"
+                  >
+                    Старт
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          )}
         </div>
         {/* phase debug hidden */}
       </div>
@@ -2408,6 +2975,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   const response = G.response || null;
   const pending = G.pending || null;
+
+  // Mobile: show a persistent cancel to exit local targeting modes.
+  const mobileCancelTargeting = () => {
+    try { setPlacementMode(null); } catch {}
+    try { setPlacementModeOpp(null); } catch {}
+    try { setPickTargetForAction4(null); } catch {}
+    try { setPickTargetForAction9(null); } catch {}
+    try { setPickTargetForPersona9(null); } catch {}
+    try { setP7FirstPick(null); } catch {}
+    try { setP16DiscardPick([]); } catch {}
+    try { setMobileHandSelected(null); } catch {}
+  };
   const responseKind = response?.kind || null;
   const responseExpiresAt = Number(response?.expiresAtMs || 0);
   const responseSecondsLeft = Math.max(0, Math.ceil((responseExpiresAt - Date.now()) / 1000));
@@ -2454,12 +3033,28 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const ENABLE_EVENT_SPLASH = true;
   const ENABLE_ACTION_SPLASH = false;
 
-  const [logCollapsed, setLogCollapsed] = useState(false);
+  const MOBILE = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    return String(window.location.hash || '').startsWith('#/m');
+  })();
+  const [logCollapsed, setLogCollapsed] = useState(() => MOBILE);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
   const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
 
-  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  
   const [mobileHandSelected, setMobileHandSelected] = useState(null);
+  const [mobileHandOpen, setMobileHandOpen] = useState(false);
+  const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
+  const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
+
+  const [bugModal, setBugModal] = useState(false);
+  const [bugText, setBugText] = useState('');
+  const [bugContact, setBugContact] = useState('');
+  const [bugSent, setBugSent] = useState(null);
+
   useEffect(() => {
     if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2986,6 +3581,78 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   return (
     <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
+      {bugModal && (
+        <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setBugModal(false)}>
+          <div className="w-[min(720px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-100 font-black text-sm">Сообщить баг</div>
+                <div className="text-amber-200/70 font-mono text-[12px] mt-1">match: {String(matchID || '').slice(0, 12) || '—'}</div>
+              </div>
+              <button type="button" onClick={() => setBugModal(false)} className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest">Закрыть</button>
+            </div>
+
+            <div className="mt-3 grid gap-2">
+              <textarea
+                value={bugText}
+                onChange={(e) => setBugText(e.target.value)}
+                placeholder="Опиши что случилось (что нажал, что ожидал, что увидел)…"
+                className="w-full h-28 px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+              />
+              <input
+                value={bugContact}
+                onChange={(e) => setBugContact(e.target.value)}
+                placeholder="Контакт (опционально): telegram @ / email"
+                className="w-full px-3 py-2 rounded-xl bg-black/50 border border-amber-900/30 text-amber-50 text-sm"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyText(JSON.stringify(buildBugReport(), null, 2))}
+                  className="px-3 py-2 rounded-xl bg-black/45 hover:bg-black/60 border border-amber-900/25 text-amber-50 font-black text-[11px]"
+                >
+                  Скопировать тех.данные
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const text = String(bugText || '').trim();
+                    if (!text) { setBugSent('Напиши текст'); return; }
+                    setBugSent('Отправляю…');
+                    try {
+                      const payload = {
+                        text,
+                        contact: String(bugContact || '').trim() || null,
+                        matchId: matchID || null,
+                        playerId: (me?.identity?.playerId || me?.name || playerID || null),
+                        name: (me?.name || null),
+                        context: buildBugReport(),
+                        url: String(window.location.href || ''),
+                      };
+                      const res = await fetch('/public/bugreport', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify(payload),
+                      });
+                      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                      const j = await res.json().catch(() => ({}));
+                      setBugSent(j?.id ? `Отправлено (#${j.id})` : 'Отправлено');
+                      setBugText('');
+                    } catch (e) {
+                      setBugSent(e?.message || String(e));
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-amber-950 font-black text-[11px] uppercase tracking-widest"
+                >
+                  Отправить
+                </button>
+              </div>
+              {!!bugSent && <div className="text-[12px] font-mono text-amber-200/80">{bugSent}</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showHotkeys && (
       <div className="fixed top-3 left-3 z-[2000] select-none">
         <div className="mb-1 pointer-events-none select-none text-amber-200/70 font-black tracking-[0.35em] uppercase text-[10px]">Politikum</div>
@@ -3017,11 +3684,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
             <button
               type="button"
-              onClick={() => copyText(JSON.stringify(buildBugReport(), null, 2))}
+              onClick={() => { try { setBugModal(true); setBugSent(null); } catch {} }}
               className="pointer-events-auto bg-slate-800/60 hover:bg-slate-700/70 border border-amber-900/20 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-amber-100/90"
-              title="Report bug (copies JSON: matchId + versions + pending/response)"
+              title="Report bug"
             >
-              Report bug
+              Bug
             </button>
 
             {hudToast && (
@@ -3047,19 +3714,22 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
           const pts = (coal || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
-          // Single opponent fan: show coalition faces reliably (don’t let a big hand hide them).
-          // We want: backs VERY tight, faces less tight.
+          const oppPid = String(p?.identity?.playerId || '').trim();
+          const oppRating = oppPid ? ratingsMap?.[oppPid] : null;
+
+          // Opponent fan cards
           const backs = Array.from({ length: nHand }, () => ({ kind: 'back' }));
           const faces = coal.map((c) => ({ kind: 'face', card: c }));
 
-          // Always include all coalition cards, and only show as many backs as fit.
+          // Mobile: don't show hidden (unplayed) hand cards at all.
+          // Desktop: show some backs + all coalition faces.
           const MAX_SHOW = 12;
           const backsShown = Math.min(nHand, Math.max(0, MAX_SHOW - faces.length));
-          const oppFanCards = [...backs.slice(0, backsShown), ...faces];
+          const oppFanCards = MOBILE ? faces : [...backs.slice(0, backsShown), ...faces];
 
           const show = oppFanCards.length;
-          const stepBack = 6;  // 2x tighter
-          const stepFace = 24; // more spacing so tokens are visible
+          const stepBack = 6;  // tight
+          const stepFace = MOBILE ? 22 : 24; // slightly tighter on mobile
 
           const calcWidth = () => {
             const shown = oppFanCards.slice(0, show);
@@ -3085,6 +3755,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {String(p.name || '').trim() && !String(p.name || '').startsWith('[H] Seat') && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
                   <span>{p.name}</span>
+                  {(oppRating != null) && <span className="text-amber-100/80">({oppRating})</span>}
+                  {MOBILE && <span className="text-amber-200/70">в руке: {nHand}</span>}
                   <span className="text-amber-200/50">•</span>
                   <span className="text-amber-200/80">{pts}p</span>
                 </div>
@@ -3094,6 +3766,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
+                  (MOBILE ? "scale-[0.55] origin-top" : "") +
                   ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
@@ -3119,7 +3792,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   if (pickTargetForAction9) {
                     try { moves.playAction(pickTargetForAction9.cardId, String(p.id)); } catch {}
                     setPickTargetForAction9(null);
+                    return;
                   }
+                  if (MOBILE) setMobileOppInspect(String(p.id));
                 }}
                 onPointerMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -3142,8 +3817,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 onPointerLeave={() => setHoverOppCoalition((m) => ({ ...(m || {}), [p.id]: null }))}
                 title={`Total: ${nTotal}`}
               >
-                {/* count */}
-                {nTotal > 0 && (
+                {/* count hidden on mobile (was overlapping) */}
+                {!MOBILE && nTotal > 0 && (
                   <div className="absolute -top-15 left-1/2 -translate-x-1/2 bg-black/70 border border-black/40 text-amber-100 font-mono font-black text-[12px] px-2 py-0.5 rounded-full">{nTotal}</div>
                 )}
 
@@ -3331,48 +4006,83 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Controls (Citadel-style touchables) */}
       <div className="fixed inset-0 z-[1100] pointer-events-none">
-        {/* Deck (Draw) */}
-        <button
-          type="button"
-          onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
-          className={
-            "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
-          }
-          style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
-          title={G.pending ? "Resolve pending" : ((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
-          aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
-        >
-          <div className="relative w-full h-auto">
-            {(isMyTurn && !G.hasDrawn) && (
-              <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
-            )}
-            <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
-            {showHotkeys && (
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
-            )}
-          </div>
-        </button>
+        {MOBILE ? (
+          <>
+            {/* Mobile text buttons */}
+            <div className="fixed top-3 z-[20000] pointer-events-auto select-none flex flex-col gap-2" style={{ right: 'min(12px, 1vw)', transform: 'translateX(-118px)' }}>
+              <button
+                type="button"
+                onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
+                className={
+                  "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
+                  ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-50" : "")
+                }
+                title="Взять карту"
+                aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
+              >
+                Взять карту
+              </button>
 
-                {/* Cookies (End Turn) */}
-        <button
-          type="button"
-          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
-          className={
-            "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || !G.hasDrawn || !G.hasPlayed) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
-          }
-          style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
-          title={(!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
-          aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed}
-        >
-          <div className="relative w-full h-auto">
-            <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
-            {showHotkeys && (
-              <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
-            )}
-          </div>
-        </button>
+              <button
+                type="button"
+                onClick={() => { if (!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
+                className={
+                  "px-3 py-2 rounded-xl bg-amber-600/90 border border-amber-500/30 text-amber-950 font-mono font-black text-[11px] " +
+                  ((!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed) ? "opacity-50" : "")
+                }
+                title="Закончить ход"
+                aria-disabled={!isMyTurn || G.pending || !G.hasDrawn || !G.hasPlayed}
+              >
+                Закончить ход
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Deck (Draw) */}
+            <button
+              type="button"
+              onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
+              className={
+                "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
+                ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+              }
+              style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
+              title={G.pending ? "Resolve pending" : ((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
+              aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
+            >
+              <div className="relative w-full h-auto">
+                {(isMyTurn && !G.hasDrawn) && (
+                  <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
+                )}
+                <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
+                {showHotkeys && (
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
+                )}
+              </div>
+            </button>
+
+            {/* Cookies (End Turn) */}
+            <button
+              type="button"
+              onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
+              className={
+                "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
+                ((!isMyTurn || !G.hasDrawn || !G.hasPlayed) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+              }
+              style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
+              title={(!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
+              aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed}
+            >
+              <div className="relative w-full h-auto">
+                <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
+                {showHotkeys && (
+                  <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
+                )}
+              </div>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Pending banner */}
@@ -3448,8 +4158,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pendingP23 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP23Source}: choose self-inflict (-1) tokens then draw
-            <span className="ml-3 text-amber-200/70">(keys 0..3)</span>
+            {pendingP23Source}: tap Волков to take -1 & draw (up to 3). (0 finishes)
           </div>
         </div>
       )}
@@ -3678,7 +4387,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <button
                   type="button"
                   className="px-4 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[12px] shadow-2xl"
-                  onClick={() => { try { moves.skipResponseWindow(); } catch {} }}
+                  onClick={() => {
+                    try {
+                      setSkippedResponseKey(responseKey);
+                      window.localStorage.setItem(`politikum.skipResponse:${responseKey}`, String(Date.now()));
+                    } catch {}
+                    try { moves.skipResponseWindow(); } catch {}
+                  }}
                   title="(2)"
                 >
                   SKIP
@@ -3701,6 +4416,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {/* Mobile: cancel local targeting modes */}
+      {MOBILE && (placementMode || placementModeOpp || pickTargetForAction4 || pickTargetForAction9 || pickTargetForPersona9 || (p7FirstPick != null)) && (
+        <div className="fixed top-3 right-3 z-[6000] pointer-events-auto select-none">
+          <button
+            type="button"
+            onClick={mobileCancelTargeting}
+            className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+          >
+            Отмена
+          </button>
         </div>
       )}
 
@@ -4294,6 +5022,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Log (collapsible) */}
+      {MOBILE && (
+        <div className="fixed top-3 z-[20000] pointer-events-auto select-none flex items-center gap-2" style={{ left: 'min(12px, 1vw)', transform: 'translateX(18px)' }}>
+          <button
+            type="button"
+            onClick={() => setLogCollapsed((v) => !v)}
+            className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+            title="Toggle log"
+          >
+            {logCollapsed ? 'LOG' : 'LOG ×'}
+          </button>
+          <div className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]">VP: {myCoalitionPoints}</div>
+        </div>
+      )}
       <div className={
         "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-x-[-392px]" : "translate-x-0")
@@ -4355,8 +5096,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className={"fixed bottom-6 left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
-        style={{ transform: 'translateX(calc(-50% - 300px))' }}>
+      <div className={"fixed left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
+        style={MOBILE
+          ? { bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + min(50px, 6vh))`, transform: 'translateX(calc(-50% - 300px + min(50px, 6vw)))' }
+          : { bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' }
+        }>
 
         {(() => {
           const coal = (me?.coalition || []);
@@ -4448,6 +5192,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         if (pending?.kind === 'action_9_discard_persona' && c.type !== 'persona') return;
                         if (c.shielded || isImmovablePersona(c)) return;
                         try { moves.discardFromCoalition(c.id); } catch {}
+                        return;
+                      }
+                      if (pendingP23Here && String(c.id).split('#')[0] === 'persona_23') {
+                        // Tap-friendly: each tap takes 1 × (-1) and draws 1 (up to 3).
+                        try { moves.persona23ChooseSelfInflict(1); } catch {}
                         return;
                       }
                       if (pendingP21Here) {
@@ -4555,19 +5304,73 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {/* Total VP (bottom-right) */}
-      <div className="fixed bottom-4 right-4 z-[2500] pointer-events-none select-none">
-        <div className="bg-black/60 border border-amber-900/20 rounded-2xl px-4 py-2 text-amber-100/90 font-mono shadow-2xl">
-          <div className="font-black tracking-widest text-[14px]">VP: {myCoalitionPoints}</div>
-          <div className="mt-0.5 text-[10px] text-amber-200/60 tabular-nums">
-            Base {myVpBase} + Tokens {myVpTokens} + Passives {myVpPassives}
+      {/* Total VP */}
+      {!MOBILE && (
+        <div className="fixed z-[2500] pointer-events-none select-none bottom-4 right-4">
+          <div className="bg-black/60 border border-amber-900/20 rounded-2xl text-amber-100/90 font-mono shadow-2xl px-4 py-2">
+            <div className="font-black tracking-widest text-[14px]">VP: {myCoalitionPoints}</div>
+            <div className="mt-0.5 text-amber-200/60 tabular-nums text-[10px]">
+              Base {myVpBase} + Tokens {myVpTokens} + Passives {myVpPassives}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Mobile: opponent inspect modal */}
+      {MOBILE && mobileOppInspect && (
+        <div
+          className="fixed inset-0 z-[99998] bg-black/70 backdrop-blur-sm pointer-events-auto select-none flex items-center justify-center"
+          onClick={() => { setMobileOppInspect(null); setMobileOppZoomImg(null); }}
+        >
+          <div
+            className="w-[min(720px,94vw)] max-h-[92vh] overflow-hidden rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-amber-100 font-black text-sm">
+                {(opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.name) || 'Оппонент'}
+              </div>
+              <button
+                type="button"
+                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+                onClick={() => { setMobileOppInspect(null); setMobileOppZoomImg(null); }}
+              >
+                Закрыть
+              </button>
+            </div>
+
+            <div className="mt-3 text-[12px] font-mono text-amber-200/70">Сыгранные карты (свайпай)</div>
+            <div className="mt-2 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+              {((opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.coalition) || []).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="shrink-0 w-44 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                  onClick={() => setMobileOppZoomImg(c.img)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+              {(((opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.coalition) || []).length === 0) && (
+                <div className="text-amber-200/40 italic text-sm font-serif">Пока пусто.</div>
+              )}
+            </div>
+
+            {!!mobileOppZoomImg && (
+              <div className="mt-3 flex items-center justify-center">
+                <div className="w-[min(420px,86vw)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/20 shadow-2xl">
+                  <img src={mobileOppZoomImg} alt="zoom" className="w-full h-full object-cover" draggable={false} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mobile: cancel hand selection */}
       {MOBILE && mobileHandSelected && (
-        <div className="fixed bottom-24 left-3 z-[2600] pointer-events-auto select-none">
+        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(96px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
             onClick={() => setMobileHandSelected(null)}
@@ -4578,8 +5381,35 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
+      {/* Mobile: hand toggle */}
+      {MOBILE && (
+        <div className="fixed left-1/2 -translate-x-1/2 z-[3000] pointer-events-auto select-none" style={{ bottom: `calc(10px + env(safe-area-inset-bottom, 0px))` }}>
+          <button
+            type="button"
+            onClick={() => { try { setMobileHandOpen((v) => !v); } catch {} }}
+            className="px-4 py-2 rounded-full bg-black/65 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+          >
+            {mobileHandOpen ? 'Скрыть руку' : 'Рука'}
+          </button>
+        </div>
+      )}
+
       {/* Hand fan */}
-      <div className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "bottom-3 left-1/2 -translate-x-1/2" : "bottom-6 right-[410px]")}>
+      <div
+        className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "left-1/2" : "bottom-6 right-[410px]")}
+        style={MOBILE ? (() => {
+          const rotated = (() => { try { return !!window.__POLITIKUM_ROTATED__; } catch { return false; } })();
+          const openY = rotated ? '-40px' : '-240px';
+          const closedY = rotated ? '120px' : '180px';
+          const dx = 'min(50px, 6vw)';
+          return {
+            bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
+            transform: `translateX(calc(-50% + ${dx})) translateY(${mobileHandOpen ? openY : closedY})` + (rotated ? ' scale(0.85)' : ''),
+            transition: 'transform 200ms ease-out',
+            transformOrigin: 'bottom center',
+          };
+        })() : undefined}
+      >
         <div
           className="relative h-56 overflow-visible"
           style={{ width: `${handWidth}px`, marginLeft: 'auto' }}
@@ -4752,7 +5582,20 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
 function Board(props) {
   const phase = String(props?.ctx?.phase || '');
-  if (phase === 'lobby') return <LobbyBoard {...props} />;
+
+  // Expose current phase so outer shell can decide whether to rotate the whole UI on mobile.
+  try { window.__POLITIKUM_PHASE__ = phase; } catch {}
+
+  const isMobileUi = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    try { return String(window.location.hash || '').startsWith('#/m'); } catch {}
+    return false;
+  })();
+
+  if (phase === 'lobby') return (isMobileUi ? <MobileLobbyBoard {...props} /> : <DesktopLobbyBoard {...props} />);
   return <ActionBoard {...props} matchID={props.matchID} />;
 }
 
@@ -5098,7 +5941,13 @@ function PolitikumWelcome({ onJoin }) {
   const [profile, setProfile] = useState(null);
   const [ratingsMap, setRatingsMap] = useState(() => ({}));
 
-  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  const MOBILE = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    return String(window.location.hash || '').startsWith('#/m');
+  })();
 
   // “prelobby / hosted / gamescreen” — first two screens are a straight copy of Citadel layout.
   return (
@@ -5479,9 +6328,21 @@ function PolitikumWelcome({ onJoin }) {
                       <div key={i} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-amber-900/20">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
-                          <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
+                          <button
+                            type="button"
+                            className="font-serif text-amber-100 text-sm font-bold truncate hover:opacity-90 text-left"
+                            onClick={() => { const pid = String(r?.playerId || r?.player_id || '').trim(); if (pid) openProfileById(pid); }}
+                            disabled={!String(r?.playerId || r?.player_id || '').trim()}
+                            title={String(r?.playerId || r?.player_id || '').trim() ? 'Открыть профиль' : ''}
+                          >
+                            {r.name}
+                          </button>
                         </div>
-                        <span className="text-xs font-mono text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</span>
+                        <div className="flex items-baseline gap-3 font-mono tabular-nums">
+                          <span className="text-[12px] text-amber-200/75">G:{Number(r.games ?? 0) || 0}</span>
+                          <span className="text-[12px] text-amber-200/75">W:{Number(r.wins ?? 0) || 0}</span>
+                          <span className="text-[12px] text-amber-100/95 font-black">R:{Number(r.rating ?? 0) || 0}</span>
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -5555,11 +6416,60 @@ export default function SpineUI() {
   useEffect(() => {
     try { document.title = 'Politikum'; } catch {}
     // Nginx likely serves SPA directly for /m, so enforce hash-route on client.
+    // Also: auto-redirect mobile devices to /m (unless already there).
     try {
       const p = String(window.location.pathname || '');
       const h = String(window.location.hash || '');
+
+      const urlParams = (() => { try { return new URLSearchParams(String(window.location.search || '')); } catch { return new URLSearchParams(''); } })();
+      const forceUi = String(urlParams.get('ui') || '').trim(); // 'desktop' | 'mobile'
+      try {
+        if (forceUi === 'desktop') window.localStorage.setItem('politikum.forceUi', 'desktop');
+        if (forceUi === 'mobile') window.localStorage.setItem('politikum.forceUi', 'mobile');
+      } catch {}
+      const forcedUi = (() => { try { return String(window.localStorage.getItem('politikum.forceUi') || ''); } catch { return ''; } })();
+
+      const isMobileDevice = (() => {
+        if (forcedUi === 'desktop') return false;
+        if (forcedUi === 'mobile') return true;
+        try {
+          const ua = String(navigator.userAgent || '');
+          // Prefer UA over pointer: coarse triggers on some touch laptops.
+          if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+        } catch {}
+        try {
+          if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+        } catch {}
+        return false;
+      })();
+
+      // Force desktop override: leave /m + #/m routes.
+      if (forcedUi === 'desktop') {
+        if (h.startsWith('#/m')) {
+          window.location.hash = '';
+          return;
+        }
+        if (p === '/m' || p.startsWith('/m/')) {
+          window.location.href = '/?ui=desktop';
+          return;
+        }
+      }
+
+      if (p === '/desk' || p.startsWith('/desk/')) {
+        try { window.localStorage.setItem('politikum.forceUi', 'desktop'); } catch {}
+        if (h.startsWith('#/m')) { window.location.hash = ''; }
+        return;
+      }
+
       if (p === '/m' || p.startsWith('/m/')) {
         if (!h.startsWith('#/m')) window.location.hash = '#/m';
+        return;
+      }
+
+      if (isMobileDevice && !h.startsWith('#/m')) {
+        // Keep mobile users on the mobile UI route.
+        window.location.href = '/m';
+        return;
       }
     } catch {}
   }, []);
@@ -5581,12 +6491,55 @@ export default function SpineUI() {
     }
   });
   const [hash, setHash] = useState(() => window.location.hash || '');
+  const isMobileRoute = String(hash || '').startsWith('#/m');
+  const [showRotateHint, setShowRotateHint] = useState(false);
+  // Default false so lobby never flashes rotated while we detect phase.
+  const [mobileRotateGame, setMobileRotateGame] = useState(false);
+
+  useEffect(() => {
+    if (!isMobileRoute) { if (showRotateHint) setShowRotateHint(false); return; }
+    const check = () => {
+      try {
+        const w = window.innerWidth || 0;
+        const h = window.innerHeight || 0;
+        // Treat landscape as "rotate hint".
+        setShowRotateHint(w > h);
+      } catch {}
+    };
+    check();
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobileRoute]);
 
   useEffect(() => {
     const onHashChange = () => setHash(window.location.hash || '');
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  // Mobile: rotate the *game table* into landscape, but keep the lobby portrait.
+  useEffect(() => {
+    if (!isMobileRoute) { setMobileRotateGame(false); return; }
+    const tick = () => {
+      try {
+        const ph = String(window.__POLITIKUM_PHASE__ || '').trim();
+        setMobileRotateGame(!!(ph && ph !== 'lobby'));
+      } catch {}
+    };
+    tick();
+    const t = setInterval(tick, 250);
+    return () => clearInterval(t);
+  }, [isMobileRoute]);
+
+  // Let inner UI know if the whole game is currently rotated.
+  useEffect(() => {
+    try { window.__POLITIKUM_ROTATED__ = !!(isMobileRoute && mobileRotateGame); } catch {}
+  }, [isMobileRoute, mobileRotateGame]);
 
   const forgetMatch = () => {
     try {
@@ -5658,6 +6611,9 @@ export default function SpineUI() {
   if (hash.startsWith('#/admin/tournament')) {
     return <AdminTournamentPage />;
   }
+  if (hash.startsWith('#/admin/bugreports')) {
+    return <AdminBugreportsPage />;
+  }
   if (hash.startsWith('#/admin')) {
     return <AdminPage />;
   }
@@ -5676,7 +6632,40 @@ export default function SpineUI() {
 
   return (
     <div className="relative">
-      <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+      {isMobileRoute ? (
+        mobileRotateGame ? (
+          <div className="fixed inset-0 overflow-hidden">
+            {/* Render the game in landscape inside a portrait phone (rotate the whole game) */}
+            <div
+              className="absolute top-0 left-0 origin-top-left"
+              style={{
+                width: '100vh',
+                height: '100vw',
+                transform: 'rotate(90deg) translateY(-100%)',
+              }}
+            >
+              <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+            </div>
+          </div>
+        ) : (
+          <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+        )
+      ) : (
+        <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+      )}
+
+      {/* Mobile: if user actually rotates device to landscape, warn to go back */}
+      {isMobileRoute && showRotateHint && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto select-none">
+          <div className="w-[min(520px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-5 text-amber-100">
+            <div className="text-amber-600 font-black uppercase tracking-[0.3em] text-xs">Politikum</div>
+            <div className="mt-2 text-lg font-black">Поверни телефон вертикально</div>
+            <div className="mt-2 text-sm text-amber-100/80">Держим телефон вертикально, а игру рисуем горизонтально. Включи блокировку поворота.</div>
+            <div className="mt-4 text-[12px] font-mono text-amber-200/70">(Окно исчезнет само, когда вернёшься в портрет)</div>
+          </div>
+        </div>
+      )}
+
       <div className="fixed bottom-3 left-3 z-[9999] pointer-events-auto">
         <button
           type="button"
