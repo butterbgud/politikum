@@ -5533,6 +5533,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 function Board(props) {
   const phase = String(props?.ctx?.phase || '');
 
+  // Expose current phase so outer shell can decide whether to rotate the whole UI on mobile.
+  try { window.__POLITIKUM_PHASE__ = phase; } catch {}
+
   const isMobileUi = (() => {
     try {
       const sp = new URLSearchParams(String(window.location.search || ''));
@@ -6440,6 +6443,7 @@ export default function SpineUI() {
   const [hash, setHash] = useState(() => window.location.hash || '');
   const isMobileRoute = String(hash || '').startsWith('#/m');
   const [showRotateHint, setShowRotateHint] = useState(false);
+  const [mobileRotateGame, setMobileRotateGame] = useState(true);
 
   useEffect(() => {
     if (!isMobileRoute) { if (showRotateHint) setShowRotateHint(false); return; }
@@ -6466,6 +6470,20 @@ export default function SpineUI() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  // Mobile: rotate the *game table* into landscape, but keep the lobby portrait.
+  useEffect(() => {
+    if (!isMobileRoute) { setMobileRotateGame(true); return; }
+    const tick = () => {
+      try {
+        const ph = String(window.__POLITIKUM_PHASE__ || '').trim();
+        setMobileRotateGame(ph && ph !== 'lobby');
+      } catch {}
+    };
+    tick();
+    const t = setInterval(tick, 250);
+    return () => clearInterval(t);
+  }, [isMobileRoute]);
 
   const forgetMatch = () => {
     try {
@@ -6559,19 +6577,23 @@ export default function SpineUI() {
   return (
     <div className="relative">
       {isMobileRoute ? (
-        <div className="fixed inset-0 overflow-hidden">
-          {/* Render the game in landscape inside a portrait phone (rotate the whole game) */}
-          <div
-            className="absolute top-0 left-0 origin-top-left"
-            style={{
-              width: '100vh',
-              height: '100vw',
-              transform: 'rotate(90deg) translateY(-100%)',
-            }}
-          >
-            <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+        mobileRotateGame ? (
+          <div className="fixed inset-0 overflow-hidden">
+            {/* Render the game in landscape inside a portrait phone (rotate the whole game) */}
+            <div
+              className="absolute top-0 left-0 origin-top-left"
+              style={{
+                width: '100vh',
+                height: '100vw',
+                transform: 'rotate(90deg) translateY(-100%)',
+              }}
+            >
+              <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
+        )
       ) : (
         <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
       )}
