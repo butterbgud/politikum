@@ -770,6 +770,18 @@ export function recordGameFinished({
   }
 }
 
+export function resolvePlayerIdFromName(name) {
+  const db = sqlite;
+  const n = String(name || '').trim();
+  if (!n) return null;
+  try {
+    const row = db.prepare('SELECT player_id AS playerId FROM users WHERE username = ? OR player_id = ?').get(n, n);
+    return row?.playerId ? String(row.playerId) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getSummary() {
   const db = sqlite;
   const totals = db

@@ -7,7 +7,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound, bugreportInsert, bugreportsList, bugreportSetStatus } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound, bugreportInsert, bugreportsList, bugreportSetStatus, resolvePlayerIdFromName } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -137,14 +137,16 @@ async function syncFinishedGames(db) {
       return sp?.identity?.playerId || null;
     };
 
-    const winnerPlayerId = seatWinnerPlayerId ? (seatToStable(seatWinnerPlayerId) || String(seatWinnerPlayerId)) : null;
+    const winnerPlayerId = seatWinnerPlayerId
+      ? (seatToStable(seatWinnerPlayerId) || resolvePlayerIdFromName(winnerName) || String(seatWinnerPlayerId))
+      : (resolvePlayerIdFromName(winnerName) || null);
 
     const playerSummaries = players
       .map((p, index) => {
         const seatId = String(p.id ?? String(index));
         const sp = statePlayers.find((x) => String(x?.id) === seatId);
-        const stable = sp?.identity?.playerId;
         const name = p.name ?? p.displayName ?? sp?.name ?? null;
+        const stable = sp?.identity?.playerId || resolvePlayerIdFromName(name);
         const isBot = Boolean(p.isBot || p.bot || sp?.isBot || String(sp?.name || '').startsWith('[B]'));
         const active = Boolean(sp?.active) || activeIds.has(seatId);
         return { seatId, playerId: stable || seatId, name, isBot, active };
