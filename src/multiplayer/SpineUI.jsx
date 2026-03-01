@@ -2457,6 +2457,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
   const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
+
+  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  const [mobileHandSelected, setMobileHandSelected] = useState(null);
   useEffect(() => {
     if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4562,8 +4565,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       </div>
 
+      {/* Mobile: cancel hand selection */}
+      {MOBILE && mobileHandSelected && (
+        <div className="fixed bottom-24 left-3 z-[2600] pointer-events-auto select-none">
+          <button
+            type="button"
+            onClick={() => setMobileHandSelected(null)}
+            className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[11px]"
+          >
+            Отмена
+          </button>
+        </div>
+      )}
+
       {/* Hand fan */}
-      <div className="fixed bottom-6 right-[410px] z-[999] pointer-events-auto">
+      <div className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "bottom-3 left-1/2 -translate-x-1/2" : "bottom-6 right-[410px]")}>
         <div
           className="relative h-56 overflow-visible"
           style={{ width: `${handWidth}px`, marginLeft: 'auto' }}
@@ -4582,8 +4598,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             const left = idx * handStep;
 
             const dist = hoverHandIndex == null ? 99 : Math.abs(idx - hoverHandIndex);
-            const scale = hoverHandIndex == null ? 1 : scaleByDist(dist);
-            const z = hoverHandIndex == null ? idx : (1000 - dist);
+            const scale0 = hoverHandIndex == null ? 1 : scaleByDist(dist);
+            const isSelected = MOBILE && String(mobileHandSelected || '') === String(card.id);
+            const scale = isSelected ? Math.max(1.06, scale0) : scale0;
+            const z = isSelected ? 2000 : (hoverHandIndex == null ? idx : (1000 - dist));
 
             const baseId = String(card.id).split('#')[0];
 
@@ -4610,6 +4628,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 key={card.id}
                 onClick={(e) => {
                   if (!canClick) return;
+
+                  // Mobile: first tap selects (preview), second tap confirms.
+                  if (MOBILE && !canDiscardDownTo7 && !canClickP16) {
+                    if (String(mobileHandSelected || '') !== String(card.id)) {
+                      try { playSfx('ui', 0.18); } catch {}
+                      setMobileHandSelected(card.id);
+                      return;
+                    }
+                    // second tap → proceed
+                    setMobileHandSelected(null);
+                  }
+
                   if (canDiscardDownTo7) {
                     try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(card.id); } catch {}
                     return;
