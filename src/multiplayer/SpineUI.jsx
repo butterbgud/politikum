@@ -3513,18 +3513,20 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     return () => clearInterval(t);
   }, [moves, G?.response, G?.pending?.kind, G?.gameOver, shouldDriveTick]);
 
-  // Keep event card visible while the event is still being resolved.
+  // Event splash: show only when an event is actively being resolved.
+  // On refresh, G.lastEvent can still point at an old event; don't full-screen it unless there's a pending.
   useEffect(() => {
     const id = G.lastEvent?.id;
-    if (!id) return;
+    if (!id) { setShowEventSplash(false); return; }
+    if (!G.pending) { setShowEventSplash(false); return; }
     setShowEventSplash(true);
-  }, [G.lastEvent?.id]);
+  }, [G.lastEvent?.id, !!G.pending]);
 
   useEffect(() => {
     if (!showEventSplash) return;
     // When no pending decisions remain, fade the event card shortly after.
     if (G.pending) return;
-    const t = setTimeout(() => setShowEventSplash(false), 4000);
+    const t = setTimeout(() => setShowEventSplash(false), 800);
     return () => clearTimeout(t);
   }, [showEventSplash, G.pending]);
 
