@@ -6023,7 +6023,11 @@ export default function SpineUI() {
 
       // Force desktop override: leave /m + #/m routes.
       if (forcedUi === 'desktop') {
-        if (p === '/m' || p.startsWith('/m/') || h.startsWith('#/m')) {
+        if (h.startsWith('#/m')) {
+          window.location.hash = '';
+          return;
+        }
+        if (p === '/m' || p.startsWith('/m/')) {
           window.location.href = '/?ui=desktop';
           return;
         }
