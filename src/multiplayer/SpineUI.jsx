@@ -3639,7 +3639,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[url('/assets/ui/table.webp')] bg-cover bg-center text-amber-100">
+    <div className="w-full min-h-screen bg-[url('/assets/ui/table_v2.webp')] bg-cover bg-center text-amber-100">
       {bugModal && (
         <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setBugModal(false)}>
           <div className="w-[min(720px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4" onClick={(e) => e.stopPropagation()}>
