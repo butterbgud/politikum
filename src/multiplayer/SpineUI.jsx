@@ -732,6 +732,8 @@ function AdminMobileGamesPage() {
   const [authed, setAuthed] = useState(false);
   const [games, setGames] = useState([]);
   const [gamesWindow, setGamesWindow] = useState('day');
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [liveTotal, setLiveTotal] = useState(null);
 
   const [matchLogId, setMatchLogId] = useState('');
   const [matchLogJson, setMatchLogJson] = useState('');
@@ -830,10 +832,17 @@ function AdminMobileGamesPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${SERVER}/admin/games?limit=60&offset=0`, { headers: { 'X-Admin-Token': token } });
-      if (!res.ok) throw new Error(`games: HTTP ${res.status}`);
-      const json = await res.json();
-      setGames(json.items || []);
+      const [gamesRes, matchesRes] = await Promise.all([
+        fetch(`${SERVER}/admin/games?limit=60&offset=0`, { headers: { 'X-Admin-Token': token } }),
+        fetch(`${SERVER}/admin/matches?limit=30`, { headers: { 'X-Admin-Token': token } }),
+      ]);
+      if (!gamesRes.ok) throw new Error(`games: HTTP ${gamesRes.status}`);
+      if (!matchesRes.ok) throw new Error(`matches: HTTP ${matchesRes.status}`);
+      const gamesJson = await gamesRes.json();
+      const matchesJson = await matchesRes.json();
+      setGames(gamesJson.items || []);
+      setLiveMatches(matchesJson.items || []);
+      setLiveTotal(matchesJson.total ?? null);
       setAuthed(true);
     } catch (e) {
       setAuthed(false);
@@ -864,6 +873,27 @@ function AdminMobileGamesPage() {
       if (!res.ok) throw new Error(`match log: HTTP ${res.status}`);
       const json = await res.json();
       setMatchLogJson(JSON.stringify(json, null, 2));
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const killMatch = async (matchId) => {
+    if (!token) { setError('Set X-Admin-Token first.'); return; }
+    const mid = String(matchId || '').trim();
+    if (!mid) return;
+    if (!confirm(`Kill match ${mid}?`)) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${SERVER}/admin/match/${encodeURIComponent(mid)}/kill`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token },
+      });
+      if (!res.ok) throw new Error(`kill: HTTP ${res.status}`);
+      await fetchGames();
     } catch (e) {
       setError(e?.message || String(e));
     } finally {
@@ -946,6 +976,44 @@ function AdminMobileGamesPage() {
         {!!error && (
           <div className="mt-3 text-xs font-mono text-red-300 bg-red-950/40 border border-red-900/40 rounded-xl px-3 py-2">Error: {error}</div>
         )}
+
+        <div className="mt-4">
+          <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Live matches</div>
+          {!authed && (
+            <div className="text-amber-200/60 text-xs font-mono">Enter token and tap Use (then Refresh).</div>
+          )}
+          {!!authed && (
+            <div className="grid gap-2">
+              {(liveMatches || []).map((m) => (
+                <div key={m.matchId} className="bg-black/40 border border-amber-900/20 rounded-2xl p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-amber-100/90 font-mono font-black text-xs break-all">{String(m.matchId || '')}</div>
+                      <div className="mt-1 text-amber-100/65 text-[11px] font-mono">upd {formatTime(m.updatedAt)} · players {(m.players || []).length}{(liveTotal != null ? ` / total ${liveTotal}` : '')}</div>
+                    </div>
+                    <div className="shrink-0 flex gap-2">
+                      <button type="button" className="px-3 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[11px]" onClick={() => copyText(m.matchId)}>Copy</button>
+                      <button type="button" className="px-3 py-2 rounded-xl bg-red-900/60 hover:bg-red-900/80 border border-red-900/30 text-red-100 font-black text-[11px]" onClick={() => killMatch(m.matchId)}>Kill</button>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(m.players || []).map((p, i) => (
+                      <span key={i} className="px-2 py-1 rounded-full border text-[11px] font-mono font-black bg-black/25 border-amber-900/25 text-amber-100/85">
+                        {String(p?.name || p?.playerId || '')}
+                      </span>
+                    ))}
+                    {!(m.players || []).length && (
+                      <span className="text-amber-200/60 text-xs font-mono">(no active players)</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {!(liveMatches || []).length && (
+                <div className="text-amber-200/60 text-xs font-mono">No live matches.</div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="mt-4">
           <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black mb-2">Last games</div>
