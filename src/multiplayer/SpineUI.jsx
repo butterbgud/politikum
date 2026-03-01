@@ -5629,8 +5629,8 @@ export default function SpineUI() {
   }, [matchID]);
 
 
-  if (hash.startsWith('#/m')) {
-    // Mobile page
+  if (hash.startsWith('#/m') && !matchID) {
+    // Mobile landing/lobby (once you joined, we continue into the match view)
     return (
       <div className="min-h-screen w-screen">
         <PolitikumWelcome
