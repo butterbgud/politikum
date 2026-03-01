@@ -1536,6 +1536,35 @@ export function bugreportsList({ limit = 50, offset = 0, status = null } = {}) {
   return { ok: true, total: totalRow?.n ?? 0, rows };
 }
 
+// Public-safe bugreport listing: no contact/context_json/user_agent.
+export function bugreportsPublicLatest({ limit = 10, status = 'new', sinceId = null } = {}) {
+  const db = sqlite;
+  const lim = Math.min(50, Math.max(1, Number.parseInt(limit, 10) || 10));
+  const st = status ? String(status) : null;
+  const sid = sinceId == null ? null : Number.parseInt(String(sinceId), 10);
+
+  const clauses = [];
+  const args = { limit: lim };
+  if (st) { clauses.push('status=@status'); args.status = st; }
+  if (Number.isFinite(sid)) { clauses.push('id>@sinceId'); args.sinceId = sid; }
+  const where = clauses.length ? ('WHERE ' + clauses.join(' AND ')) : '';
+
+  const rows = db.prepare(`
+    SELECT id, created_at, status, match_id, player_id, name, text
+    FROM bugreports
+    ${where}
+    ORDER BY id DESC
+    LIMIT @limit
+  `).all(args).map((r) => {
+    const t = String(r.text || '');
+    const preview = t.replace(/\s+/g, ' ').trim().slice(0, 100);
+    return { ...r, text_preview: preview };
+  });
+
+  return { ok: true, rows };
+}
+
+
 export function bugreportSetStatus({ id, status } = {}) {
   const db = sqlite;
   const sid = Number.parseInt(id, 10);

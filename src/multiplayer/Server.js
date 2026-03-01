@@ -7,7 +7,7 @@ const NEWS_PATH = process.env.NEWS_PATH || path.join(process.cwd(), 'NEWS.md');
 
 import { createMatch as createBgioMatch } from 'boardgame.io/dist/cjs/internal.js';
 import { CitadelGame } from './Game.js';
-import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound, bugreportInsert, bugreportsList, bugreportSetStatus, resolvePlayerIdFromName } from './db.js';
+import { recordGameFinished, getSummary, getGames, getGameByMatchId, getLeaderboard, getPublicProfile, setUserBio, authCreateSession, authGetSession, authRegisterOrLogin, authChangeToken, eloRecomputeAll, adminMergePlayerIds, tournamentsList, tournamentGet, tournamentTablesList, tournamentBracketGet, tournamentTableGet, tournamentTableSetMatch, tournamentTableSetResult, tournamentCreate, tournamentSetStatus, tournamentJoin, tournamentLeave, tournamentGenerateRound1, tournamentGenerateNextRound, bugreportInsert, bugreportsList, bugreportSetStatus, resolvePlayerIdFromName, bugreportsPublicLatest } from './db.js';
 import { lobbyChatList, lobbyChatInsert, lobbyChatSetEnabled, lobbyChatClear, lobbyChatIsEnabled } from './lobbyChat.js';
 
 function clampLimit(v, dflt, max) {
@@ -396,6 +396,14 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       } catch {}
 
       ctx.body = { ok: true, id: ins?.id ?? null };
+      return;
+    }
+
+    if (ctx.path === '/public/bugreports/latest' && ctx.method === 'GET') {
+      const limit = Math.min(50, Number.parseInt(ctx.query.limit ?? '10', 10) || 10);
+      const status = ctx.query.status != null ? String(ctx.query.status) : 'new';
+      const sinceId = ctx.query.sinceId != null ? String(ctx.query.sinceId) : null;
+      ctx.body = bugreportsPublicLatest({ limit, status, sinceId });
       return;
     }
 
