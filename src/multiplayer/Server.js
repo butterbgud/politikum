@@ -741,6 +741,16 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       }
     }
 
+    // Mobile entrypoint: simple redirect to the SPA mobile route.
+    if ((ctx.path === '/m' || ctx.path === '/m/') && ctx.method === 'GET') {
+      ctx.type = 'text/html; charset=utf-8';
+      ctx.body = `<!doctype html><html lang="ru"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Politikum · Mobile</title></head><body style="margin:0;background:#0b0f17;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <div>Redirecting…</div>
+      <script>location.replace('/#/m');</script>
+      </body></html>`;
+      return;
+    }
+
     // Public profile page (pretty HTML): safe to open in a browser.
     {
       const m = String(ctx.path || '').match(/^\/profile\/([^\/]+)$/);

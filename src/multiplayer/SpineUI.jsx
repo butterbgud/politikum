@@ -5548,6 +5548,21 @@ export default function SpineUI() {
   }, [matchID]);
 
 
+  if (hash.startsWith('#/m')) {
+    // Mobile page (separate URL /m redirects here)
+    return (
+      <div className="min-h-screen w-screen">
+        <PolitikumWelcome
+          onJoin={({ matchID: mid, playerID: pid, credentials: cred }) => {
+            setMatchID(mid);
+            setPlayerID(pid);
+            setCredentials(cred);
+          }}
+        />
+      </div>
+    );
+  }
+
   if (hash.startsWith('#/tournament/')) {
     const tid = hash.slice('#/tournament/'.length).split('?')[0];
     return <TournamentDetailPage tournamentId={tid} />;
