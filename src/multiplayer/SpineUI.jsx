@@ -5,6 +5,60 @@ import { LobbyClient } from 'boardgame.io/client';
 import { CitadelGame as PolitikumGame } from './Game.js';
 
 const SERVER = (import.meta.env.VITE_SERVER || window.localStorage.getItem('politikum.server') || window.location.origin);
+
+const PERSONA_NAME = {
+  'persona_1': 'Рунов',
+  'persona_2': 'Сережко',
+  'persona_3': 'SVTV',
+  'persona_4': 'Яшин',
+  'persona_5': 'Певчих',
+  'persona_6': 'Кашин',
+  'persona_7': 'Каспаров',
+  'persona_8': 'Лазерсон',
+  'persona_9': 'Пономарёв',
+  'persona_10': 'Наки',
+  'persona_11': 'Соловей',
+  'persona_12': 'Савин',
+  'persona_13': 'Венедитков',
+  'persona_14': 'Ройзман',
+  'persona_15': 'Пожарский',
+  'persona_16': 'Кац',
+  'persona_17': 'Арно',
+  'persona_18': 'Соболь',
+  'persona_19': 'Гиркин',
+  'persona_20': 'Быков',
+  'persona_21': 'Штефанов',
+  'persona_22': 'Светов',
+  'persona_23': 'Волков',
+  'persona_24': 'Латынина',
+  'persona_25': 'Надеждин',
+  'persona_26': 'Демушкин',
+  'persona_27': 'Юдин',
+  'persona_28': 'Ведута',
+  'persona_29': 'Юнеман',
+  'persona_30': 'Ходорковский',
+  'persona_31': 'Шлосберг',
+  'persona_32': 'Плющев',
+  'persona_33': 'Собчак',
+  'persona_34': 'Милов',
+  'persona_35': 'Жданов',
+  'persona_36': 'Кагалицкий',
+  'persona_37': 'Гуриев',
+  'persona_38': 'VotVot',
+  'persona_39': 'Лефт',
+  'persona_40': 'Дунцова',
+  'persona_41': 'Дождь',
+  'persona_42': 'Стрелков',
+  'persona_43': 'Доха',
+  'persona_44': 'Рудой',
+  'persona_45': 'Шульман',
+};
+
+function personaName(id) {
+  const base = String(id || '').split('#')[0];
+  return PERSONA_NAME[base] || base;
+}
+
 const lobbyClient = new LobbyClient({ server: SERVER });
 
 const NAMES = [
@@ -4326,8 +4380,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         };
 
         return (
-          <div className="fixed inset-0 z-[6000] pointer-events-auto select-none bg-transparent">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1100px,95vw)] max-h-[90vh] overflow-auto bg-transparent border-0 rounded-2xl px-5 py-4 text-amber-100/90 shadow-none">
+          <div className="fixed inset-0 z-[6000] pointer-events-auto select-none bg-black/40 backdrop-blur-sm">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1100px,95vw)] max-h-[90vh] overflow-auto bg-transparent border-0 rounded-2xl px-5 py-4 text-amber-100/90">
               <div className="flex items-center justify-between gap-4">
                 <div className="font-mono text-[12px]">
                   <span className="opacity-80">{pendingP34Source}:</span> Милов — выбери персонажа (следующая персона в колоде, события/действия пропускаются)
@@ -4348,9 +4402,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     className="absolute left-[12%] right-[12%] top-[22%] h-[28%] rounded-lg bg-black/70 border border-amber-400/40 flex items-center justify-center text-[12px] font-mono text-amber-100/90 px-2 cursor-pointer"
                     onWheel={onWheel}
                     onClick={() => { try { if (wheelId) moves.persona34GuessTopdeck(wheelId); } catch {} }}
-                    title={wheelId || 'wheel'}
+                    title={wheelId ? personaName(wheelId) : 'wheel'}
                   >
-                    {wheelId ? wheelId.replace('persona_', 'p') : '—'}
+                    {wheelId ? personaName(wheelId) : '—'}
                   </div>
                 </div>
                 <div className="text-[11px] opacity-80">Колесо мыши: листай варианты. Клик по окошку — подтвердить.</div>
