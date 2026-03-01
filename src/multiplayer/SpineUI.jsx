@@ -5097,8 +5097,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className={"fixed bottom-6 left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
-        style={{ transform: 'translateX(calc(-50% - 300px))' }}>
+      <div className={"fixed left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
+        style={MOBILE
+          ? { bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + min(50px, 6vh))`, transform: 'translateX(calc(-50% - 300px + min(50px, 6vw)))' }
+          : { bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' }
+        }>
 
         {(() => {
           const coal = (me?.coalition || []);
@@ -5394,9 +5397,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           const rotated = (() => { try { return !!window.__POLITIKUM_ROTATED__; } catch { return false; } })();
           const openY = rotated ? '-40px' : '-240px';
           const closedY = rotated ? '120px' : '180px';
+          const dx = 'min(50px, 6vw)';
           return {
             bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
-            transform: `translateX(-50%) translateY(${mobileHandOpen ? openY : closedY})` + (rotated ? ' scale(0.85)' : ''),
+            transform: `translateX(calc(-50% + ${dx})) translateY(${mobileHandOpen ? openY : closedY})` + (rotated ? ' scale(0.85)' : ''),
             transition: 'transform 200ms ease-out',
             transformOrigin: 'bottom center',
           };
