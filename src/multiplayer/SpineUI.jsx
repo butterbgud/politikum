@@ -1896,6 +1896,7 @@ function AdminBugreportsPage() {
 
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState(''); // '' | new | seen | done
+  const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -1920,6 +1921,12 @@ function AdminBugreportsPage() {
 
   const setItemStatus = async (id, st) => {
     if (!token) { setError('Set X-Admin-Token first.'); return; }
+    const sid = Number(id);
+    if (!Number.isFinite(sid)) return;
+
+    // optimistic update
+    setItems((arr) => (arr || []).map((r) => (Number(r.id) === sid ? { ...r, status: st } : r)));
+
     setLoading(true);
     setError('');
     try {
@@ -1929,9 +1936,13 @@ function AdminBugreportsPage() {
         body: JSON.stringify({ status: st }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const j = await res.json().catch(() => ({}));
+      if (j?.ok === false) throw new Error(j?.error || 'failed');
+      // re-fetch to confirm
       await fetchList();
     } catch (e) {
       setError(e?.message || String(e));
+      await fetchList().catch(() => {});
     } finally {
       setLoading(false);
     }
@@ -1993,25 +2004,56 @@ function AdminBugreportsPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((r) => (
-                <tr key={r.id} className="border-b border-amber-900/20 align-top">
-                  <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{fmt(r.created_at)}</td>
-                  <td className="px-2 py-2 whitespace-nowrap">{r.status}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{String(r.match_id || '').slice(0, 12) || '—'}</td>
-                  <td className="px-2 py-2 whitespace-nowrap">{r.name || r.player_id || '—'}</td>
-                  <td className="px-2 py-2">
-                    <div className="whitespace-pre-wrap">{String(r.text || '')}</div>
-                    {(r.contact || '').trim() && <div className="mt-1 text-[10px] text-amber-200/60">contact: {r.contact}</div>}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap">
-                    <div className="flex flex-col gap-1">
-                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'seen')} className="px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-slate-700/70 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Seen</button>
-                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'done')} className="px-2 py-1 rounded-lg bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-[10px] uppercase tracking-widest">Done</button>
-                      <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'new')} className="px-2 py-1 rounded-lg bg-amber-700/40 hover:bg-amber-600/50 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">New</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {items.map((r) => {
+                const isOpen = String(expandedId) === String(r.id);
+                const txt = String(r.text || '').trim();
+                const oneLine = txt.replace(/\s+/g, ' ').slice(0, 140);
+                const matchShort = String(r.match_id || '').slice(0, 12) || '—';
+                const from = r.name || r.player_id || '—';
+                return (
+                  <React.Fragment key={r.id}>
+                    <tr
+                      className={"border-b border-amber-900/20 align-top cursor-pointer hover:bg-black/20"}
+                      onClick={() => setExpandedId((v) => (String(v) === String(r.id) ? null : r.id))}
+                      title="Click to expand"
+                    >
+                      <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{fmt(r.created_at)}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">{r.status}</td>
+                      <td className="px-2 py-2 whitespace-nowrap text-amber-200/70">{matchShort}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">{from}</td>
+                      <td className="px-2 py-2">
+                        <div className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[520px]">{oneLine}{txt.length > oneLine.length ? '…' : ''}</div>
+                      </td>
+                      <td className="px-2 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'new')} className="px-2 py-1 rounded-lg bg-amber-700/40 hover:bg-amber-600/50 disabled:opacity-60 text-amber-50 font-black text-[10px] uppercase tracking-widest">New</button>
+                          <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'seen')} className="px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-slate-700/70 disabled:opacity-60 text-amber-100 font-black text-[10px] uppercase tracking-widest">Seen</button>
+                          <button type="button" disabled={loading} onClick={() => setItemStatus(r.id, 'done')} className="px-2 py-1 rounded-lg bg-emerald-700/60 hover:bg-emerald-600/70 disabled:opacity-60 text-emerald-50 font-black text-[10px] uppercase tracking-widest">Done</button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="border-b border-amber-900/20 bg-black/20">
+                        <td colSpan="6" className="px-2 py-3">
+                          <div className="text-[11px] font-mono text-amber-200/60 flex flex-wrap gap-3">
+                            <span>id: {r.id}</span>
+                            <span>match: {String(r.match_id || '—')}</span>
+                            <span>from: {from}</span>
+                            {(r.contact || '').trim() && <span>contact: {String(r.contact)}</span>}
+                          </div>
+                          <div className="mt-2 whitespace-pre-wrap text-sm font-serif text-amber-50/90">{txt || '—'}</div>
+                          {(r.context_json || '').trim() && (
+                            <details className="mt-2">
+                              <summary className="cursor-pointer text-[11px] font-mono text-amber-200/70">context_json</summary>
+                              <pre className="mt-2 max-h-[260px] overflow-auto text-[10px] bg-black/40 border border-amber-900/20 rounded-xl p-2">{String(r.context_json)}</pre>
+                            </details>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
               {items.length === 0 && (
                 <tr>
                   <td colSpan="6" className="px-2 py-6 text-center text-amber-300/60 text-xs">No bugreports.</td>
@@ -4014,9 +4056,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 type="button"
                 onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
                 className={
-                  "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
-                  ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-50" : "")
+                  "px-3 py-2 rounded-xl border text-amber-100/90 font-mono font-black text-[11px] transition-colors " +
+                  ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2)
+                    ? "opacity-50 bg-black/60 border-amber-900/25"
+                    : ((isMyTurn && !G.hasDrawn)
+                      ? "bg-emerald-700/45 border-emerald-300/60 animate-pulse"
+                      : "bg-black/60 border-amber-900/25"))
                 }
+                style={(isMyTurn && !G.hasDrawn && !(!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2)) ? { animationDuration: '1.8s' } : undefined}
                 title="Взять карту"
                 aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
               >
@@ -4704,9 +4751,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-black/40 backdrop-blur-sm backdrop-filter pointer-events-auto">
           <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[860px] max-w-[96vw]">
             <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Bykov (p20) — Take from discard</div>
-            <div className="mt-2 text-amber-100/80 text-sm">Choose any 1 card from the discard pile to take into your hand.</div>
+            <div className="mt-2 text-amber-100/80 text-sm">Choose 1 ACTION card from the discard pile to take into your hand.</div>
             <div className="mt-4 flex flex-wrap gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-              {(G.discard || []).filter((c) => c.type !== 'event').map((c) => (
+              {(G.discard || []).filter((c) => c.type === 'action').map((c) => (
                 <button
                   key={c.id}
                   className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
@@ -5096,11 +5143,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
 
       {/* My coalition (built row fan) */}
-      <div className={"fixed left-1/2 -translate-x-1/2 -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
-        style={MOBILE
-          ? { bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + min(50px, 6vh))`, transform: 'translateX(calc(-50% - 300px + min(50px, 6vw)))' }
-          : { bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' }
-        }>
+      <div className={"fixed -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
+        style={(() => {
+          const dx = 'min(50px, 6vw)';
+          const dy = 'min(50px, 6vh)';
+          if (MOBILE) {
+            return {
+              left: `calc(50% + ${dx})`,
+              bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + ${dy})`,
+              transform: 'translateX(calc(-50% - 300px))',
+            };
+          }
+          return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
+        })()}>
 
         {(() => {
           const coal = (me?.coalition || []);
