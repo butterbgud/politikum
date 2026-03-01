@@ -5018,14 +5018,17 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Log (collapsible) */}
       {MOBILE && (
-        <button
-          type="button"
-          onClick={() => setLogCollapsed((v) => !v)}
-          className="fixed top-3 left-3 z-[20000] pointer-events-auto px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
-          title="Toggle log"
-        >
-          {logCollapsed ? 'LOG' : 'LOG ×'}
-        </button>
+        <div className="fixed top-3 left-3 z-[20000] pointer-events-auto select-none flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setLogCollapsed((v) => !v)}
+            className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+            title="Toggle log"
+          >
+            {logCollapsed ? 'LOG' : 'LOG ×'}
+          </button>
+          <div className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]">VP: {myCoalitionPoints}</div>
+        </div>
       )}
       <div className={
         "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
@@ -5290,9 +5293,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Total VP */}
       <div className={"fixed z-[2500] pointer-events-none select-none " + (MOBILE ? "top-3 left-3" : "bottom-4 right-4") }>
-        <div className={"bg-black/60 border border-amber-900/20 rounded-2xl text-amber-100/90 font-mono shadow-2xl " + (MOBILE ? "px-3 py-1.5" : "px-4 py-2") }>
-          <div className={"font-black tracking-widest " + (MOBILE ? "text-[12px]" : "text-[14px]") }>VP: {myCoalitionPoints}</div>
-          <div className={"mt-0.5 text-amber-200/60 tabular-nums " + (MOBILE ? "text-[9px]" : "text-[10px]") }>
+        <div className={"bg-black/60 border border-amber-900/20 rounded-2xl text-amber-100/90 font-mono shadow-2xl " + (MOBILE ? "px-2 py-1" : "px-4 py-2") }>
+          <div className={"font-black tracking-widest " + (MOBILE ? "text-[11px]" : "text-[14px]") }>VP: {myCoalitionPoints}</div>
+          <div className={"mt-0.5 text-amber-200/60 tabular-nums " + (MOBILE ? "hidden" : "text-[10px]") }>
             Base {myVpBase} + Tokens {myVpTokens} + Passives {myVpPassives}
           </div>
         </div>
