@@ -4056,9 +4056,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 type="button"
                 onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
                 className={
-                  "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
-                  ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-50" : "")
+                  "px-3 py-2 rounded-xl border text-amber-100/90 font-mono font-black text-[11px] transition-colors " +
+                  ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2)
+                    ? "opacity-50 bg-black/60 border-amber-900/25"
+                    : ((isMyTurn && !G.hasDrawn)
+                      ? "bg-emerald-700/45 border-emerald-300/60 animate-pulse"
+                      : "bg-black/60 border-amber-900/25"))
                 }
+                style={(isMyTurn && !G.hasDrawn && !(!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2)) ? { animationDuration: '1.8s' } : undefined}
                 title="Взять карту"
                 aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
               >
