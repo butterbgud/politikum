@@ -5916,7 +5916,10 @@ function PolitikumWelcome({ onJoin }) {
                           <span className="text-[11px] font-mono text-amber-200/50 w-7">#{i + 1}</span>
                           <span className="font-serif text-amber-100 text-sm font-bold truncate">{r.name}</span>
                         </div>
-                        <span className="text-xs font-mono text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-[10px] font-mono text-amber-200/60 tabular-nums">{Number(r.wins ?? 0) || 0}/{Number(r.games ?? 0) || 0}</span>
+                          <span className="text-xs font-mono text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</span>
+                        </div>
                       </div>
                     ))
                   ) : (
