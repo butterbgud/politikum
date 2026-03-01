@@ -4388,7 +4388,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <button
                   type="button"
                   className="px-4 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[12px] shadow-2xl"
-                  onClick={() => { try { moves.skipResponseWindow(); } catch {} }}
+                  onClick={() => {
+                    try {
+                      setSkippedResponseKey(responseKey);
+                      window.localStorage.setItem(`politikum.skipResponse:${responseKey}`, String(Date.now()));
+                    } catch {}
+                    try { moves.skipResponseWindow(); } catch {}
+                  }}
                   title="(2)"
                 >
                   SKIP
