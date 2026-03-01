@@ -3772,7 +3772,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {/* (admin link removed from in-game UI) */}
 
       {/* Opponents */}
-      <div className="fixed top-20 left-0 right-0 z-[700] flex justify-evenly pointer-events-auto">
+      <div className="fixed top-20 z-[700] flex justify-evenly pointer-events-auto" style={MOBILE ? { left: '-36px', right: '36px' } : { left: 0, right: 0 }}>
         {opponents.map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -5169,9 +5169,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           const dy = 'calc(min(50px, 6vh) + min(100px, 12vh))'; // +100 more down
           if (MOBILE) {
             return {
-              left: `calc(50% + ${dx})`,
+              left: '50%',
               bottom: `calc(24px + env(safe-area-inset-bottom, 0px))`,
-              transform: `translateX(calc(-50% - 300px)) translateY(${dy})`,
+              transform: `translateX(-50%) translateY(${dy})`,
             };
           }
           return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
@@ -5457,32 +5457,23 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {/* Mobile: hand toggle */}
-      {MOBILE && (
-        <div className="fixed left-1/2 -translate-x-1/2 z-[3000] pointer-events-auto select-none" style={{ bottom: `calc(10px + env(safe-area-inset-bottom, 0px))` }}>
-          <button
-            type="button"
-            onClick={() => { try { setMobileHandOpen((v) => !v); } catch {} }}
-            className="px-4 py-2 rounded-full bg-black/65 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
-          >
-            {mobileHandOpen ? 'Скрыть руку' : 'Рука'}
-          </button>
-        </div>
-      )}
+      {/* Mobile: no hand toggle button (hand peeks from the right) */}
 
       {/* Hand fan */}
       <div
         className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "left-1/2" : "bottom-6 right-[410px]")}
         style={MOBILE ? (() => {
-          const rotated = (() => { try { return !!window.__POLITIKUM_ROTATED__; } catch { return false; } })();
-          const openY = rotated ? '-40px' : '-240px';
-          const closedY = rotated ? '120px' : '180px';
-          const dx = 'min(50px, 6vw)';
+          // Hand peeks from the right edge; rotated -90deg. Tap any card to expand/collapse.
+          const dxClosed = 'calc(100vw - 70px)'; // only tops visible
+          const dxOpen = '50vw'; // centered-ish
+          const y = 'calc(50vh + 20px)';
+          const s = '0.85';
           return {
-            bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
-            transform: `translateX(calc(-50% + ${dx})) translateY(${mobileHandOpen ? openY : closedY})` + (rotated ? ' scale(0.85)' : ''),
-            transition: 'transform 200ms ease-out',
-            transformOrigin: 'bottom center',
+            left: '0px',
+            top: '0px',
+            transform: `translateX(${mobileHandOpen ? dxOpen : dxClosed}) translateY(${y}) rotate(-90deg) scale(${s})`,
+            transition: 'transform 220ms ease-out',
+            transformOrigin: 'top left',
           };
         })() : undefined}
       >
@@ -5535,8 +5526,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 onClick={(e) => {
                   if (!canClick) return;
 
-                  // Mobile: first tap selects (preview), second tap confirms.
+                  // Mobile: tap the peeking hand to expand; when expanded, first tap selects (preview), second confirms.
                   if (MOBILE && !canDiscardDownTo7 && !canClickP16) {
+                    if (!mobileHandOpen) {
+                      try { setMobileHandOpen(true); } catch {}
+                      try { playSfx('ui', 0.12); } catch {}
+                      return;
+                    }
                     if (String(mobileHandSelected || '') !== String(card.id)) {
                       try { playSfx('ui', 0.18); } catch {}
                       setMobileHandSelected(card.id);
