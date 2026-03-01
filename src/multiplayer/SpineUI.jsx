@@ -2547,6 +2547,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   
   const [mobileHandSelected, setMobileHandSelected] = useState(null);
   const [mobileHandOpen, setMobileHandOpen] = useState(false);
+  const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
+  const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
   useEffect(() => {
     if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3134,19 +3136,22 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
           const pts = (coal || []).reduce((s, c) => s + Number(c.vp || 0), 0); // MVP points
 
-          // Single opponent fan: show coalition faces reliably (don’t let a big hand hide them).
-          // We want: backs VERY tight, faces less tight.
+          const oppPid = String(p?.identity?.playerId || '').trim();
+          const oppRating = oppPid ? ratingsMap?.[oppPid] : null;
+
+          // Opponent fan cards
           const backs = Array.from({ length: nHand }, () => ({ kind: 'back' }));
           const faces = coal.map((c) => ({ kind: 'face', card: c }));
 
-          // Always include all coalition cards, and only show as many backs as fit.
+          // Mobile: don't show hidden (unplayed) hand cards at all.
+          // Desktop: show some backs + all coalition faces.
           const MAX_SHOW = 12;
           const backsShown = Math.min(nHand, Math.max(0, MAX_SHOW - faces.length));
-          const oppFanCards = [...backs.slice(0, backsShown), ...faces];
+          const oppFanCards = MOBILE ? faces : [...backs.slice(0, backsShown), ...faces];
 
           const show = oppFanCards.length;
-          const stepBack = 6;  // 2x tighter
-          const stepFace = 24; // more spacing so tokens are visible
+          const stepBack = 6;  // tight
+          const stepFace = MOBILE ? 22 : 24; // slightly tighter on mobile
 
           const calcWidth = () => {
             const shown = oppFanCards.slice(0, show);
@@ -3172,6 +3177,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {String(p.name || '').trim() && !String(p.name || '').startsWith('[H] Seat') && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
                   <span>{p.name}</span>
+                  {(oppRating != null) && <span className="text-amber-100/80">({oppRating})</span>}
+                  {MOBILE && <span className="text-amber-200/70">в руке: {nHand}</span>}
                   <span className="text-amber-200/50">•</span>
                   <span className="text-amber-200/80">{pts}p</span>
                 </div>
@@ -3181,6 +3188,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
+                  (MOBILE ? "scale-[0.55] origin-top" : "") +
                   ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
@@ -3206,7 +3214,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   if (pickTargetForAction9) {
                     try { moves.playAction(pickTargetForAction9.cardId, String(p.id)); } catch {}
                     setPickTargetForAction9(null);
+                    return;
                   }
+                  if (MOBILE) setMobileOppInspect(String(p.id));
                 }}
                 onPointerMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -4684,6 +4694,58 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </div>
         </div>
       </div>
+
+      {/* Mobile: opponent inspect modal */}
+      {MOBILE && mobileOppInspect && (
+        <div
+          className="fixed inset-0 z-[99998] bg-black/70 backdrop-blur-sm pointer-events-auto select-none flex items-center justify-center"
+          onClick={() => { setMobileOppInspect(null); setMobileOppZoomImg(null); }}
+        >
+          <div
+            className="w-[min(720px,94vw)] max-h-[92vh] overflow-hidden rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-amber-100 font-black text-sm">
+                {(opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.name) || 'Оппонент'}
+              </div>
+              <button
+                type="button"
+                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
+                onClick={() => { setMobileOppInspect(null); setMobileOppZoomImg(null); }}
+              >
+                Закрыть
+              </button>
+            </div>
+
+            <div className="mt-3 text-[12px] font-mono text-amber-200/70">Сыгранные карты (свайпай)</div>
+            <div className="mt-2 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+              {((opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.coalition) || []).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="shrink-0 w-44 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                  onClick={() => setMobileOppZoomImg(c.img)}
+                  title={c.name || c.id}
+                >
+                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+              {(((opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.coalition) || []).length === 0) && (
+                <div className="text-amber-200/40 italic text-sm font-serif">Пока пусто.</div>
+              )}
+            </div>
+
+            {!!mobileOppZoomImg && (
+              <div className="mt-3 flex items-center justify-center">
+                <div className="w-[min(420px,86vw)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/20 shadow-2xl">
+                  <img src={mobileOppZoomImg} alt="zoom" className="w-full h-full object-cover" draggable={false} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mobile: cancel hand selection */}
       {MOBILE && mobileHandSelected && (
