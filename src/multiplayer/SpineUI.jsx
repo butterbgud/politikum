@@ -2539,11 +2539,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const ENABLE_EVENT_SPLASH = true;
   const ENABLE_ACTION_SPLASH = false;
 
-  const [logCollapsed, setLogCollapsed] = useState(false);
+  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  const [logCollapsed, setLogCollapsed] = useState(() => MOBILE);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
   const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
 
-  const MOBILE = String(window.location.hash || '').startsWith('#/m');
+  
   const [mobileHandSelected, setMobileHandSelected] = useState(null);
   useEffect(() => {
     if (pending?.kind === 'persona_28_pick_non_fbk') setHoverMyCoalition(null);
@@ -3416,48 +3417,68 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Controls (Citadel-style touchables) */}
       <div className="fixed inset-0 z-[1100] pointer-events-none">
-        {/* Deck (Draw) */}
-        <button
-          type="button"
-          onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
-          className={
-            "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
-          }
-          style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
-          title={G.pending ? "Resolve pending" : ((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
-          aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
-        >
-          <div className="relative w-full h-auto">
-            {(isMyTurn && !G.hasDrawn) && (
-              <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
-            )}
-            <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
-            {showHotkeys && (
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
-            )}
-          </div>
-        </button>
+        {MOBILE ? (
+          <>
+            {/* Mobile text buttons */}
+            <button
+              type="button"
+              onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
+              className={
+                "fixed top-3 right-3 pointer-events-auto select-none px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
+                ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-50" : "")
+              }
+              title="Взять карту"
+              aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
+            >
+              Взять карту
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Deck (Draw) */}
+            <button
+              type="button"
+              onClick={() => { if (!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) return; playSfx('draw'); moves.drawCard(); }}
+              className={
+                "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
+                ((!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+              }
+              style={{ right: 'calc(2% + 148px)', bottom: 'calc(18% - 155px)', width: '172px' }}
+              title={G.pending ? "Resolve pending" : ((G.drawsThisTurn || 0) >= 2 ? "No more draws" : (G.hasPlayed ? "Already played" : ((G.drawsThisTurn || 0) === 1 ? "Draw 2nd (ends turn)" : "Draw card")))}
+              aria-disabled={!isMyTurn || G.pending || G.hasPlayed || (G.drawsThisTurn || 0) >= 2}
+            >
+              <div className="relative w-full h-auto">
+                {(isMyTurn && !G.hasDrawn) && (
+                  <img src="/assets/ui/touch_deck_glow.png" alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none animate-pulse" draggable={false} />
+                )}
+                <img src="/assets/ui/touch_deck.png" alt="Deck" className="w-full h-auto" draggable={false} />
+                {showHotkeys && (
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(c)</div>
+                )}
+              </div>
+            </button>
 
-                {/* Cookies (End Turn) */}
-        <button
-          type="button"
-          onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
-          className={
-            "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
-            ((!isMyTurn || !G.hasDrawn || !G.hasPlayed) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
-          }
-          style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
-          title={(!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
-          aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed}
-        >
-          <div className="relative w-full h-auto">
-            <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
-            {showHotkeys && (
-              <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
-            )}
-          </div>
-        </button>
+            {/* Cookies (End Turn) */}
+            <button
+              type="button"
+              onClick={() => { if (!isMyTurn || !G.hasDrawn || !G.hasPlayed) return; playSfx('ui'); moves.endTurn(); }}
+              className={
+                "fixed pointer-events-auto select-none outline-none transition-transform duration-150 ease-out hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-[0.99] " +
+                ((!isMyTurn || !G.hasDrawn || !G.hasPlayed) ? "opacity-60 cursor-not-allowed hover:translate-y-0 hover:scale-100" : "cursor-pointer")
+              }
+              style={{ right: 'calc(2% - 12px)', top: 'calc(3% - 96px)', width: '280px' }}
+              title={(!G.hasDrawn ? "Draw first" : (!G.hasPlayed ? "Play first" : "End turn"))}
+              aria-disabled={!isMyTurn || !G.hasDrawn || !G.hasPlayed}
+            >
+              <div className="relative w-full h-auto">
+                <img src="/assets/ui/touch_cookies.png" alt="End Turn" className="w-full h-auto" draggable={false} />
+                {showHotkeys && (
+                  <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[12px] font-mono font-black text-amber-200/90 drop-shadow">(e)</div>
+                )}
+              </div>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Pending banner */}
