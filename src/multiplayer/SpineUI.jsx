@@ -5354,11 +5354,17 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {/* Hand fan */}
       <div
         className={"fixed z-[999] pointer-events-auto " + (MOBILE ? "left-1/2" : "bottom-6 right-[410px]")}
-        style={MOBILE ? {
-          bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
-          transform: `translateX(-50%) translateY(${mobileHandOpen ? '-240px' : '180px'})`,
-          transition: 'transform 200ms ease-out',
-        } : undefined}
+        style={MOBILE ? (() => {
+          const rotated = (() => { try { return !!window.__POLITIKUM_ROTATED__; } catch { return false; } })();
+          const openY = rotated ? '-40px' : '-240px';
+          const closedY = rotated ? '120px' : '180px';
+          return {
+            bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
+            transform: `translateX(-50%) translateY(${mobileHandOpen ? openY : closedY})` + (rotated ? ' scale(0.85)' : ''),
+            transition: 'transform 200ms ease-out',
+            transformOrigin: 'bottom center',
+          };
+        })() : undefined}
       >
         <div
           className="relative h-56 overflow-visible"
@@ -6474,17 +6480,22 @@ export default function SpineUI() {
 
   // Mobile: rotate the *game table* into landscape, but keep the lobby portrait.
   useEffect(() => {
-    if (!isMobileRoute) { setMobileRotateGame(true); return; }
+    if (!isMobileRoute) { setMobileRotateGame(false); return; }
     const tick = () => {
       try {
         const ph = String(window.__POLITIKUM_PHASE__ || '').trim();
-        setMobileRotateGame(ph && ph !== 'lobby');
+        setMobileRotateGame(!!(ph && ph !== 'lobby'));
       } catch {}
     };
     tick();
     const t = setInterval(tick, 250);
     return () => clearInterval(t);
   }, [isMobileRoute]);
+
+  // Let inner UI know if the whole game is currently rotated.
+  useEffect(() => {
+    try { window.__POLITIKUM_ROTATED__ = !!(isMobileRoute && mobileRotateGame); } catch {}
+  }, [isMobileRoute, mobileRotateGame]);
 
   const forgetMatch = () => {
     try {
