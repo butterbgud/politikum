@@ -3513,13 +3513,29 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     return () => clearInterval(t);
   }, [moves, G?.response, G?.pending?.kind, G?.gameOver, shouldDriveTick]);
 
-  // Event splash: show only when an event is actively being resolved.
-  // On refresh, G.lastEvent can still point at an old event; don't full-screen it unless there's a pending.
+  // Event splash: show only when an event is actively being resolved AND it just changed.
+  // On refresh, G.lastEvent can still point at an old event; never full-screen it on first render.
+  const lastEventSeenRef = useRef(null);
   useEffect(() => {
-    const id = G.lastEvent?.id;
-    if (!id) { setShowEventSplash(false); return; }
-    if (!G.pending) { setShowEventSplash(false); return; }
-    setShowEventSplash(true);
+    const id = G.lastEvent?.id ? String(G.lastEvent.id) : '';
+    if (!id) { setShowEventSplash(false); lastEventSeenRef.current = null; return; }
+
+    // First render for this client session: mark seen and do not show.
+    if (lastEventSeenRef.current == null) {
+      lastEventSeenRef.current = id;
+      setShowEventSplash(false);
+      return;
+    }
+
+    // Only show when the event id changes, and only if something is pending.
+    if (String(lastEventSeenRef.current) !== id && G.pending) {
+      lastEventSeenRef.current = id;
+      setShowEventSplash(true);
+      return;
+    }
+
+    // Otherwise keep it hidden.
+    setShowEventSplash(false);
   }, [G.lastEvent?.id, !!G.pending]);
 
   useEffect(() => {
@@ -5155,8 +5171,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           if (MOBILE) {
             return {
               left: `calc(50% + ${dx})`,
-              bottom: `calc(24px + env(safe-area-inset-bottom, 0px) + ${dy})`,
-              transform: 'translateX(calc(-50% - 300px))',
+              bottom: `calc(24px + env(safe-area-inset-bottom, 0px))`,
+              transform: `translateX(calc(-50% - 300px)) translateY(${dy})`,
             };
           }
           return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
