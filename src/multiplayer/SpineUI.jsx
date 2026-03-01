@@ -2875,6 +2875,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       error: mk('error_008.ogg'),
       win: mk('win.ogg'),
       lose: mk('lose.ogg'),
+      fan: mk('card-fan-1.ogg'),
     };
   }, []);
 
@@ -2899,6 +2900,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [p7FirstPick, setP7FirstPick] = useState(null); // { ownerId, cardId }
   const [placementModeOpp, setPlacementModeOpp] = useState(null); // { cardId, targetId, neighborId, side }
   const [pickTargetForPersona9, setPickTargetForPersona9] = useState(null); // { cardId }
+  const [p34WheelIdx, setP34WheelIdx] = useState(0);
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
 
@@ -3228,6 +3230,27 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const pendingP34 = pending?.kind === 'persona_34_guess_topdeck' && String(pending?.playerId) === String(playerID);
   const pendingP34Source = pendingP34 ? String(pending?.sourceCardId || '') : '';
   const canUseP39 = isMyTurn && !G.pending && !G.response && (me?.coalition || []).some((c) => String(c.id).split('#')[0] === 'persona_39');
+
+  const p34Remaining = useMemo(() => {
+    if (!pendingP34) return [];
+    const ALL = Array.from({ length: 45 }, (_, i) => `persona_${i + 1}`);
+    const playedOrDiscarded = new Set();
+    const myHand = new Set();
+    try {
+      for (const pp of (G.players || [])) {
+        for (const c of (pp.coalition || [])) playedOrDiscarded.add(String(c.id).split('#')[0]);
+      }
+      for (const c of (G.discard || [])) playedOrDiscarded.add(String(c.id).split('#')[0]);
+      const me2 = (G.players || []).find((pp) => String(pp.id) === String(playerID));
+      for (const c of (me2?.hand || [])) myHand.add(String(c.id).split('#')[0]);
+    } catch {}
+    return ALL.filter((id) => !playedOrDiscarded.has(id) && !myHand.has(id));
+  }, [G, playerID, pendingP34]);
+
+  useEffect(() => {
+    if (!pendingP34) return;
+    setP34WheelIdx(0);
+  }, [pendingP34, p34Remaining.length]);
 
   const pendingP16 = pending?.kind === 'persona_16_discard3_from_hand' && String(pending?.playerId) === String(playerID);
   const pendingP16Source = pendingP16 ? String(pending?.sourceCardId || '') : '';
@@ -4296,19 +4319,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP34 && (() => {
-        const ALL = Array.from({ length: 45 }, (_, i) => `persona_${i + 1}`);
-        const playedOrDiscarded = new Set();
-        const myHand = new Set();
-        try {
-          for (const pp of (G.players || [])) {
-            for (const c of (pp.coalition || [])) playedOrDiscarded.add(String(c.id).split('#')[0]);
-          }
-          for (const c of (G.discard || [])) playedOrDiscarded.add(String(c.id).split('#')[0]);
-          const me = (G.players || []).find((pp) => String(pp.id) === String(playerID));
-          for (const c of (me?.hand || [])) myHand.add(String(c.id).split('#')[0]);
-        } catch {}
-
-        const remaining = ALL.filter((id) => !playedOrDiscarded.has(id) && !myHand.has(id));
+        const remaining = p34Remaining || [];
+        const wheelCount = remaining.length;
+        const wheelId = remaining[p34WheelIdx] || '';
+        const onWheel = (e) => {
+          if (!wheelCount) return;
+          try { e.preventDefault(); } catch {}
+          const dir = e.deltaY > 0 ? 1 : -1;
+          setP34WheelIdx((i) => (i + dir + wheelCount) % wheelCount);
+          playSfx('fan', 0.35);
+        };
 
         return (
           <div className="fixed inset-0 z-[6000] pointer-events-auto select-none bg-black/40 backdrop-blur-sm">
@@ -4324,6 +4344,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 >
                   Skip
                 </button>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <div className="relative w-[220px] max-w-[60vw]">
+                  <img src="/assets/ui/milov.webp" alt="Milov" className="w-full h-auto block opacity-95" draggable={false} />
+                  <div
+                    className="absolute left-[12%] right-[12%] top-[22%] h-[28%] rounded-lg bg-black/70 border border-amber-400/40 flex items-center justify-center text-[12px] font-mono text-amber-100/90 px-2 cursor-pointer"
+                    onWheel={onWheel}
+                    onClick={() => { try { if (wheelId) moves.persona34GuessTopdeck(wheelId); } catch {} }}
+                    title={wheelId || 'wheel'}
+                  >
+                    {wheelId ? wheelId.replace('persona_', 'p') : '—'}
+                  </div>
+                </div>
+                <div className="text-[11px] opacity-80">Колесо мыши: листай варианты. Клик по окошку — подтвердить.</div>
               </div>
 
               {(() => {
