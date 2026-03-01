@@ -5990,11 +5990,31 @@ export default function SpineUI() {
   useEffect(() => {
     try { document.title = 'Politikum'; } catch {}
     // Nginx likely serves SPA directly for /m, so enforce hash-route on client.
+    // Also: auto-redirect mobile devices to /m (unless already there).
     try {
       const p = String(window.location.pathname || '');
       const h = String(window.location.hash || '');
+
+      const isMobileDevice = (() => {
+        try {
+          if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+        } catch {}
+        try {
+          const ua = String(navigator.userAgent || '');
+          return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        } catch {}
+        return false;
+      })();
+
       if (p === '/m' || p.startsWith('/m/')) {
         if (!h.startsWith('#/m')) window.location.hash = '#/m';
+        return;
+      }
+
+      if (isMobileDevice && !h.startsWith('#/m')) {
+        // Keep mobile users on the mobile UI route.
+        window.location.href = '/m';
+        return;
       }
     } catch {}
   }, []);
