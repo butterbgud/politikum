@@ -6443,7 +6443,8 @@ export default function SpineUI() {
   const [hash, setHash] = useState(() => window.location.hash || '');
   const isMobileRoute = String(hash || '').startsWith('#/m');
   const [showRotateHint, setShowRotateHint] = useState(false);
-  const [mobileRotateGame, setMobileRotateGame] = useState(true);
+  // Default false so lobby never flashes rotated while we detect phase.
+  const [mobileRotateGame, setMobileRotateGame] = useState(false);
 
   useEffect(() => {
     if (!isMobileRoute) { if (showRotateHint) setShowRotateHint(false); return; }
