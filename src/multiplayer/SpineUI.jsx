@@ -2138,7 +2138,7 @@ function LobbyBoard({ G, ctx, moves, playerID }) {
             )}
 
             {/* Lobby chat */}
-            <div className={"bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0 " + (MOBILE ? "min-h-[62vh]" : "")}>
+            <div className={"bg-slate-900/40 rounded-2xl p-4 border border-amber-900/20 flex flex-col flex-1 min-h-0 " + (MOBILE ? ((G.chat || []).length ? "min-h-[62vh]" : "min-h-[30vh]") : "")}>
               <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Чат лобби</div>
               <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                 {(G.chat || []).map((m, i) => {
