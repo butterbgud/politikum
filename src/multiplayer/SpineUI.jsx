@@ -5532,7 +5532,17 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
 function Board(props) {
   const phase = String(props?.ctx?.phase || '');
-  if (phase === 'lobby') return (MOBILE ? <MobileLobbyBoard {...props} /> : <DesktopLobbyBoard {...props} />);
+
+  const isMobileUi = (() => {
+    try {
+      const sp = new URLSearchParams(String(window.location.search || ''));
+      if (String(sp.get('ui') || '').trim() === 'desktop') return false;
+    } catch {}
+    try { return String(window.location.hash || '').startsWith('#/m'); } catch {}
+    return false;
+  })();
+
+  if (phase === 'lobby') return (isMobileUi ? <MobileLobbyBoard {...props} /> : <DesktopLobbyBoard {...props} />);
   return <ActionBoard {...props} matchID={props.matchID} />;
 }
 
