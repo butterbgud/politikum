@@ -5002,6 +5002,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Log (collapsible) */}
+      {MOBILE && (
+        <button
+          type="button"
+          onClick={() => setLogCollapsed((v) => !v)}
+          className="fixed top-3 left-3 z-[20000] pointer-events-auto px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]"
+          title="Toggle log"
+        >
+          {logCollapsed ? 'LOG' : 'LOG ×'}
+        </button>
+      )}
       <div className={
         "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-x-[-392px]" : "translate-x-0")
