@@ -4675,11 +4675,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {/* Total VP (bottom-right) */}
-      <div className="fixed bottom-4 right-4 z-[2500] pointer-events-none select-none">
-        <div className="bg-black/60 border border-amber-900/20 rounded-2xl px-4 py-2 text-amber-100/90 font-mono shadow-2xl">
-          <div className="font-black tracking-widest text-[14px]">VP: {myCoalitionPoints}</div>
-          <div className="mt-0.5 text-[10px] text-amber-200/60 tabular-nums">
+      {/* Total VP */}
+      <div className={"fixed z-[2500] pointer-events-none select-none " + (MOBILE ? "top-3 left-3" : "bottom-4 right-4") }>
+        <div className={"bg-black/60 border border-amber-900/20 rounded-2xl text-amber-100/90 font-mono shadow-2xl " + (MOBILE ? "px-3 py-1.5" : "px-4 py-2") }>
+          <div className={"font-black tracking-widest " + (MOBILE ? "text-[12px]" : "text-[14px]") }>VP: {myCoalitionPoints}</div>
+          <div className={"mt-0.5 text-amber-200/60 tabular-nums " + (MOBILE ? "text-[9px]" : "text-[10px]") }>
             Base {myVpBase} + Tokens {myVpTokens} + Passives {myVpPassives}
           </div>
         </div>
