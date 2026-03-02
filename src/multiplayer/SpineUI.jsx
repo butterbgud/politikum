@@ -857,6 +857,33 @@ function AdminMobileGamesPage() {
     try { setError(''); } catch {}
   };
 
+  const formatTimeShortDay = (ms) => {
+    try {
+      if (!ms) return '';
+      const d = new Date(ms);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}`;
+    } catch { return ''; }
+  };
+  const formatTimeOnly = (ms) => {
+    try {
+      if (!ms) return '';
+      const d = new Date(ms);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `${hh}:${mi}`;
+    } catch { return ''; }
+  };
+  const isToday = (ms) => {
+    try {
+      if (!ms) return false;
+      const d = new Date(ms);
+      const n = new Date();
+      return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+    } catch { return false; }
+  };
+
   const formatTime = (ms) => {
     if (!ms) return '—';
     const d = new Date(ms);
@@ -1081,7 +1108,7 @@ function AdminMobileGamesPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-amber-100/90 font-mono font-black text-xs break-all">{String(g.matchId || '')}</div>
-                    <div className="mt-1 text-amber-100/65 text-[11px] font-mono">{formatTime(g.finishedAt || g.createdAt)} · {formatDuration(g.durationMs || ((g.finishedAt || 0) - (g.createdAt || 0)))}</div>
+                    <div className="mt-1 text-amber-100/65 text-[11px] font-mono">{gamesWindow === 'day' ? formatTimeOnly(g.finishedAt || g.createdAt) : formatTime(g.finishedAt || g.createdAt)} · {formatDuration(g.durationMs || ((g.finishedAt || 0) - (g.createdAt || 0)))}</div>
                   </div>
                   <button type="button" className="shrink-0 px-3 py-2 rounded-xl bg-black/40 hover:bg-black/55 border border-amber-900/20 text-amber-50 font-black text-[11px]" onClick={() => copyText(g.matchId)}>Copy</button>
                 </div>
@@ -1737,7 +1764,7 @@ function AdminPage() {
                     <td className="px-2 py-2 align-top whitespace-nowrap text-amber-100/90 font-black tabular-nums">{Number(r.rating ?? 0) || 0}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap text-emerald-300 font-black tabular-nums">{r.wins}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap tabular-nums">{r.games}</td>
-                    <td className="px-2 py-2 align-top whitespace-nowrap">{r.lastFinishedAt ? formatTime(r.lastFinishedAt) : '—'}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{r.lastFinishedAt ? formatTimeShortDay(r.lastFinishedAt) : '—'}</td>
                   </tr>
                 );
                 })}
@@ -1845,14 +1872,13 @@ function AdminPage() {
                   <tr key={g.matchId} className="border-b border-amber-900/20">
                     <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(g.finishedAt || g.createdAt)}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">
-                      <span className="font-mono text-[11px] text-amber-200/70">{String(g.matchId || '').slice(0, 12)}</span>
                       <button
                         type="button"
-                        className="ml-2 text-[10px] font-mono font-black text-amber-200/60 hover:text-amber-50 underline underline-offset-4"
+                        className="font-mono text-[11px] text-amber-200/70 hover:text-amber-50 underline underline-offset-4"
                         onClick={() => { copyAdminText(String(g.matchId || '')); }}
                         title={g.matchId}
                       >
-                        copy
+                        {String(g.matchId || '').slice(0, 12)}
                       </button>
                     </td>
                     <td className="px-2 py-2 align-top">
