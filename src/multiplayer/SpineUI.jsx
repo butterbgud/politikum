@@ -6562,6 +6562,8 @@ export default function SpineUI() {
       } catch {}
       const forcedUi = (() => { try { return String(window.localStorage.getItem('politikum.forceUi') || ''); } catch { return ''; } })();
 
+      const isAdminMobile = h.startsWith('#/adminm');
+
       const isMobileDevice = (() => {
         if (forcedUi === 'desktop') return false;
         if (forcedUi === 'mobile') return true;
@@ -6595,11 +6597,11 @@ export default function SpineUI() {
       }
 
       if (p === '/m' || p.startsWith('/m/')) {
-        if (!h.startsWith('#/m')) window.location.hash = '#/m';
+        if (!h.startsWith('#/m') && !isAdminMobile) window.location.hash = '#/m';
         return;
       }
 
-      if (isMobileDevice && !h.startsWith('#/m')) {
+      if (isMobileDevice && !h.startsWith('#/m') && !isAdminMobile) {
         // Keep mobile users on the mobile UI route.
         window.location.href = '/m';
         return;
