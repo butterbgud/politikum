@@ -1880,7 +1880,7 @@ function AdminPage() {
               <tbody>
                 {filteredGames.map((g) => (
                   <tr key={g.matchId} className="border-b border-amber-900/20">
-                    <td className="px-2 py-2 align-top whitespace-nowrap">{formatTime(g.finishedAt || g.createdAt)}</td>
+                    <td className="px-2 py-2 align-top whitespace-nowrap">{gamesWindow === 'day' ? formatTimeOnly(g.finishedAt || g.createdAt) : formatTime(g.finishedAt || g.createdAt)}</td>
                     <td className="px-2 py-2 align-top whitespace-nowrap">
                       <button
                         type="button"
