@@ -1223,6 +1223,16 @@ function AdminMobileGamesPage() {
   );
 }
 
+function formatTimeOnly(ms) {
+  try {
+    if (!ms) return '';
+    const d = new Date(ms);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mi}`;
+  } catch { return ''; }
+}
+
 function AdminPage() {
   const [token, setToken] = useState(() => {
     try {
