@@ -4215,6 +4215,17 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               >
                 Закончить ход
               </button>
+              <button
+                type="button"
+                onClick={() => { if (!MOBILE) return; setMobileHandOpen(!mobileHandOpen); if (mobileHandOpen) setMobileHandSelected(null); }}
+                className={
+                  "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
+                  (mobileHandOpen ? "opacity-90" : "")
+                }
+                title="Рука"
+              >
+                Рука
+              </button>
             </div>
           </>
         ) : (
@@ -5537,6 +5548,41 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
+      {MOBILE && mobileHandOpen && (
+        <div className="fixed left-0 right-0 z-[2500] pointer-events-auto select-none" style={{ bottom: `calc(70px + env(safe-area-inset-bottom, 0px))` }}>
+          <div className="mx-3 rounded-2xl bg-black/70 border border-amber-900/30 px-3 py-3">
+            <div className="relative h-[140px] overflow-visible">
+              {(hand || []).map((card, idx) => {
+                const left = idx * 42;
+                const isSel = String(mobileHandSelected || '') === String(card.id);
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    className="absolute top-0 w-[90px] aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/30"
+                    style={{ left: `${left}px`, zIndex: isSel ? 2000 : idx + 1, transform: isSel ? 'scale(1.04)' : 'scale(1.0)' }}
+                    onClick={() => setMobileHandSelected(card.id)}
+                  >
+                    <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
+                  </button>
+                );
+              })}
+              {!(hand || []).length && (
+                <div className="text-amber-200/40 italic text-sm font-serif">Пусто.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {MOBILE && mobileHandSelected && (
+        <div className="fixed inset-0 z-[2600] flex items-center justify-center pointer-events-auto">
+          <div className="w-[min(70vw,320px)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/80" onClick={() => setMobileHandSelected(null)}>
+            <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} />
+          </div>
+        </div>
+      )}
+
       {/* Mobile: cancel hand selection */}
       {MOBILE && mobileHandSelected && (
         <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(96px + env(safe-area-inset-bottom, 0px))` }}>
@@ -5564,7 +5610,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           return {
             left: '0px',
             top: '0px',
-            transform: `translateX(${mobileHandOpen ? dxOpen : dxClosed}) translateY(${y}) rotate(-90deg) scale(${s})`,
+            transform: `translateX(${mobileHandOpen ? dxOpen : dxClosed}) translateY(${y}) rotate(90deg) scale(${s})`,
             transition: 'transform 220ms ease-out',
             transformOrigin: 'top left',
           };
