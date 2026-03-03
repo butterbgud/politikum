@@ -3183,7 +3183,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     } catch {}
     return String(window.location.hash || '').startsWith('#/m');
   })();
-  const [logCollapsed, setLogCollapsed] = useState(() => MOBILE);
+  const [logCollapsed, setLogCollapsed] = useState(true);
   const [hoverHandIndex, setHoverHandIndex] = useState(null);
   const [hoverMyCoalition, setHoverMyCoalition] = useState(null);
 
@@ -5196,7 +5196,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
       <div className={
-        "fixed top-1/2 -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+        "fixed top-[calc(50%-80px)] -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-x-[-392px]" : "translate-x-0")
       }>
         <div className="w-[420px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">

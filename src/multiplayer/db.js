@@ -1335,6 +1335,9 @@ export function tournamentGenerateRound1({ id }) {
   shuffleInPlace(ids);
 
   const now = nowMs();
+  // start tournament on round1 generation
+  db.prepare('UPDATE tournaments SET status='running', started_at=COALESCE(started_at, @now) WHERE id=@t').run({ t: tid, now });
+
   const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: 1, s: 'pending', c: now });
   const roundId = round?.id;
 
