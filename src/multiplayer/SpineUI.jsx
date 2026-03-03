@@ -153,10 +153,6 @@ function TournamentPage() {
   const lobbyChatToken = (() => {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
   })();
-  const viewerName = (() => {
-    try { return String(window.localStorage.getItem('politikum.playerName') || '').trim().toLowerCase(); } catch { return ''; }
-  })();
-
 
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'games'); } catch {}
@@ -247,6 +243,9 @@ function TournamentDetailPage({ tournamentId }) {
 
   const lobbyChatToken = (() => {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+  const viewerName = (() => {
+    try { return String(window.localStorage.getItem('politikum.playerName') || '').trim().toLowerCase(); } catch { return ''; }
   })();
 
   const [rightTab, setRightTab] = useState(() => {
@@ -477,6 +476,9 @@ function AdminTournamentPage() {
 
   const lobbyChatToken = (() => {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+  const viewerName = (() => {
+    try { return String(window.localStorage.getItem('politikum.playerName') || '').trim().toLowerCase(); } catch { return ''; }
   })();
 
   const [rightTab, setRightTab] = useState(() => {
@@ -1213,6 +1215,9 @@ function AdminPage() {
 
   const lobbyChatToken = (() => {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
+  })();
+  const viewerName = (() => {
+    try { return String(window.localStorage.getItem('politikum.playerName') || '').trim().toLowerCase(); } catch { return ''; }
   })();
 
   const [rightTab, setRightTab] = useState(() => {
