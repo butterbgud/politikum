@@ -302,6 +302,25 @@ function TournamentDetailPage({ tournamentId }) {
 
   useEffect(() => { load(); }, [tournamentId]);
 
+  const publicCreateTournamentMatch = async (tb) => {
+    try {
+      setLoading(true);
+      setErr('');
+      const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/table/${tb.id}/create_match`, { method: 'POST' });
+      if (!res.ok) {
+        let details = '';
+        try { details = await res.text(); } catch {}
+        details = String(details || '').trim();
+        throw new Error(`HTTP ${res.status}${details ? ` — ${details}` : ''}`);
+      }
+      await load();
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const adminCreateMatch = async (tableId) => {
     setLoading(true);
     setErr('');
@@ -433,7 +452,7 @@ function TournamentDetailPage({ tournamentId }) {
                                     </>
                                   )}
                                   {(!tb.matchId && (tb.seats || []).some((s) => String(s.name || s.playerId || '').trim().toLowerCase() === viewerName)) && (
-                                    <button type="button" disabled={loading} onClick={() => adminCreateMatch(tb.id)} className="text-[10px] font-mono text-emerald-300/80 hover:text-emerald-200 disabled:opacity-60">Create match</button>
+                                    <button type="button" disabled={loading} onClick={() => publicCreateTournamentMatch(tb)} className="text-[10px] font-mono text-emerald-300/80 hover:text-emerald-200 disabled:opacity-60">Create match</button>
                                   )}
                                 </div>
                               </div>
