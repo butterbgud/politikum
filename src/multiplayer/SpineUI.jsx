@@ -153,6 +153,10 @@ function TournamentPage() {
   const lobbyChatToken = (() => {
     try { return String(window.localStorage.getItem('politikum.authToken') || ''); } catch { return ''; }
   })();
+  const viewerName = (() => {
+    try { return String(window.localStorage.getItem('politikum.playerName') || '').trim().toLowerCase(); } catch { return ''; }
+  })();
+
 
   const [rightTab, setRightTab] = useState(() => {
     try { return String(window.localStorage.getItem('politikum.welcomeRightTab') || 'games'); } catch {}
@@ -424,7 +428,7 @@ function TournamentDetailPage({ tournamentId }) {
                                   {tb.matchId && (
                                     <>
                                       <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50">Open match</button>
-                                      {(tb.seats || []).some((s) => String(s.playerId) === String(playerID)) && (
+                                      {(tb.seats || []).some((s) => String(s.name || s.playerId || '').trim().toLowerCase() === viewerName) && (
                                         <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-emerald-300/80 hover:text-emerald-200">Join</button>
                                       )}
                                     </>
