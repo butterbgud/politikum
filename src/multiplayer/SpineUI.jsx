@@ -4217,14 +4217,39 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </button>
               <button
                 type="button"
-                onClick={() => { if (!MOBILE) return; setMobileHandOpen(!mobileHandOpen); if (mobileHandOpen) setMobileHandSelected(null); }}
+                onClick={() => {
+                  if (!MOBILE) return;
+                  if (mobileHandSelected) {
+                    try {
+                      const card = (me?.hand || []).find((c) => String(c.id) === String(mobileHandSelected));
+                      if (!card) return;
+                      const baseId = String(card.id).split('#')[0];
+                      const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
+                      const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+                      if (canPlayPersona) {
+                        const coal = me?.coalition || [];
+                        if (coal.length === 0) {
+                          moves.playPersona(card.id);
+                        } else {
+                          setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' });
+                        }
+                      } else if (canPlayAction) {
+                        moves.playAction(card.id);
+                      }
+                      setMobileHandSelected(null);
+                    } catch {}
+                    return;
+                  }
+                  setMobileHandOpen(!mobileHandOpen);
+                  if (mobileHandOpen) setMobileHandSelected(null);
+                }}
                 className={
                   "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
                   (mobileHandOpen ? "opacity-90" : "")
                 }
-                title="Рука"
+                title={mobileHandSelected ? "Сыграть карту" : "Рука"}
               >
-                Рука
+                {mobileHandSelected ? 'Сыграть карту' : 'Рука'}
               </button>
             </div>
           </>
