@@ -306,7 +306,8 @@ function TournamentDetailPage({ tournamentId }) {
     try {
       setLoading(true);
       setErr('');
-      const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/table/${tb.id}/create_match`, { method: 'POST' });
+      const pname = (() => { try { return String(window.localStorage.getItem('politikum.playerName') || ''); } catch { return ''; } })();
+      const res = await fetch(`${SERVER}/public/tournament/${tournamentId}/table/${tb.id}/create_match`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: pname }) });
       if (!res.ok) {
         let details = '';
         try { details = await res.text(); } catch {}

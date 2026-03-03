@@ -828,6 +828,58 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
       }
     }
 
+
+    // Public tournament: allow participants to create match for their table
+    {
+      const m = String(ctx.path || '').match(/^\/public\/tournament\/([^\/]+)\/table\/(\d+)\/create_match$/);
+      if (m && ctx.method === 'POST') {
+        const tid = m[1];
+        const tableId = Number(m[2]);
+        const body = ctx.request?.body || {};
+        const reqName = String(body?.name || '').trim().toLowerCase();
+
+        const table = tournamentTableGet({ tournamentId: tid, tableId });
+        if (!table) ctx.throw(404, 'Not found');
+        if (table.matchId) ctx.throw(409, 'match_exists');
+
+        const seats = Array.isArray(table.seats) ? table.seats : [];
+        const isParticipant = seats.some((s) => {
+          const nm = String(s?.name || '').trim().toLowerCase();
+          const pid = String(s?.playerId || '').trim().toLowerCase();
+          return reqName && (nm == reqName || pid == reqName);
+        });
+        if (!isParticipant) ctx.throw(403, 'not_participant');
+
+        const numPlayers = Math.max(2, seats.length || 0);
+        const matchId = `t_${tid}_${tableId}_${Date.now().toString(36)}`;
+
+        const match = createBgioMatch({
+          game: CitadelGame,
+          unlisted: true,
+          numPlayers,
+          setupData: undefined,
+        });
+        if ('setupDataError' in match) ctx.throw(400, 'setupData_required');
+
+        const { metadata, initialState } = match;
+        for (let i = 0; i < numPlayers; i++) {
+          const seat = seats[i];
+          const name = seat?.name == null ? null : String(seat.name || '').trim();
+          const playerId = seat?.playerId == null ? null : String(seat.playerId || '').trim();
+          if (playerId || name) metadata.players[i].data = { playerId: playerId || null, name: name || null };
+        }
+        metadata.tournament = { id: tid, tableId };
+
+        await ctx.db.createMatch(matchId, { initialState, metadata });
+
+        const res = tournamentTableSetMatch({ tournamentId: tid, tableId, matchId, status: 'ready' });
+        if (!res.ok) ctx.throw(404, res.error || 'not_found');
+
+        ctx.body = { ok: true, matchId };
+        return;
+      }
+    }
+
     // Public leaderboard: safe to embed in lobby screen (no token).
     if (ctx.path === '/public/leaderboard' && ctx.method === 'GET') {
       const limit = clampLimit(ctx.query.limit, 10, 50);
