@@ -2084,7 +2084,7 @@ function AdminBugreportsPage() {
                 <th className="px-2 py-2 whitespace-nowrap w-[140px]">When</th>
                 <th className="px-2 py-2 whitespace-nowrap w-[64px]">Status</th>
                 <th className="px-2 py-2 whitespace-nowrap w-[96px]">Match</th>
-                <th className="px-2 py-2 whitespace-nowrap w-[90px]">From</th>
+                <th className="px-2 py-2 whitespace-nowrap w-[120px]">From</th>
                 <th className="px-2 py-2">Text</th>
                 <th className="px-2 py-2 whitespace-nowrap w-[160px]">Actions</th>
               </tr>
@@ -4219,7 +4219,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 type="button"
                 onClick={() => {
                   if (!MOBILE) return;
-                  if (mobileHandSelected) {
+                  if (false) {
                     try {
                       const card = (me?.hand || []).find((c) => String(c.id) === String(mobileHandSelected));
                       if (!card) return;
@@ -4247,9 +4247,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   "px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px] " +
                   (mobileHandOpen ? "opacity-90" : "")
                 }
-                title={mobileHandSelected ? "Сыграть карту" : "Рука"}
+                title="Рука"
               >
-                {mobileHandSelected ? 'Сыграть карту' : 'Рука'}
+                Рука
               </button>
             </div>
           </>
@@ -5575,16 +5575,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {MOBILE && mobileHandOpen && (
         <div className="fixed left-0 right-0 z-[2500] pointer-events-auto select-none" style={{ bottom: `calc(70px + env(safe-area-inset-bottom, 0px))` }}>
-          <div className="mx-3 rounded-2xl bg-black/70 border border-amber-900/30 px-3 py-3">
-            <div className="relative h-[140px] overflow-visible">
+          <div className="mx-auto w-[min(92vw,720px)] bg-transparent border-0 px-0 py-0">
+            <div className="relative h-[180px] overflow-visible">
               {(hand || []).map((card, idx) => {
-                const left = idx * 42;
+                const left = idx * 56;
                 const isSel = String(mobileHandSelected || '') === String(card.id);
                 return (
                   <button
                     key={card.id}
                     type="button"
-                    className="absolute top-0 w-[90px] aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/30"
+                    className="absolute top-0 w-[120px] aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/30"
                     style={{ left: `${left}px`, zIndex: isSel ? 2000 : idx + 1, transform: isSel ? 'scale(1.04)' : 'scale(1.0)' }}
                     onClick={() => setMobileHandSelected(card.id)}
                   >
@@ -5602,8 +5602,27 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {MOBILE && mobileHandSelected && (
         <div className="fixed inset-0 z-[2600] flex items-center justify-center pointer-events-auto">
-          <div className="w-[min(70vw,320px)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/80" onClick={() => setMobileHandSelected(null)}>
-            <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} />
+          <div className="relative w-[min(70vw,320px)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/80">
+            <button
+              type="button"
+              className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-xl bg-emerald-600/90 text-emerald-50 font-mono font-black text-[11px]"
+              onClick={() => {
+                try {
+                  const card = (hand || []).find((c) => String(c.id) === String(mobileHandSelected));
+                  if (!card) return;
+                  const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
+                  const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+                  if (canPlayPersona) {
+                    const coal = me?.coalition || [];
+                    if (coal.length === 0) { moves.playPersona(card.id); } else { setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' }); }
+                  } else if (canPlayAction) {
+                    moves.playAction(card.id);
+                  }
+                  setMobileHandSelected(null);
+                } catch {}
+              }}
+            >Сыграть</button>
+            <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} onClick={() => setMobileHandSelected(null)} />
           </div>
         </div>
       )}
