@@ -733,6 +733,25 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
         if (action === 'join') {
           const body = ctx.request.body || {};
           const name = (body.name == null) ? null : String(body.name || '').trim();
+          try {
+            const bracket = tournamentBracketGet({ id: tid });
+            if (bracket?.ok && Array.isArray(bracket.rounds)) {
+              const lower = String(name || sess.email || '').trim().toLowerCase();
+              let allowed = false;
+              for (const r of bracket.rounds) {
+                for (const tb of (r.tables || [])) {
+                  if (tb?.matchId) continue; // only pending tables
+                  for (const s of (tb.seats || [])) {
+                    const nm = String(s?.name || s?.playerId || '').trim().toLowerCase();
+                    if (nm && nm === lower) { allowed = true; break; }
+                  }
+                  if (allowed) break;
+                }
+                if (allowed) break;
+              }
+              if (!allowed) ctx.throw(403, 'not_in_table');
+            }
+          } catch {}
           const res = tournamentJoin({ id: tid, playerId: sess.playerId, name: name || sess.email || null });
           if (!res.ok) ctx.throw(409, res.error || 'join_failed');
           ctx.body = res;
