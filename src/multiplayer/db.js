@@ -1371,7 +1371,6 @@ export function tournamentGenerateNextRound({ id }) {
 
   const t = db.prepare('SELECT id, type, table_size AS tableSize, status FROM tournaments WHERE id=?').get(tid);
   if (!t) return { ok: false, error: 'not_found' };
-  if (String(t.type || '') !== 'double_elim') return { ok: false, error: 'bad_type' };
   if (String(t.status || '') !== 'running') return { ok: false, error: 'not_running' };
 
   const tableSize = Math.max(2, Math.min(5, Number(t.tableSize) || 2));
@@ -1385,6 +1384,46 @@ export function tournamentGenerateNextRound({ id }) {
 
   const unfinished = Number(db.prepare("SELECT COUNT(1) AS n FROM tournament_tables WHERE tournament_id=? AND round_id=? AND status<>'finished'").get(tid, lastRound.id)?.n || 0) || 0;
   if (unfinished > 0) return { ok: false, error: 'round_not_finished' };
+
+  if (String(t.type || '') !== 'double_elim') {
+    // single_elim: winners from last round
+    const rows = db.prepare('SELECT winner_player_id AS winnerPlayerId, result_json AS resultJson FROM tournament_tables WHERE tournament_id=? AND round_id=? ORDER BY table_index ASC').all(tid, lastRound.id);
+    const winners = [];
+    for (const row of rows) {
+      const wpid = row.winnerPlayerId ? String(row.winnerPlayerId) : null;
+      if (wpid) winners.push(wpid);
+    }
+    if (winners.length <= 1) return { ok: false, error: 'tournament_finished' };
+
+    const nextRoundIndex = lastRoundIndex + 1;
+    const now = nowMs();
+    const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'pending', c: now });
+    const roundId = round?.id;
+
+    // build name map for labels
+    const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC').all(tid);
+    const nameById = new Map(players.map((p) => [String(p.playerId), p.name || null]));
+
+    const tables = [];
+    let tableIndex = 1;
+    for (let i = 0; i < winners.length;) {
+      const remaining = winners.length - i;
+      if (remaining === 1) break;
+      const size = Math.min(tableSize, remaining);
+      const slice = winners.slice(i, i + size);
+      const row = db.prepare('INSERT INTO tournament_tables (tournament_id, round_id, table_index, match_id, status, winner_player_id, result_json) VALUES (@t,@rid,@ti,NULL,@s,NULL,@rj) RETURNING id').get({
+        t: tid,
+        rid: roundId,
+        ti: tableIndex,
+        s: 'pending',
+        rj: JSON.stringify({ seats: slice.map((pid, idx) => ({ seat: idx, playerId: pid, name: nameById.get(pid) || null })) }),
+      });
+      tables.push({ id: row?.id, tableIndex, seats: slice });
+      tableIndex++;
+      i += size;
+    }
+    return { ok:true, round: { id: roundId, roundIndex: nextRoundIndex }, tables, tournament: tournamentGet({ id: tid }) };
+  }
 
   const players = db.prepare('SELECT player_id AS playerId, name FROM tournament_players WHERE tournament_id=? AND dropped_at IS NULL ORDER BY joined_at ASC').all(tid);
   if (players.length < 2) return { ok: false, error: 'not_enough_players' };
