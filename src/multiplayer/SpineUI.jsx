@@ -314,7 +314,9 @@ function TournamentDetailPage({ tournamentId }) {
         details = String(details || '').trim();
         throw new Error(`HTTP ${res.status}${details ? ` — ${details}` : ''}`);
       }
+      const json = await res.json();
       await load();
+      if (json?.matchId) openMatch(json.matchId);
     } catch (e) {
       setErr(e?.message || String(e));
     } finally {
