@@ -432,6 +432,9 @@ function TournamentDetailPage({ tournamentId }) {
                                       )}
                                     </>
                                   )}
+                                  {(!tb.matchId && (tb.seats || []).some((s) => String(s.name || s.playerId || '').trim().toLowerCase() === viewerName)) && (
+                                    <button type="button" disabled={loading} onClick={() => adminCreateMatch(tb.id)} className="text-[10px] font-mono text-emerald-300/80 hover:text-emerald-200 disabled:opacity-60">Create match</button>
+                                  )}
                                 </div>
                               </div>
                               <div className="grid gap-0.5 text-xs font-serif">
