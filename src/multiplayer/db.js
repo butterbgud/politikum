@@ -1175,6 +1175,17 @@ export function tournamentTableSetResult({ tournamentId, tableId, winnerPlayerId
     'UPDATE tournament_tables SET status=@s, winner_player_id=@w, result_json=@r WHERE tournament_id=@t AND id=@id'
   ).run({ t: tid, id, s: 'finished', w: winner, r: resultJson, id });
 
+  // Mark round done if all tables finished
+  try {
+    const rid = db.prepare('SELECT round_id AS roundId FROM tournament_tables WHERE tournament_id=? AND id=?').get(tid, id)?.roundId;
+    if (rid) {
+      const unfinished = Number(db.prepare("SELECT COUNT(1) AS n FROM tournament_tables WHERE tournament_id=? AND round_id=? AND status<>'finished'").get(tid, rid)?.n || 0) || 0;
+      if (unfinished <= 0) {
+        db.prepare("UPDATE tournament_rounds SET status='done' WHERE id=?").run(rid);
+      }
+    }
+  } catch {}
+
   if (!res.changes) return { ok: false, error: 'not_found' };
 
   // Auto-finish 2-player single_elim tournaments: Round 1 is the final.
@@ -1338,7 +1349,7 @@ export function tournamentGenerateRound1({ id }) {
   // start tournament on round1 generation
   db.prepare('UPDATE tournaments SET status='running', started_at=COALESCE(started_at, @now) WHERE id=@t').run({ t: tid, now });
 
-  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: 1, s: 'pending', c: now });
+  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: 1, s: 'in_progress', c: now });
   const roundId = round?.id;
 
   const tables = [];
@@ -1397,7 +1408,7 @@ export function tournamentGenerateNextRound({ id }) {
 
     const nextRoundIndex = lastRoundIndex + 1;
     const now = nowMs();
-    const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'pending', c: now });
+    const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'in_progress', c: now });
     const roundId = round?.id;
 
     // build name map for labels
@@ -1477,7 +1488,7 @@ export function tournamentGenerateNextRound({ id }) {
   if (survivors0.length === 1 && survivors1.length === 1) {
     const nextRoundIndex = lastRoundIndex + 1;
     const now = nowMs();
-    const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'pending', c: now });
+    const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'in_progress', c: now });
     const roundId = round?.id;
     const tables = [];
     const pair = [survivors0[0], survivors1[0]];
@@ -1495,7 +1506,7 @@ export function tournamentGenerateNextRound({ id }) {
 
   const nextRoundIndex = lastRoundIndex + 1;
   const now = nowMs();
-  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'pending', c: now });
+  const round = db.prepare('INSERT INTO tournament_rounds (tournament_id, round_index, status, created_at) VALUES (@t,@r,@s,@c) RETURNING id').get({ t: tid, r: nextRoundIndex, s: 'in_progress', c: now });
   const roundId = round?.id;
 
   const tables = [];
