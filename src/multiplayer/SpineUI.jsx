@@ -392,75 +392,17 @@ function TournamentDetailPage({ tournamentId }) {
 
         {t && (
           <div className="grid gap-3">
-                        <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
-              <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Players</div>
-              <div className="mt-2 grid gap-1 text-sm font-serif">
-                {(t.players || []).map((p) => (
-                  <div key={p.playerId} className="text-amber-100/90">{p.name || p.playerId}</div>
-                ))}
-                {(!(t.players || []).length) && <div className="text-amber-200/40 italic">No players yet.</div>}
-              </div>
-            </div>
-
-            <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Round 1 tables</div>
-                <div className="flex items-center gap-2">
-                  {tablesErr && <div className="text-[10px] font-mono text-amber-200/50">{tablesErr}</div>}
-                  {(tablesErr && hasAdminToken) && (
-                    <button type="button" onClick={() => { window.location.hash = '#/admin/tournament'; }} className="text-[10px] font-mono text-amber-200/60 hover:text-amber-50">Admin</button>
-                  )}
+                        {(!(Array.isArray(bracket) && bracket.length > 0)) && (
+              <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
+                <div className="text-xs uppercase tracking-widest text-amber-200/70 font-black">Players</div>
+                <div className="mt-2 grid gap-1 text-sm font-serif">
+                  {(t.players || []).map((p) => (
+                    <div key={p.playerId} className="text-amber-100/90">{p.name || p.playerId}</div>
+                  ))}
+                  {(!(t.players || []).length) && <div className="text-amber-200/40 italic">No players yet.</div>}
                 </div>
               </div>
-
-              <div className="mt-2 grid gap-2">
-                {tables.map((tb) => (
-                  <div key={tb.id || String(tb.tableIndex)} className="rounded-xl border border-amber-900/20 bg-black/30 px-3 py-2">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="font-black text-amber-50 text-xs uppercase tracking-widest">Table {tb.tableIndex}</div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-[10px] font-mono text-amber-200/60">{tb.status || 'pending'}</div>
-                        {tb.winnerPlayerId && (
-                          <div className="text-[10px] font-mono text-emerald-300/80">winner: {tb.winnerPlayerId}</div>
-                        )}
-                        {tb.matchId && (
-                          <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50">Open match</button>
-                        )}
-                        {(!tb.matchId && hasAdminToken) && (
-                          <button type="button" disabled={loading} onClick={() => adminCreateMatch(tb.id)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Create match</button>
-                        )}
-                        {(tb.matchId && !tb.winnerPlayerId && hasAdminToken) && (
-                          <button type="button" disabled={loading} onClick={async () => {
-                            try {
-                              const tok = String(window.localStorage.getItem('politikum.adminToken') || '');
-                              if (!tok) throw new Error('Admin token missing');
-                              const seatStr = window.prompt('Winner seat number (1..N):');
-                              if (!seatStr) return;
-                              const seat = Math.max(1, Number.parseInt(String(seatStr), 10) || 0) - 1;
-                              const res = await fetch(`${SERVER}/admin/tournament/${tournamentId}/table/${tb.id}/set_winner`, {
-                                method: 'POST',
-                                headers: { 'X-Admin-Token': tok, 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ seat }),
-                              });
-                              if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                              await load();
-                            } catch (e) { setErr(e?.message || String(e)); }
-                          }} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50 disabled:opacity-60">Set winner</button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-1 grid gap-0.5 text-sm font-serif">
-                      {(tb.seats || []).map((s) => (
-                        <div key={String(s.seat)} className="text-amber-100/90">Seat {Number(s.seat) + 1}: {s.name || s.playerId}</div>
-                      ))}
-                      {(!(tb.seats || []).length) && <div className="text-amber-200/40 italic">No seats.</div>}
-                    </div>
-                  </div>
-                ))}
-
-                {(!tables.length && !tablesErr) && <div className="text-amber-200/40 italic">No tables yet.</div>}
-              </div>
-            </div>
+            )}
 
             {Array.isArray(bracket) && bracket.length > 0 && (
               <div className="bg-black/40 border border-amber-900/20 rounded-2xl px-4 py-3">
@@ -477,7 +419,17 @@ function TournamentDetailPage({ tournamentId }) {
                             <div key={tb.id || tb.tableIndex} className="rounded-xl border border-amber-900/30 bg-black/40 px-3 py-2">
                               <div className="flex items-baseline justify-between gap-2 mb-1">
                                 <div className="text-[10px] font-mono text-amber-200/70">Table {tb.tableIndex}</div>
-                                <div className="text-[10px] font-mono text-amber-200/50">{tb.status || 'pending'}</div>
+                                <div className="flex items-center gap-2">
+                                  <div className="text-[10px] font-mono text-amber-200/50">{tb.status || 'pending'}</div>
+                                  {tb.matchId && (
+                                    <>
+                                      <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-amber-200/70 hover:text-amber-50">Open match</button>
+                                      {(tb.seats || []).some((s) => String(s.playerId) === String(playerID)) && (
+                                        <button type="button" onClick={() => openMatch(tb.matchId)} className="text-[10px] font-mono text-emerald-300/80 hover:text-emerald-200">Join</button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                               </div>
                               <div className="grid gap-0.5 text-xs font-serif">
                                 {(tb.seats || []).map((s) => (
