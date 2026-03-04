@@ -5760,7 +5760,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </button>
         </div>
       )}
-      {MOBILE && pendingHandLimit && mobileHandOpen && (
+      {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
         <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(150px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
