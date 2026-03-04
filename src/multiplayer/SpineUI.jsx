@@ -1232,6 +1232,7 @@ function AdminPage() {
   const [liveMatches, setLiveMatches] = useState([]);
   const [liveTotal, setLiveTotal] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lobbyChat, setLobbyChat] = useState([]);
   const [lobbyChatEnabled, setLobbyChatEnabled] = useState(true);
@@ -1737,9 +1738,15 @@ function AdminPage() {
         )}
 
         <div className="mt-2">
-          <div className="flex items-baseline justify-between mb-2">
+          <button
+            type="button"
+            onClick={() => setShowLeaderboard((v) => !v)}
+            className="w-full flex items-baseline justify-between mb-2 text-left"
+          >
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Leaderboard (MVP)</div>
-          </div>
+            <div className="text-[11px] font-mono text-amber-200/60">{showLeaderboard ? 'Hide' : 'Show'}</div>
+          </button>
+          {showLeaderboard && (
           <div className="overflow-x-auto -mx-2 mb-6">
             <table className="min-w-full text-left text-xs font-mono text-amber-100/90">
               <thead>
@@ -1784,6 +1791,7 @@ function AdminPage() {
               </tbody>
             </table>
           </div>
+          )}
 
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80 font-black">Live matches</div>
