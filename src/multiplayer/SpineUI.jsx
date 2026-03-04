@@ -5620,7 +5620,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   if (baseId === 'persona_9') {
                     const opp = (G.players || []).find((pp) => String(pp.id) !== String(playerID));
                     if (opp) {
-                      moves.playPersona(card.id, String(opp.id));
+                      moves.playPersona(card.id, undefined, "right", String(opp.id));
                       setMobileHandSelected(null);
                       setMobileHandOpen(false);
                       return;
