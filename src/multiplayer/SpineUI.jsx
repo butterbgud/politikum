@@ -4315,6 +4315,38 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               >
                 Рука
               </button>
+              {MOBILE && opponents.length > 1 && (
+                <div className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ids = opponents.map((o) => String(o.id));
+                      const cur = String(mobileOppFocus || ids[0]);
+                      const i = Math.max(0, ids.indexOf(cur));
+                      const next = ids[(i + 1) % ids.length];
+                      setMobileOppFocus(String(next));
+                    }}
+                    className="px-3 py-1 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[10px]"
+                    title="Следующий соперник"
+                  >
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ids = opponents.map((o) => String(o.id));
+                      const cur = String(mobileOppFocus || ids[0]);
+                      const i = Math.max(0, ids.indexOf(cur));
+                      const prev = ids[(i - 1 + ids.length) % ids.length];
+                      setMobileOppFocus(String(prev));
+                    }}
+                    className="px-3 py-1 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[10px]"
+                    title="Предыдущий соперник"
+                  >
+                    ◀
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
