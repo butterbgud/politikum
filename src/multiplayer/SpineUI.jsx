@@ -4136,6 +4136,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 }
                 style={{ width: Math.max(width, 260) }}
                 onClick={() => {
+                  if (MOBILE && !pendingP17PickOpp && !pendingPersona45 && !pickTargetForPersona9 && !pickTargetForAction4 && !pickTargetForAction9 && !pendingP17PickOpp && !(placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) {
+                    try { setMobileOppZoomPid(String(p.id)); } catch {}
+                    return;
+                  }
                   if (pendingP17PickOpp) {
                     try { moves.persona17PickOpponent(String(p.id)); } catch {}
                     return;
@@ -5980,7 +5984,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         const faces = coal.map((c) => ({ kind: 'face', card: c }));
         const oppFanCards = faces;
         const show = oppFanCards.length;
-        const stepFace = 44;
+        const stepFace = 64;
         const width = 160 + Math.max(0, show - 1) * stepFace;
         return (
           <div className="fixed inset-0 z-[99998] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileOppZoomPid(null)}>
@@ -5989,7 +5993,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <span>{p.name || p.id}</span>
                 <span className="text-amber-200/70">к: {nHand}</span>
               </div>
-              <div className="relative h-60 pointer-events-none select-none" style={{ width: Math.max(width, 260) }}>
+              <div className="relative h-60 pointer-events-none select-none scale-[1.08]" style={{ width: Math.max(width, 260) }}>
                 {oppFanCards.map((it, i) => {
                   const t = show <= 1 ? 0.5 : i / (show - 1);
                   const rot = (t - 0.5) * 12;
