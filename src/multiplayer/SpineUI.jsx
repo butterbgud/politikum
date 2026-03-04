@@ -4668,7 +4668,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Hand limit: discard down to 7 (no modal) */}
       {G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             У тебя больше 7 карт: сбрось лишние кликом по картам на руке
           </div>
@@ -4677,7 +4677,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona prompts (no modals) */}
       {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             SVTV (p3): click a LEFTWING persona to discard it, or press B for option B
           </div>
@@ -4685,7 +4685,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP12 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Savin (p12): click one adjacent red_nationalist to get +2
           </div>
@@ -4693,7 +4693,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP16 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>p16: select 3 cards to discard ({(p16DiscardPick || []).length}/3)</span>
             <button
@@ -4720,7 +4720,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP7 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>
               p7: {p7FirstPick ? 'pick SECOND persona (same coalition)' : 'pick FIRST persona'}
@@ -4740,7 +4740,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_5 target prompt */}
       {G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             p5: click a LIBERAL persona in an opponent’s coalition
           </div>
@@ -4749,7 +4749,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_14 discard prompt (no modal) */}
       {G.pending?.kind === 'discard_one_persona_from_any_coalition' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             p14: click any persona on the table to discard it
           </div>
@@ -4760,7 +4760,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_17 pick opponent */}
       {pendingP17PickOpp && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             p17: click an opponent to reveal their hand and steal 1 persona
           </div>
@@ -4772,7 +4772,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         const target = (G.players || []).find((pp) => String(pp.id) === String(pendingP17TargetId));
         const cards = (target?.hand || []).filter((c) => c?.type === 'persona');
         return (
-          <div className="fixed inset-x-0 top-14 z-[2600] flex items-start justify-center pointer-events-none select-none">
+          <div className="fixed inset-x-0 top-14 z-[9600] flex items-start justify-center pointer-events-none select-none">
             <div className="pointer-events-auto bg-black/75 border border-amber-900/30 rounded-3xl shadow-2xl p-4 max-w-[96vw]">
               <div className="text-amber-200/70 text-[11px] font-mono font-black tracking-widest">p17: pick a persona from {target?.name || pendingP17TargetId}</div>
               <div className="mt-3 flex gap-3 flex-wrap justify-center">
@@ -4798,7 +4798,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_45: choose opponent (no modal) */}
       {pendingPersona45 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             {pendingPersona45Source}: click an opponent to steal 1 random card
           </div>
@@ -4806,7 +4806,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {canPersona8Swap && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             persona_8: click the just-played persona to SWAP with it
           </div>
@@ -4814,7 +4814,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {canPersona10Cancel && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Вы можете позвать маму Наки чтобы отменить действие
           </div>
@@ -4823,7 +4823,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Event_16: discard one of YOUR personas, then draw 1 (no modal) */}
       {G.pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             EVENT {G.pending.sourceCardId}: click a persona in YOUR coalition to discard it (then draw 1)
           </div>
@@ -4832,7 +4832,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_7: click a persona on the table to block (no modal) */}
       {G.pending?.kind === 'action_7_block_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Экшен 7: ткни по любой персоне на столе чтобы запретить ей способности
           </div>
@@ -4841,7 +4841,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_13: shield one of YOUR personas (no modal) */}
       {G.pending?.kind === 'action_13_shield_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Белое пальто: ткни по персоне в СВОЕЙ коалиции чтобы защитить
           </div>
@@ -4850,7 +4850,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_17: click any opponent persona on the table (no modal) */}
       {G.pending?.kind === 'action_17_choose_opponent_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Action 17: ткни по персоне любого оппонента (Esc чтобы отменить)
           </div>
@@ -5178,7 +5178,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Event card: big centered while resolving */}
       {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && (
-        <div className="fixed inset-0 z-[2500] pointer-events-none select-none">
+        <div className="fixed inset-0 z-[9500] pointer-events-none select-none">
           <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex flex-col items-center">
             <div className="mb-3 text-amber-100/90 font-black text-2xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.8)]">Ой!</div>
             <div className="w-64 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
@@ -5190,7 +5190,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action splash (auto-hide) */}
       {ENABLE_ACTION_SPLASH && showActionSplash && !!G.lastAction && (
-        <div className="fixed inset-0 z-[2600] pointer-events-none">
+        <div className="fixed inset-0 z-[9600] pointer-events-none">
           <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 flex items-end gap-6">
             <div className="w-56 aspect-[2/3] rounded-3xl overflow-hidden border border-black/50 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
               <img src={G.lastAction.img} alt={G.lastAction.id} className="w-full h-full object-cover" draggable={false} />
@@ -5509,7 +5509,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Placement mode prompt (no modal) */}
       {!!placementMode && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>Place persona: click LEFT/RIGHT half of a coalition card to insert before/after</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setPlacementMode(null)}>Cancel</button>
@@ -5518,7 +5518,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {!!placementModeOpp && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[2500] pointer-events-none select-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>Place into opponent: click LEFT/RIGHT half of their coalition card to insert</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setPlacementModeOpp(null)}>Cancel</button>
@@ -5528,7 +5528,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Total VP */}
       {!MOBILE && (
-        <div className="fixed z-[2500] pointer-events-none select-none bottom-4 right-4">
+        <div className="fixed z-[9500] pointer-events-none select-none bottom-4 right-4">
           <div className="bg-black/60 border border-amber-900/20 rounded-2xl text-amber-100/90 font-mono shadow-2xl px-4 py-2">
             <div className="font-black tracking-widest text-[14px]">VP: {myCoalitionPoints}</div>
             <div className="mt-0.5 text-amber-200/60 tabular-nums text-[10px]">
@@ -5548,7 +5548,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {MOBILE && mobileHandOpen && (
-        <div className="fixed left-0 right-0 z-[2500] pointer-events-auto select-none" style={{ bottom: `calc(70px + env(safe-area-inset-bottom, 0px))` }}>
+        <div className="fixed left-0 right-0 z-[9500] pointer-events-auto select-none" style={{ bottom: `calc(70px + env(safe-area-inset-bottom, 0px))` }}>
           <div className="mx-auto w-[min(92vw,720px)] bg-transparent border-0 px-0 py-0">
             <div className="relative h-[180px] overflow-visible">
               {(hand || []).map((card, idx) => {
@@ -5575,7 +5575,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {MOBILE && mobileHandSelected && (
-        <div className="fixed inset-0 z-[2600] flex items-center justify-center pointer-events-auto">
+        <div className="fixed inset-0 z-[9600] flex items-center justify-center pointer-events-auto">
           <div className="relative w-[min(70vw,320px)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/80">
                         <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} onClick={() => setMobileHandSelected(null)} />
           </div>
@@ -5585,7 +5585,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {/* Mobile: cancel hand selection */}
 
       {MOBILE && mobileHandSelected && (
-        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(96px + env(safe-area-inset-bottom, 0px))` }}>
+        <div className="fixed left-3 z-[9600] pointer-events-auto select-none" style={{ bottom: `calc(96px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
             onClick={() => {
