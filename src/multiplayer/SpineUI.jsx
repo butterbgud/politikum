@@ -5761,7 +5761,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
       {MOBILE && pendingHandLimit && mobileHandOpen && (
-        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(140px + env(safe-area-inset-bottom, 0px))` }}>
+        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(150px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
             onClick={() => {
