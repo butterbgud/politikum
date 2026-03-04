@@ -5659,6 +5659,22 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </button>
         </div>
       )}
+      {MOBILE && pendingHandLimit && (
+        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(140px + env(safe-area-inset-bottom, 0px))` }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (!mobileHandSelected) return;
+              try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+              setMobileHandSelected(null);
+            }}
+            className="px-6 py-3 rounded-xl bg-red-600/90 text-red-50 font-mono font-black text-[13px]"
+          >
+            Сбросить
+          </button>
+        </div>
+      )}
+
       {/* Mobile: no hand toggle button (hand peeks from the right) */}
 
       {/* Hand fan */}
@@ -6952,7 +6968,7 @@ export default function SpineUI() {
           className="px-3 py-2 rounded-xl bg-black/55 border border-red-500/40 text-red-200/90 font-mono font-black text-[11px] hover:bg-black/70"
           title="Clears localStorage politikum.lastMatch*"
         >
-          Forget match
+          
         </button>
       </div>
     </div>
