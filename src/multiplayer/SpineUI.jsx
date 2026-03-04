@@ -5603,43 +5603,38 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {MOBILE && mobileHandSelected && (
         <div className="fixed inset-0 z-[2600] flex items-center justify-center pointer-events-auto">
           <div className="relative w-[min(70vw,320px)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/80">
-            <button
-              type="button"
-              className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-xl bg-emerald-600/90 text-emerald-50 font-mono font-black text-[11px]"
-              onClick={() => {
-                try {
-                  const card = (hand || []).find((c) => String(c.id) === String(mobileHandSelected));
-                  if (!card) return;
-                  const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
-                  const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
-                  if (canPlayPersona) {
-                    const coal = me?.coalition || [];
-                    if (coal.length === 0) { moves.playPersona(card.id); } else { setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' }); }
-                  } else if (canPlayAction) {
-                    moves.playAction(card.id);
-                  }
-                  setMobileHandSelected(null);
-                } catch {}
-              }}
-            >Сыграть</button>
-            <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} onClick={() => setMobileHandSelected(null)} />
+                        <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} onClick={() => setMobileHandSelected(null)} />
           </div>
         </div>
       )}
 
       {/* Mobile: cancel hand selection */}
+
       {MOBILE && mobileHandSelected && (
         <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(96px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
-            onClick={() => setMobileHandSelected(null)}
-            className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/20 text-amber-100/90 font-mono font-black text-[11px]"
+            onClick={() => {
+              try {
+                const card = (hand || []).find((c) => String(c.id) === String(mobileHandSelected));
+                if (!card) return;
+                const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
+                const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+                if (canPlayPersona) {
+                  const coal = me?.coalition || [];
+                  if (coal.length === 0) { moves.playPersona(card.id); } else { setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' }); }
+                } else if (canPlayAction) {
+                  moves.playAction(card.id);
+                }
+                setMobileHandSelected(null);
+              } catch {}
+            }}
+            className="px-6 py-3 rounded-xl bg-emerald-600/90 text-emerald-50 font-mono font-black text-[13px]"
           >
-            Отмена
+            Сыграть
           </button>
         </div>
       )}
-
       {/* Mobile: no hand toggle button (hand peeks from the right) */}
 
       {/* Hand fan */}
