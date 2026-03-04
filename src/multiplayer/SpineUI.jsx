@@ -3340,6 +3340,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   }, [pendingP34, p34Remaining.length]);
 
   const pendingP16 = pending?.kind === 'persona_16_discard3_from_hand' && String(pending?.playerId) === String(playerID);
+  const pendingHandLimit = isMyTurn && !pending && !responseActive && (me?.hand || []).length > 7;
   const pendingP16Source = pendingP16 ? String(pending?.sourceCardId || '') : '';
 
   const pendingP12 = pending?.kind === 'persona_12_choose_adjacent_red' && String(pending?.playerId) === String(playerID);
@@ -4498,6 +4499,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-none select-none">
           <div className="bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             Сбросьте 3 карты ({(p16DiscardPick || []).length}/3)
+          </div>
+        </div>
+      )}
+
+      {pendingHandLimit && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-none select-none">
+          <div className="bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            Сбросьте лишние карты ({(me?.hand || []).length} / 7)
           </div>
         </div>
       )}
