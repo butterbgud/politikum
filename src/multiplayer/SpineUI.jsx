@@ -5579,7 +5579,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
       {!logCollapsed && (
       <div className={
-        "fixed bottom-4 right-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+        "fixed bottom-4 right-[5px] z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-y-[240px] opacity-0" : "translate-y-0")
       }>
         <div className="w-[300px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
