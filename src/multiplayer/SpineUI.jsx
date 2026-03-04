@@ -5628,10 +5628,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     type="button"
                     onClick={() => {
                       try { playSfx('ui', 0.4); } catch {}
-                      try { localStorage.removeItem("politikum.lastMatchId"); } catch {}
-                      try { localStorage.removeItem("politikum.lastMatchId:admin"); } catch {}
-                      try { localStorage.removeItem("politikum.lastMatchId:public"); } catch {}
-                      try { window.location.hash = "#/"; } catch {}
+                      try { forgetMatch(); } catch {}
                     }}
                     className="px-2 py-0.5 rounded-md border border-red-500/40 bg-red-600/80 text-red-50 text-[10px] font-black"
                     title="Quit"
