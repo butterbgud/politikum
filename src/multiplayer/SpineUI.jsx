@@ -3231,13 +3231,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
   useEffect(() => {
     if (!MOBILE) return;
-    if (mobileOppFocus != null) return;
-    const first = (opponents || [])[0];
-    if (first) setMobileOppFocus(String(first.id));
-  }, [MOBILE, opponents, mobileOppFocus]);
-
-  useEffect(() => {
-    if (!MOBILE) return;
     if (G.pending?.kind === 'discard_down_to_7' && mobileAutoDiscardId) {
       try { moves.discardFromHandDownTo7(mobileAutoDiscardId); } catch {}
       setMobileAutoDiscardId(null);
@@ -3274,6 +3267,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         return true;
       });
   }, [G.players, playerID]);
+
+  useEffect(() => {
+    if (!MOBILE) return;
+    if (mobileOppFocus != null) return;
+    const first = (opponents || [])[0];
+    if (first) setMobileOppFocus(String(first.id));
+  }, [MOBILE, opponents, mobileOppFocus]);
 
   // Auto-pick sole opponent for flows that start with “choose opponent”.
   useEffect(() => {
