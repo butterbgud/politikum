@@ -5720,7 +5720,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </button>
         </div>
       )}
-      {MOBILE && pendingHandLimit && (
+      {MOBILE && pendingHandLimit && mobileHandOpen && (
         <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(140px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
@@ -5729,7 +5729,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
               setMobileHandSelected(null);
             }}
-            className="px-6 py-3 rounded-xl bg-red-600/90 text-red-50 font-mono font-black text-[13px]"
+            className={
+              "px-6 py-3 rounded-xl font-mono font-black text-[13px] " +
+              (mobileHandSelected ? "bg-red-600/90 text-red-50" : "bg-red-900/40 text-red-200/40")
+            }
+            aria-disabled={!mobileHandSelected}
           >
             Сбросить
           </button>
