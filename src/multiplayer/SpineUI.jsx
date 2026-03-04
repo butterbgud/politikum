@@ -3215,7 +3215,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileHandSelected, setMobileHandSelected] = useState(null);
   const [mobileHandOpen, setMobileHandOpen] = useState(false);
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
-  const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
+  const [mobileOppZoomPid, setMobileOppZoomPid] = useState(null);
   const [mobileMyZoomCard, setMobileMyZoomCard] = useState(null);
 
   // Mobile: when the hand drawer is closed, reset any zoom/selection so cards return to small size.
@@ -4173,7 +4173,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                           return;
                         }
                         if (MOBILE) {
-                          try { setMobileOppZoomImg(it.card.img); } catch {}
+                          try { setMobileOppZoomPid(String(p.id)); } catch {}
                         }
                         if (canClickFaceForP5) {
                           try { playSfx('ui', 0.35); moves.persona5PickLiberal(String(p.id), it.card.id); } catch {}
@@ -5328,7 +5328,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             return {
               left: '50%',
               bottom: `calc(24px + env(safe-area-inset-bottom, 0px))`,
-              transform: `translateX(-50%) translateY(${dy})`,
+              transform: `translateX(-50%) translateY(calc(${dy} + ${mobileOppZoomPid ? '120vh' : '0px'}))`,
             };
           }
           return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
@@ -5621,13 +5621,44 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {MOBILE && mobileOppZoomImg && (
-        <div className="fixed inset-0 z-[99998] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileOppZoomImg(null)}>
-          <div className="w-[min(80vw,360px)] max-h-[88vh] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/60">
-            <img src={mobileOppZoomImg} alt="zoom" className="w-full h-full object-contain" draggable={false} />
+      {MOBILE && mobileOppZoomPid && (() => {
+        const p = (opponents || []).find((pp) => String(pp.id) === String(mobileOppZoomPid));
+        if (!p) return null;
+        const hand0 = p.hand || [];
+        const coal = (p.coalition || []);
+        const nHand = (hand0 || []).length;
+        const faces = coal.map((c) => ({ kind: 'face', card: c }));
+        const oppFanCards = faces;
+        const show = oppFanCards.length;
+        const stepFace = 44;
+        const width = 160 + Math.max(0, show - 1) * stepFace;
+        return (
+          <div className="fixed inset-0 z-[99998] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileOppZoomPid(null)}>
+            <div className="relative">
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/65 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
+                <span>{p.name || p.id}</span>
+                <span className="text-amber-200/70">к: {nHand}</span>
+              </div>
+              <div className="relative h-60 pointer-events-none select-none" style={{ width: Math.max(width, 260) }}>
+                {oppFanCards.map((it, i) => {
+                  const t = show <= 1 ? 0.5 : i / (show - 1);
+                  const rot = (t - 0.5) * 12;
+                  const left = i * stepFace;
+                  return (
+                    <div
+                      key={it.card?.id || i}
+                      className="absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
+                      style={{ left, transform: `rotate(${rot}deg)` }}
+                    >
+                      {it.kind === 'face' && <img src={it.card.img} alt={it.card.id} className="w-full h-full object-cover" draggable={false} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {MOBILE && mobileHandOpen && (
         <div className="fixed left-0 right-0 z-[9500] pointer-events-auto select-none" style={{ bottom: `calc(70px + env(safe-area-inset-bottom, 0px))` }}>
