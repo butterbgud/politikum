@@ -5178,7 +5178,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Event card: big centered while resolving */}
-      {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && (
+      {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && !MOBILE && (
         <div className="fixed inset-0 z-[9500] pointer-events-none select-none">
           <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex flex-col items-center">
             <div className="mb-3 text-amber-100/90 font-black text-2xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.8)]">Ой!</div>
