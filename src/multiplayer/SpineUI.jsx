@@ -4018,6 +4018,52 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* (admin link removed from in-game UI) */}
 
+      {MOBILE && opponents.length > 0 && (() => {
+        const focusId = String(mobileOppFocus || opponents[0]?.id);
+        const op = opponents.find((o) => String(o.id) === focusId) || opponents[0];
+        const nHand = (op?.hand || []).length;
+        return (
+          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[2100] flex items-center gap-2 pointer-events-auto">
+            {opponents.length > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const ids = opponents.map((o) => String(o.id));
+                  const cur = String(mobileOppFocus || ids[0]);
+                  const i = Math.max(0, ids.indexOf(cur));
+                  const prev = ids[(i - 1 + ids.length) % ids.length];
+                  setMobileOppFocus(String(prev));
+                }}
+                className="px-2 py-1 rounded-full bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[10px]"
+                title="Предыдущий соперник"
+              >
+                ◀
+              </button>
+            )}
+            <div className="flex items-center gap-2 bg-black/65 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 whitespace-nowrap">
+              <span>{op?.name || op?.id}</span>
+              <span className="text-amber-200/70">к: {nHand}</span>
+            </div>
+            {opponents.length > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const ids = opponents.map((o) => String(o.id));
+                  const cur = String(mobileOppFocus || ids[0]);
+                  const i = Math.max(0, ids.indexOf(cur));
+                  const next = ids[(i + 1) % ids.length];
+                  setMobileOppFocus(String(next));
+                }}
+                className="px-2 py-1 rounded-full bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[10px]"
+                title="Следующий соперник"
+              >
+                ▶
+              </button>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Opponents */}
       <div className="fixed top-20 z-[700] flex justify-start gap-6 pointer-events-auto pl-6" style={MOBILE ? { left: '-80px', right: '80px' } : { left: '2rem', right: 'auto' }}>
         {(MOBILE ? opponents.filter((p) => String(p.id) === String(mobileOppFocus || (opponents[0]?.id))) : opponents).map((p) => {
@@ -4405,38 +4451,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               >
                 Рука
               </button>
-              {MOBILE && opponents.length > 1 && (
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ids = opponents.map((o) => String(o.id));
-                      const cur = String(mobileOppFocus || ids[0]);
-                      const i = Math.max(0, ids.indexOf(cur));
-                      const next = ids[(i + 1) % ids.length];
-                      setMobileOppFocus(String(next));
-                    }}
-                    className="px-3 py-1 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[10px]"
-                    title="Следующий соперник"
-                  >
-                    ▶
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ids = opponents.map((o) => String(o.id));
-                      const cur = String(mobileOppFocus || ids[0]);
-                      const i = Math.max(0, ids.indexOf(cur));
-                      const prev = ids[(i - 1 + ids.length) % ids.length];
-                      setMobileOppFocus(String(prev));
-                    }}
-                    className="px-3 py-1 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[10px]"
-                    title="Предыдущий соперник"
-                  >
-                    ◀
-                  </button>
-                </div>
-              )}
             </div>
           </>
         ) : (
@@ -5569,7 +5583,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         "fixed bottom-4 right-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-y-[240px] opacity-0" : "translate-y-0")
       }>
-        <div className="w-[420px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="w-[300px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
 
@@ -5633,7 +5647,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </button>
             </div>
           </div>
-          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[168px] overflow-y-auto custom-scrollbar">
+          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[118px] overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
           </div>
         </div>
@@ -5641,7 +5655,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* My coalition (built row fan) */}
-      <div className={"fixed -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
+      <div className={"fixed -ml-[140px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
         style={(() => {
           const dx = 'calc(min(50px, 6vw) + min(50px, 6vw))'; // +50 more right
           const dy = 'min(50px, 6vh) + min(100px, 12vh)'; // +100 more down
@@ -5652,7 +5666,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               transform: `translateX(-50%) translateY(calc(${mobileOppZoomPid ? dy + ' + 120vh' : dy} + ${mobileHandOpen ? '30px' : '0px'}))`,
             };
           }
-          return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
+          return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 340px))' };
         })()}>
 
         {(() => {
@@ -5969,7 +5983,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         return (
           <div className="fixed inset-0 z-[99998] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileOppZoomPid(null)}>
             <div className="relative">
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/65 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
+              <div className="fixed top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/65 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
                 <span>{p.name || p.id}</span>
                 <span className="text-amber-200/70">к: {nHand}</span>
               </div>
