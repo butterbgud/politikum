@@ -4114,11 +4114,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           return (
             <div key={p.id} className="flex flex-col items-center gap-2 relative pt-10 px-6">
               {/* name/points as absolute overlay above cards */}
-              {String(p.name || '').trim() && !String(p.name || '').startsWith('[H] Seat') && (
+              {!MOBILE && String(p.name || '').trim() && !String(p.name || '').startsWith('[H] Seat') && (
                 <div className="absolute -top-10 left-0 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
                   <span>{p.name}</span>
                   {(oppRating != null) && <span className="text-amber-100/80">({oppRating})</span>}
-                  {MOBILE && <span className="text-amber-200/70">к: {nHand}</span>}
                   <span className="text-amber-200/50">•</span>
                   <span className="text-amber-200/80">{pts}p</span>
                 </div>
