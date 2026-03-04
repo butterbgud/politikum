@@ -5630,6 +5630,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
                 if (canPlayPersona) {
                   const coal = me?.coalition || [];
+                  const baseId = String(card.id).split('#')[0];
+                  if (baseId === 'persona_9') {
+                    const opp = (G.players || []).find((pp) => String(pp.id) !== String(playerID));
+                    if (opp) {
+                      moves.playPersona(card.id, String(opp.id));
+                      setMobileHandSelected(null);
+                      setMobileHandOpen(false);
+                      return;
+                    }
+                  }
                   if (coal.length === 0) { moves.playPersona(card.id); } else { setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' }); }
                   setMobileHandSelected(null);
                   setMobileHandOpen(false);
