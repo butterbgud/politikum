@@ -4170,7 +4170,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         <TokenPips delta={it.card.passiveVpDelta} compact right dim />
                       )}
                       {it.kind === 'face' && it.card?.blockedAbilities && (
-                        <div className="absolute top-[22px] left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black z-40">
+                        <div className="absolute top-[42px] left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black z-40">
                           <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
                         </div>
                       )}
@@ -4490,10 +4490,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         );
       })()}
 
-      {pendingP16 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP16Source}: discard 3 from hand (keys 1..3 select, Enter confirm)
+            {pendingP16 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-none select-none">
+          <div className="bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
+            Сбросьте 3 карты ({(p16DiscardPick || []).length}/3)
           </div>
         </div>
       )}
@@ -4693,34 +4693,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {pendingP16 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
-          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
-            <span>p16: select 3 cards to discard ({(p16DiscardPick || []).length}/3)</span>
-            <button
-              type="button"
-              className={( (p16DiscardPick || []).length >= 3 ? 'bg-emerald-700/80 hover:bg-emerald-600/80 ' : 'bg-slate-800/60 ' ) + 'pointer-events-auto px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20'}
-              onClick={() => {
-                const ids = (p16DiscardPick || []).slice(0, 3);
-                if (ids.length < 3) return;
-                try { moves.persona16Discard3FromHand(ids[0], ids[1], ids[2]); } catch {}
-                setP16DiscardPick([]);
-              }}
-            >
-              Confirm
-            </button>
-            <button
-              type="button"
-              className="pointer-events-auto px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60"
-              onClick={() => setP16DiscardPick([])}
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-      )}
-
-      {pendingP7 && (
+            {pendingP7 && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>
@@ -5495,7 +5468,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       <TokenPips delta={c.passiveVpDelta} right dim />
                     )}
                     {(c.shielded || c.blockedAbilities) && (
-                      <div className="absolute top-[22px] left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black z-40">
+                      <div className="absolute top-[42px] left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black z-40">
                         {c.shielded && String(c?.shieldedBy || '') !== 'action_13' && (
                           <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                         )}
@@ -5560,7 +5533,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               <TokenPips delta={mobileMyZoomCard.passiveVpDelta} right dim top />
             )}
             {(mobileMyZoomCard.shielded || mobileMyZoomCard.blockedAbilities) && (
-              <div className="absolute top-[22px] right-2 flex gap-1 text-[9px] font-mono font-black z-40">
+              <div className="absolute top-[42px] right-2 flex gap-1 text-[9px] font-mono font-black z-40">
                 {mobileMyZoomCard.shielded && String(mobileMyZoomCard?.shieldedBy || '') !== 'action_13' && (
                   <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                 )}
@@ -5630,6 +5603,17 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 if (!card) return;
                 const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
                 const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
+                if (pendingP16) {
+                  const next = [...(p16DiscardPick || [])];
+                  if (!next.includes(card.id)) next.push(card.id);
+                  setP16DiscardPick(next);
+                  if (next.length >= 3) {
+                    try { moves.persona16Discard3FromHand(next[0], next[1], next[2]); } catch {}
+                    setP16DiscardPick([]);
+                  }
+                  setMobileHandSelected(null);
+                  return;
+                }
                 if (canPlayPersona) {
                   const coal = me?.coalition || [];
                   const baseId = String(card.id).split('#')[0];
@@ -5657,7 +5641,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             }}
             className="px-6 py-3 rounded-xl bg-emerald-600/90 text-emerald-50 font-mono font-black text-[13px]"
           >
-            Сыграть
+            {pendingP16 ? "Сбросить" : "Сыграть"}
           </button>
         </div>
       )}
