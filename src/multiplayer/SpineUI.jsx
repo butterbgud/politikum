@@ -5681,7 +5681,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </button>
             </div>
           </div>
-          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 ${MOBILE ? 'max-h-[118px]' : 'max-h-[168px]'} overflow-y-auto custom-scrollbar">
+          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 ${MOBILE ? 'max-h-[118px]' : 'max-h-[150px]'} overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
           </div>
         </div>
