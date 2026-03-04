@@ -5587,13 +5587,15 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             <div className="relative h-[180px] overflow-visible">
               {(hand || []).map((card, idx) => {
                 const left = idx * 56;
+                const total = Math.max(0, (hand || []).length - 1) * 56 + 120;
+                const offset = `calc(50% - ${total/2}px)`;
                 const isSel = String(mobileHandSelected || '') === String(card.id);
                 return (
                   <button
                     key={card.id}
                     type="button"
                     className="absolute top-0 w-[120px] aspect-[2/3] rounded-xl overflow-hidden border border-amber-900/30"
-                    style={{ left: `${left}px`, zIndex: isSel ? 2000 : idx + 1, transform: isSel ? 'scale(1.04)' : 'scale(1.0)' }}
+                    style={{ left: `calc(${offset} + ${left}px)`, zIndex: isSel ? 2000 : idx + 1, transform: isSel ? 'scale(1.04)' : 'scale(1.0)' }}
                     onClick={() => setMobileHandSelected(card.id)}
                   >
                     <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
