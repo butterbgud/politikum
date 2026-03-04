@@ -3216,6 +3216,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileHandOpen, setMobileHandOpen] = useState(false);
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomPid, setMobileOppZoomPid] = useState(null);
+  const [mobileOppFocus, setMobileOppFocus] = useState(null);
   const [mobileMyZoomCard, setMobileMyZoomCard] = useState(null);
   const [mobileAutoDiscardId, setMobileAutoDiscardId] = useState(null);
 
@@ -3227,6 +3228,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     setHoverHandIndex(null);
     setHoverMyCoalition(null);
   }, [MOBILE, mobileHandOpen]);
+
+  useEffect(() => {
+    if (!MOBILE) return;
+    if (mobileOppFocus != null) return;
+    const first = (opponents || [])[0];
+    if (first) setMobileOppFocus(String(first.id));
+  }, [MOBILE, opponents, mobileOppFocus]);
 
   useEffect(() => {
     if (!MOBILE) return;
@@ -3935,7 +3943,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Opponents */}
       <div className="fixed top-20 z-[700] flex justify-evenly pointer-events-auto" style={MOBILE ? { left: '-36px', right: '36px' } : { left: 0, right: 0 }}>
-        {opponents.map((p) => {
+        {(MOBILE ? opponents.filter((p) => String(p.id) === String(mobileOppFocus || (opponents[0]?.id))) : opponents).map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
           const nHand = (hand0 || []).length;
