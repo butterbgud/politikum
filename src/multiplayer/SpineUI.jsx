@@ -5758,48 +5758,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           >
             {pendingP16 ? "Сбросить" : "Сыграть"}
           </button>
-          {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && (
-            <button
-              type="button"
-              onClick={() => {
-                if (!mobileHandSelected) return;
-                if (G.pending?.kind !== 'discard_down_to_7') {
-                  setMobileAutoDiscardId(mobileHandSelected);
-                  try { moves.endTurn(); } catch {}
-                  return;
-                }
-                try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
-                setMobileHandSelected(null);
-              }}
-              className="mt-2 px-6 py-3 rounded-xl bg-violet-600/90 text-violet-50 font-mono font-black text-[13px]"
-            >
-              Сбросить
-            </button>
-          )}
-        </div>
-      )}
-      {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
-        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(150px + env(safe-area-inset-bottom, 0px))` }}>
-          <button
-            type="button"
-            onClick={() => {
-              if (!mobileHandSelected) return;
-              if (G.pending?.kind !== 'discard_down_to_7') {
-                setMobileAutoDiscardId(mobileHandSelected);
-                try { moves.endTurn(); } catch {}
-                return;
-              }
-              try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
-              setMobileHandSelected(null);
-            }}
-            className={
-              "px-6 py-3 rounded-xl font-mono font-black text-[13px] " +
-              (mobileHandSelected ? "bg-red-600/90 text-red-50" : "bg-red-900/40 text-red-200/40")
-            }
-            aria-disabled={!mobileHandSelected}
-          >
-            Сбросить
-          </button>
         </div>
       )}
 
@@ -5886,8 +5844,17 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       setMobileHandSelected(card.id);
                       return;
                     }
-                    // second tap → proceed
-                    if (pendingHandLimit) return; // wait for Discard button
+                    // second tap
+                    if (pendingHandLimit) {
+                      setMobileAutoDiscardId(card.id);
+                      try { moves.endTurn(); } catch {}
+                      return;
+                    }
+                    if (canDiscardDownTo7) {
+                      try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(card.id); } catch {}
+                      setMobileHandSelected(null);
+                      return;
+                    }
                     setMobileHandSelected(null);
                   }
 
