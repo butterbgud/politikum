@@ -5698,7 +5698,27 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         </div>
       )}
 
-      {MOBILE && mobileHandSelected && (
+      
+      {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
+        <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(150px + env(safe-area-inset-bottom, 0px))` }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (!mobileHandSelected) return;
+              try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+              setMobileHandSelected(null);
+            }}
+            className={
+              "px-6 py-3 rounded-xl font-mono font-black text-[13px] " +
+              (mobileHandSelected ? "bg-red-600/90 text-red-50" : "bg-red-900/40 text-red-200/40")
+            }
+            aria-disabled={!mobileHandSelected}
+          >
+            Сбросить
+          </button>
+        </div>
+      )}
+{MOBILE && mobileHandSelected && (
         <div className="fixed inset-0 z-[9600] flex items-center justify-center pointer-events-auto">
           <div className="relative w-[min(70vw,320px)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/80">
                         <img src={(hand || []).find((c) => String(c.id) === String(mobileHandSelected))?.img} alt="zoom" className="w-full h-full object-cover" draggable={false} onClick={() => setMobileHandSelected(null)} />
