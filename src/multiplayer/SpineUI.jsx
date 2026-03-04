@@ -3552,8 +3552,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       }
 
       // p23 choice: 0..3 tokens
-      if (pendingP23 && (key === '0' || key === '1' || key === '2' || key === '3')) {
+      if (pendingP23 && (key === '1' || key === '2' || key === '3')) {
         try { moves.persona23ChooseSelfInflict(Number(key)); } catch {}
+        return;
+      }
+      if (pendingP23 && key === 'escape') {
+        try { moves.persona23ChooseSelfInflict(0); } catch {}
         return;
       }
 
@@ -4370,7 +4374,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pendingP23 && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP23Source}: tap Волков to take -1 & draw (up to 3). (0 finishes)
+            {pendingP23Source}: тап по Волкову — минус 1 и добор (до 3). Esc — закончить.
           </div>
         </div>
       )}
