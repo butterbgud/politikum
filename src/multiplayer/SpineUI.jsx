@@ -5383,7 +5383,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         try { moves.discardPersonaFromOwnCoalitionForEvent16(c.id); } catch {}
                         return;
                       }
-                      if (pendingA4A9Discard) {
+                      if (pendingHandLimit && !mobileHandSelected && (hand || []).length) { setMobileHandSelected((hand || [])[0].id); }
+                if (pendingA4A9Discard) {
                         if (pending?.kind === 'action_9_discard_persona' && c.type !== 'persona') return;
                         if (c.shielded || isImmovablePersona(c)) return;
                         try { moves.discardFromCoalition(c.id); } catch {}
