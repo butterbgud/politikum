@@ -6918,7 +6918,10 @@ export default function SpineUI() {
 
   useEffect(() => {
     if (!isMobileRoute) { if (showRotateHint) setShowRotateHint(false); return; }
-    if (!MOBILE) { if (showRotateHint) setShowRotateHint(false); return; }
+    try {
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+      if (!isTouch) { if (showRotateHint) setShowRotateHint(false); return; }
+    } catch {}
     const check = () => {
       try {
         const w = window.innerWidth || 0;
