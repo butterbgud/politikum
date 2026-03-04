@@ -5637,10 +5637,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 if (canPlayPersona) {
                   const coal = me?.coalition || [];
                   if (coal.length === 0) { moves.playPersona(card.id); } else { setPlacementMode({ cardId: card.id, neighborId: null, side: 'right' }); }
+                  setMobileHandSelected(null);
+                  setMobileHandOpen(false);
                 } else if (canPlayAction) {
                   moves.playAction(card.id);
+                  setMobileHandSelected(null);
+                  setMobileHandOpen(false);
+                } else {
+                  try { playSfx('error', 0.5); } catch {}
+                  return;
                 }
-                setMobileHandSelected(null);
               } catch {}
             }}
             className="px-6 py-3 rounded-xl bg-emerald-600/90 text-emerald-50 font-mono font-black text-[13px]"
