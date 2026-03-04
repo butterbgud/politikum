@@ -3275,6 +3275,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     if (first) setMobileOppFocus(String(first.id));
   }, [MOBILE, opponents, mobileOppFocus]);
 
+  useEffect(() => {
+    if (!MOBILE) return;
+    try {
+      const cur = String(ctx?.currentPlayer ?? '');
+      if (!cur) return;
+      if (String(cur) === String(playerID)) return; // on my turn keep last focus
+      if (mobileOppFocus === String(cur)) return;
+      const tmo = setTimeout(() => setMobileOppFocus(String(cur)), 300);
+      return () => clearTimeout(tmo);
+    } catch {}
+  }, [MOBILE, ctx?.currentPlayer, playerID, mobileOppFocus]);
+
   // Auto-pick sole opponent for flows that start with “choose opponent”.
   useEffect(() => {
     const only = opponents?.length === 1 ? opponents[0] : null;
