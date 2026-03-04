@@ -1954,7 +1954,7 @@ function Card({ card, onClick, disabled, showCheck }) {
       onClick={onClick}
       disabled={disabled}
       className={
-        'relative w-32 aspect-[2/3] rounded-2xl overflow-hidden border shadow-2xl transition-transform ' +
+        'relative w-40 aspect-[2/3] rounded-2xl overflow-hidden border shadow-2xl transition-transform ' +
         (disabled ? 'opacity-40 cursor-not-allowed border-black/30' : 'cursor-pointer hover:scale-[1.03] border-amber-500/30')
       }
       title={card?.id}
@@ -3944,7 +3944,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               <div
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
-                  (MOBILE ? (flatP5 ? "scale-[0.62] origin-top" : "scale-[0.55] origin-top") : "") +
+                  (MOBILE ? (flatP5 ? "scale-[0.74] origin-top" : "scale-[0.65] origin-top") : "") +
                   ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
@@ -4051,7 +4051,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
-                      className={"absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-visible border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
+                      className={"absolute bottom-[20px] w-40 aspect-[2/3] rounded-2xl overflow-visible border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                       title={id}
                       onClick={(e) => {
@@ -4651,7 +4651,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {(me?.hand || []).map((c) => (
                 <button
                   key={c.id}
-                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
                   onClick={() => moves.discardFromHandForEvent12b(c.id)}
                   title={c.name || c.id}
                 >
@@ -4780,7 +4780,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   <button
                     key={c.id}
                     type="button"
-                    className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-emerald-400/40 hover:border-emerald-300 cursor-pointer shadow-2xl hover:scale-[1.02] transition-transform"
+                    className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-emerald-400/40 hover:border-emerald-300 cursor-pointer shadow-2xl hover:scale-[1.02] transition-transform"
                     onClick={() => { try { moves.persona17StealPersonaFromHand(c.id); } catch {} }}
                     title={c.name || c.id}
                   >
@@ -4867,7 +4867,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {(G.discard || []).filter((c) => c.type === 'persona' && !isImmovablePersona(c)).map((c) => (
                 <button
                   key={c.id}
-                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
                   onClick={() => moves.pickPersonaFromDiscardForAction18(c.id)}
                   title={c.name || c.id}
                 >
@@ -4892,7 +4892,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               {(G.discard || []).filter((c) => c.type === 'action').map((c) => (
                 <button
                   key={c.id}
-                  className="w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
+                  className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
                   onClick={() => moves.persona20PickFromDiscard(c.id)}
                   title={c.name || c.id}
                 >
@@ -5014,7 +5014,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       <span>{scoreNow(pid)} очк</span>
                     </div>
                     <div
-                      className="relative h-44 pointer-events-none select-none"
+                      className="relative h-52 pointer-events-none select-none"
                       style={{ width: Math.max(width, 260) }}
                       // no hover-zoom on win screen
                     >
@@ -5028,7 +5028,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         return (
                           <div
                             key={c.id}
-                            className="absolute bottom-0 w-32 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl pointer-events-none"
+                            className="absolute bottom-0 w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl pointer-events-none"
                             style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                           >
                             <img src={c.img} alt={c.id} className="w-full h-full object-cover pointer-events-none" draggable={false} />
