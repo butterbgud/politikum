@@ -5229,6 +5229,20 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <>
                   <button
                     type="button"
+                    onClick={() => {
+                      try { playSfx('ui', 0.4); } catch {}
+                      try { localStorage.removeItem("politikum.lastMatchId"); } catch {}
+                      try { localStorage.removeItem("politikum.lastMatchId:admin"); } catch {}
+                      try { localStorage.removeItem("politikum.lastMatchId:public"); } catch {}
+                      try { window.location.hash = "#/"; } catch {}
+                    }}
+                    className="px-2 py-0.5 rounded-md border border-red-500/40 bg-red-600/80 text-red-50 text-[10px] font-black"
+                    title="Quit"
+                  >
+                    Quit
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setShowTutorial((v) => !v)}
                     className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showTutorial ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
                     title="Tutorial (T)"
