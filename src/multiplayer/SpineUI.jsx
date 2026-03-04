@@ -4096,7 +4096,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       })()}
 
       {/* Opponents */}
-      <div className="fixed top-20 z-[700] flex justify-start gap-6 pointer-events-auto pl-6" style={MOBILE ? { left: '-80px', right: '80px' } : { left: '2rem', right: 'auto' }}>
+      <div className="fixed top-20 z-[700] flex justify-start gap-6 pointer-events-auto pl-6" style={MOBILE ? { left: '-80px', right: '80px' } : (opponents.length === 1 ? { left: '50%', transform: 'translateX(-50%)' } : { left: '2rem', right: 'auto' })}>
         {(MOBILE ? opponents.filter((p) => String(p.id) === String(mobileOppFocus || (opponents[0]?.id))) : opponents).map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -5614,9 +5614,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
       {!logCollapsed && (
       <div className={
-        "fixed right-[5px] z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+        "fixed z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-y-[240px] opacity-0" : "translate-y-0")
-      } style={{ bottom: MOBILE ? "1rem" : "6rem" }}>
+      } style={{ bottom: MOBILE ? "1rem" : "6rem", left: MOBILE ? undefined : "50%", transform: MOBILE ? undefined : "translateX(0%)" }}>
         <div className={"bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden " + (MOBILE ? "w-[90vw]" : "w-[525px]")}>
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
