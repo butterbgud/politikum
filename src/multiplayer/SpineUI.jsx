@@ -5509,7 +5509,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     )}
                     <img src={c.img} alt={c.id} className="relative z-10 w-full h-full object-cover" draggable={false} />
                     {MOBILE ? (
-                      <div className="absolute z-30 flex flex-col items-start gap-1" style={{ top: 20, left: 20 }}>
+                      <div className="absolute z-30 flex flex-col items-start gap-1" style={{ top: 30, left: 10 }}>
                         {(Number(c.vpDelta || 0) > 0) && (
                           <div className="w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] bg-emerald-700/95 border-emerald-200/50">
                             +{Number(c.vpDelta || 0)}
