@@ -5751,13 +5751,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       
-      {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
+      {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId)) || (G.pending?.kind === 'persona_16_discard3_from_hand' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
         <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(150px + env(safe-area-inset-bottom, 0px))` }}>
           <button
             type="button"
             onClick={() => {
               if (!mobileHandSelected) return;
-              try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+              try {
+                if (G.pending?.kind === 'persona_16_discard3_from_hand') moves.persona16Discard3FromHand?.(mobileHandSelected, mobileHandSelected, mobileHandSelected);
+                else moves.discardFromHandDownTo7(mobileHandSelected);
+              } catch {}
               setMobileHandSelected(null);
             }}
             className={
@@ -5924,6 +5927,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     }
                     if (canDiscardDownTo7) {
                       try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(card.id); } catch {}
+                      setMobileHandSelected(null);
+                      return;
+                    }
+                    if (G.pending?.kind === 'persona_16_discard3_from_hand') {
+                      try { moves.persona16Discard3FromHand?.(card.id, card.id, card.id); } catch {}
                       setMobileHandSelected(null);
                       return;
                     }
