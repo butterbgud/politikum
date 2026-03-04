@@ -6918,6 +6918,7 @@ export default function SpineUI() {
 
   useEffect(() => {
     if (!isMobileRoute) { if (showRotateHint) setShowRotateHint(false); return; }
+    if (!MOBILE) { if (showRotateHint) setShowRotateHint(false); return; }
     const check = () => {
       try {
         const w = window.innerWidth || 0;
