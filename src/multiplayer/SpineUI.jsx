@@ -7078,7 +7078,6 @@ export default function SpineUI() {
         <GameClient matchID={matchID} playerID={playerID} credentials={credentials} />
       )}
 
-/* Mobile: if user actually rotates device to landscape, warn to go back */
       {isMobileRoute && showRotateHint && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto select-none">
           <div className="w-[min(520px,92vw)] rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-5 text-amber-100">
