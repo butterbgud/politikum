@@ -3941,6 +3941,15 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               Bug
             </button>
 
+            <button
+              type="button"
+              onClick={() => { try { forgetMatch(); } catch {} }}
+              className="pointer-events-auto bg-red-800/60 hover:bg-red-700/70 border border-red-900/30 rounded-lg px-2 py-1 text-[11px] font-mono font-black tracking-widest text-red-100/90"
+              title="Quit to lobby"
+            >
+              Quit
+            </button>
+
             {hudToast && (
               <div className="pointer-events-none text-[10px] font-mono text-amber-200/80">
                 {hudToast}
