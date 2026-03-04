@@ -3179,7 +3179,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
   const [mobileMyZoomCard, setMobileMyZoomCard] = useState(null);
-  const [mobileDiscardPick, setMobileDiscardPick] = useState(null);
 
   // Mobile: when the hand drawer is closed, reset any zoom/selection so cards return to small size.
   useEffect(() => {
@@ -5378,7 +5377,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       if (pendingA4A9Discard) {
                         if (pending?.kind === 'action_9_discard_persona' && c.type !== 'persona') return;
                         if (c.shielded || isImmovablePersona(c)) return;
-                        setMobileDiscardPick(c.id);
+                        try { moves.discardFromCoalition(c.id); } catch {}
                         return;
                       }
                       if (pendingP23Here && String(c.id).split('#')[0] === 'persona_23') {
@@ -5608,13 +5607,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 if (!card) return;
                 const canPlayPersona = isMyTurn && !responseActive && G.hasDrawn && card.type === 'persona';
                 const canPlayAction = isMyTurn && !responseActive && G.hasDrawn && !G.hasPlayed && card.type === 'action';
-                if (pendingA4A9Discard) {
-                  if (!mobileDiscardPick) { try { playSfx('error', 0.5); } catch {}; return; }
-                  try { moves.discardFromCoalition(mobileDiscardPick); } catch {}
-                  setMobileDiscardPick(null);
-                  setMobileHandSelected(null);
-                  return;
-                }
                 if (pendingP16) {
                   const next = [...(p16DiscardPick || [])];
                   if (!next.includes(card.id)) next.push(card.id);
@@ -5651,9 +5643,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 }
               } catch {}
             }}
-            className={(pendingA4A9Discard ? "px-6 py-3 rounded-xl bg-blue-600/90 text-blue-50" : (pendingP16 ? "px-6 py-3 rounded-xl bg-amber-500/90 text-amber-950" : "px-6 py-3 rounded-xl bg-emerald-600/90 text-emerald-50")) + " font-mono font-black text-[13px]"}
+            className={(pendingP16 ? "px-6 py-3 rounded-xl bg-amber-500/90 text-amber-950" : "px-6 py-3 rounded-xl bg-emerald-600/90 text-emerald-50") + " font-mono font-black text-[13px]"}
           >
-            {pendingA4A9Discard ? "Скинуть" : (pendingP16 ? "Сбросить" : "Сыграть")}
+            {pendingP16 ? "Сбросить" : "Сыграть"}
           </button>
         </div>
       )}
