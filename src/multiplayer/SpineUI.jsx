@@ -3217,6 +3217,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomPid, setMobileOppZoomPid] = useState(null);
   const [mobileMyZoomCard, setMobileMyZoomCard] = useState(null);
+  const [mobileAutoDiscardId, setMobileAutoDiscardId] = useState(null);
 
   // Mobile: when the hand drawer is closed, reset any zoom/selection so cards return to small size.
   useEffect(() => {
@@ -3226,6 +3227,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     setHoverHandIndex(null);
     setHoverMyCoalition(null);
   }, [MOBILE, mobileHandOpen]);
+
+  useEffect(() => {
+    if (!MOBILE) return;
+    if (G.pending?.kind === 'discard_down_to_7' && mobileAutoDiscardId) {
+      try { moves.discardFromHandDownTo7(mobileAutoDiscardId); } catch {}
+      setMobileAutoDiscardId(null);
+    }
+  }, [MOBILE, G.pending?.kind, mobileAutoDiscardId]);
 
   const [bugModal, setBugModal] = useState(false);
   const [bugText, setBugText] = useState('');
@@ -5323,12 +5332,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       <div className={"fixed -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
         style={(() => {
           const dx = 'calc(min(50px, 6vw) + min(50px, 6vw))'; // +50 more right
-          const dy = 'calc(min(50px, 6vh) + min(100px, 12vh))'; // +100 more down
+          const dy = 'min(50px, 6vh) + min(100px, 12vh)'; // +100 more down
           if (MOBILE) {
             return {
               left: '50%',
               bottom: `calc(24px + env(safe-area-inset-bottom, 0px))`,
-              transform: `translateX(-50%) translateY(calc(${dy} + ${mobileOppZoomPid ? '120vh' : '0px'}))`,
+              transform: `translateX(-50%) translateY(calc(${mobileOppZoomPid ? dy + ' + 120vh' : dy}))`,
             };
           }
           return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
@@ -5757,6 +5766,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             type="button"
             onClick={() => {
               if (!mobileHandSelected) return;
+              if (G.pending?.kind !== 'discard_down_to_7') {
+                setMobileAutoDiscardId(mobileHandSelected);
+                try { moves.endTurn(); } catch {}
+                return;
+              }
               try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
               setMobileHandSelected(null);
             }}
