@@ -5639,7 +5639,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 }
               } catch {}
             }}
-            className="px-6 py-3 rounded-xl bg-emerald-600/90 text-emerald-50 font-mono font-black text-[13px]"
+            className="px-6 py-3 rounded-xl bg-amber-500/90 text-amber-950 font-mono font-black text-[13px]"
           >
             {pendingP16 ? "Сбросить" : "Сыграть"}
           </button>
