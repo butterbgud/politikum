@@ -5617,7 +5617,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         "fixed bottom-4 right-[5px] z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-y-[240px] opacity-0" : "translate-y-0")
       }>
-        <div className="w-[300px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="${MOBILE ? 'w-[300px]' : 'w-[420px]'} bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
 
@@ -5681,7 +5681,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               </button>
             </div>
           </div>
-          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 max-h-[118px] overflow-y-auto custom-scrollbar">
+          <div ref={logRef} className="px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 ${MOBILE ? 'max-h-[118px]' : 'max-h-[168px]'} overflow-y-auto custom-scrollbar">
             {(G.log || []).slice(-40).join("\n")}
           </div>
         </div>
