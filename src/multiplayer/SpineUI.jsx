@@ -3931,10 +3931,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             <div key={p.id} className="flex flex-col items-center gap-2 relative pt-10 px-6">
               {/* name/points as absolute overlay above cards */}
               {String(p.name || '').trim() && !String(p.name || '').startsWith('[H] Seat') && (
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
+                <div className="absolute -top-10 left-0 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 z-[2000] whitespace-nowrap justify-center">
                   <span>{p.name}</span>
                   {(oppRating != null) && <span className="text-amber-100/80">({oppRating})</span>}
-                  {MOBILE && <span className="text-amber-200/70">в руке: {nHand}</span>}
+                  {MOBILE && <span className="text-amber-200/70">к: {nHand}</span>}
                   <span className="text-amber-200/50">•</span>
                   <span className="text-amber-200/80">{pts}p</span>
                 </div>
@@ -5008,7 +5008,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
                 return (
                   <div className="flex flex-col items-center gap-2 relative pt-10 pointer-events-auto">
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest z-[2000] whitespace-nowrap justify-center" style={{ color }}>
+                    <div className="absolute -top-10 left-0 flex items-center gap-2 bg-black/55 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest z-[2000] whitespace-nowrap justify-center" style={{ color }}>
                       <span>{p?.name || pid}</span>
                       <span className="opacity-50">•</span>
                       <span>{scoreNow(pid)} очк</span>
