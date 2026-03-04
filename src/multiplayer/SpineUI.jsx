@@ -3972,7 +3972,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     setPickTargetForAction9(null);
                     return;
                   }
-                  if (MOBILE) setMobileOppInspect(String(p.id));
+
                 }}
                 onPointerMove={(e) => {
                   if (flatP5) return;
@@ -4127,6 +4127,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         if (canClickFaceForP13) {
                           try { playSfx('ui', 0.35); moves.persona13PickTarget(String(p.id), it.card.id); } catch {}
                           return;
+                        }
+                        if (MOBILE) {
+                          try { setMobileOppZoomImg(it.card.img); } catch {}
                         }
                         if (canClickFaceForP5) {
                           try { playSfx('ui', 0.35); moves.persona5PickLiberal(String(p.id), it.card.id); } catch {}
@@ -5536,53 +5539,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Mobile: opponent inspect modal */}
-      {MOBILE && mobileOppInspect && (
-        <div
-          className="fixed inset-0 z-[99998] bg-black/70 backdrop-blur-sm pointer-events-auto select-none flex items-center justify-center"
-          onClick={() => { setMobileOppInspect(null); setMobileOppZoomImg(null); }}
-        >
-          <div
-            className="w-[min(720px,94vw)] max-h-[92vh] overflow-hidden rounded-2xl border border-amber-900/30 bg-black/60 shadow-2xl p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-amber-100 font-black text-sm">
-                {(opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.name) || 'Оппонент'}
-              </div>
-              <button
-                type="button"
-                className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-amber-900/20 text-amber-50 font-black text-[10px] uppercase tracking-widest"
-                onClick={() => { setMobileOppInspect(null); setMobileOppZoomImg(null); }}
-              >
-                Закрыть
-              </button>
-            </div>
-
-            <div className="mt-3 text-[12px] font-mono text-amber-200/70">Сыгранные карты (свайпай)</div>
-            <div className="mt-2 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-              {((opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.coalition) || []).map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className="shrink-0 w-44 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl"
-                  onClick={() => setMobileOppZoomImg(c.img)}
-                  title={c.name || c.id}
-                >
-                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                </button>
-              ))}
-              {(((opponents.find((pp) => String(pp.id) === String(mobileOppInspect))?.coalition) || []).length === 0) && (
-                <div className="text-amber-200/40 italic text-sm font-serif">Пока пусто.</div>
-              )}
-            </div>
-
-            {!!mobileOppZoomImg && (
-              <div className="mt-3 flex items-center justify-center">
-                <div className="w-[min(420px,86vw)] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/20 shadow-2xl">
-                  <img src={mobileOppZoomImg} alt="zoom" className="w-full h-full object-cover" draggable={false} />
-                </div>
-              </div>
-            )}
+            {MOBILE && mobileOppZoomImg && (
+        <div className="fixed inset-0 z-[99998] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileOppZoomImg(null)}>
+          <div className="w-[min(80vw,360px)] max-h-[88vh] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/60">
+            <img src={mobileOppZoomImg} alt="zoom" className="w-full h-full object-contain" draggable={false} />
           </div>
         </div>
       )}
