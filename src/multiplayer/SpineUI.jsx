@@ -5616,7 +5616,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       <div className={
         "fixed z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-y-[240px] opacity-0" : "translate-y-0")
-      } style={{ bottom: MOBILE ? "1rem" : "6rem", left: MOBILE ? undefined : "50%", transform: MOBILE ? undefined : "translateX(0%)" }}>
+      } style={{ bottom: MOBILE ? "1rem" : undefined, top: MOBILE ? undefined : "40%", left: MOBILE ? undefined : "0px" }}>
         <div className={"bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden " + (MOBILE ? "w-[90vw]" : "w-[525px]")}>
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
             <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
