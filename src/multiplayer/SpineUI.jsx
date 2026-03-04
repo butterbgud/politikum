@@ -3025,6 +3025,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [placementModeOpp, setPlacementModeOpp] = useState(null); // { cardId, targetId, neighborId, side }
   const [pickTargetForPersona9, setPickTargetForPersona9] = useState(null); // { cardId }
   const [p34WheelIdx, setP34WheelIdx] = useState(0);
+  const [targetAction9Id, setTargetAction9Id] = useState(null);
+  const [targetA7, setTargetA7] = useState(null); // { playerId, cardId }
+  const [targetA13, setTargetA13] = useState(null); // { playerId, cardId }
+  const [targetA17, setTargetA17] = useState(null); // { playerId, cardId }
+  const [targetP5, setTargetP5] = useState(null); // { playerId, cardId }
+  const [targetP11, setTargetP11] = useState(null); // { playerId, cardId }
+  const [targetP13, setTargetP13] = useState(null); // { playerId, cardId }
+  const [targetP14, setTargetP14] = useState(null); // { playerId, cardId }
+  const [targetP21, setTargetP21] = useState(null); // { playerId, cardId }
+  const [targetP26, setTargetP26] = useState(null); // { playerId, cardId }
+  const [targetP28, setTargetP28] = useState(null); // { playerId, cardId }
+  const [targetP37, setTargetP37] = useState(null); // { playerId, cardId }
+  const [targetP40, setTargetP40] = useState(null); // { cardId }
   const logRef = React.useRef(null);
   const me = (G.players || []).find((p) => String(p.id) === String(playerID));
 
@@ -3345,6 +3358,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingTokens, pendingTokensSource]);
 
+  useEffect(() => {
+    if (pendingTokensBase !== 'persona_40') setTargetP40(null);
+  }, [pendingTokensBase]);
+
   const pendingPersona45 = pending?.kind === 'persona_45_steal_from_opponent' && String(pending?.playerId) === String(playerID);
   const pendingPersona45Source = pendingPersona45 ? String(pending?.sourceCardId || '') : '';
 
@@ -3368,6 +3385,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const pendingP26Source = pendingP26 ? String(pending?.sourceCardId || '') : '';
   const pendingP28 = pending?.kind === 'persona_28_pick_non_fbk' && String(pending?.playerId) === String(playerID);
   const pendingP28Source = pendingP28 ? String(pending?.sourceCardId || '') : '';
+
+  const pendingA7 = pending?.kind === 'action_7_block_persona' && String(pending?.attackerId) === String(playerID);
+  const pendingA13 = pending?.kind === 'action_13_shield_persona' && String(pending?.attackerId) === String(playerID);
+  const pendingA17 = pending?.kind === 'action_17_choose_opponent_persona' && String(pending?.attackerId) === String(playerID);
 
   const pendingP32 = pending?.kind === 'persona_32_pick_bounce_target' && String(pending?.playerId) === String(playerID);
   const pendingP32Source = pendingP32 ? String(pending?.sourceCardId || '') : '';
@@ -3423,6 +3444,41 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const pendingP17PickOpp = pending?.kind === 'persona_17_pick_opponent' && String(pending?.playerId) === String(playerID);
   const pendingP17PickCard = pending?.kind === 'persona_17_pick_persona_from_hand' && String(pending?.playerId) === String(playerID);
   const pendingP17TargetId = pendingP17PickCard ? String(pending?.targetId || '') : '';
+
+  useEffect(() => {
+    if (!pickTargetForAction9) setTargetAction9Id(null);
+  }, [pickTargetForAction9]);
+
+  useEffect(() => {
+    const kind = String(pending?.kind || '');
+    if (!kind) {
+      setTargetA7(null);
+      setTargetA13(null);
+      setTargetA17(null);
+      setTargetP5(null);
+      setTargetP11(null);
+      setTargetP13(null);
+      setTargetP14(null);
+      setTargetP21(null);
+      setTargetP26(null);
+      setTargetP28(null);
+      setTargetP37(null);
+      setTargetP40(null);
+      return;
+    }
+    if (kind !== 'action_7_block_persona') setTargetA7(null);
+    if (kind !== 'action_13_shield_persona') setTargetA13(null);
+    if (kind !== 'action_17_choose_opponent_persona') setTargetA17(null);
+    if (kind !== 'persona_5_pick_liberal') setTargetP5(null);
+    if (kind !== 'persona_11_pick_opponent_persona') setTargetP11(null);
+    if (kind !== 'persona_13_pick_target') setTargetP13(null);
+    if (kind !== 'discard_one_persona_from_any_coalition') setTargetP14(null);
+    if (kind !== 'persona_21_pick_target_invert') setTargetP21(null);
+    if (kind !== 'persona_26_pick_red_nationalist') setTargetP26(null);
+    if (kind !== 'persona_28_pick_non_fbk') setTargetP28(null);
+    if (kind !== 'persona_37_pick_opponent_persona') setTargetP37(null);
+    if (kind !== 'place_tokens_plus_vp') setTargetP40(null);
+  }, [pending?.kind]);
 
 
   const isImmovablePersona = (card) => card?.type === 'persona' && String(card.id).split('#')[0] === 'persona_31';
@@ -3963,7 +4019,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {/* (admin link removed from in-game UI) */}
 
       {/* Opponents */}
-      <div className="fixed top-20 z-[700] flex justify-evenly pointer-events-auto" style={MOBILE ? { left: '-36px', right: '36px' } : { left: 0, right: 0 }}>
+      <div className="fixed top-20 z-[700] flex justify-start gap-6 pointer-events-auto pl-6" style={MOBILE ? { left: '-80px', right: '80px' } : { left: '2rem', right: 'auto' }}>
         {(MOBILE ? opponents.filter((p) => String(p.id) === String(mobileOppFocus || (opponents[0]?.id))) : opponents).map((p) => {
           const hand0 = p.hand || [];
           const coal = (p.coalition || []);
@@ -4027,7 +4083,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 className={
                   "relative h-44 pointer-events-auto transition-colors rounded-2xl " +
                   (MOBILE ? (flatP5 ? "scale-[0.74] origin-top" : "scale-[0.65] origin-top") : "") +
-                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "")
+                  ((pickTargetForAction4 || pickTargetForAction9 || pendingPersona45 || pickTargetForPersona9 || pendingP17PickOpp || (placementModeOpp && String(placementModeOpp.targetId) === String(p.id))) ? "cursor-pointer ring-2 ring-emerald-500/30 hover:ring-emerald-300/50" : "") +
+                  ((targetAction9Id && String(targetAction9Id) === String(p.id)) ? " ring-4 ring-amber-300/80" : "")
                 }
                 style={{ width: Math.max(width, 260) }}
                 onClick={() => {
@@ -4050,8 +4107,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                     return;
                   }
                   if (pickTargetForAction9) {
-                    try { moves.playAction(pickTargetForAction9.cardId, String(p.id)); } catch {}
-                    setPickTargetForAction9(null);
+                    setTargetAction9Id(String(p.id));
                     return;
                   }
 
@@ -4129,11 +4185,24 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   const pendingA17 = G.pending?.kind === 'action_17_choose_opponent_persona' && String(playerID) === String(G.pending.attackerId);
                   const canClickFaceForA17 = pendingA17 && String(p.id) !== String(playerID) && it.kind === 'face' && it.card?.type === 'persona' && !it.card?.shielded && !isImmovablePersona(it.card);
 
+                  const selectedA7 = targetA7 && String(targetA7.playerId) === String(p.id) && String(targetA7.cardId) === String(it.card?.id);
+                  const selectedA17 = targetA17 && String(targetA17.playerId) === String(p.id) && String(targetA17.cardId) === String(it.card?.id);
+                  const selectedP5 = targetP5 && String(targetP5.playerId) === String(p.id) && String(targetP5.cardId) === String(it.card?.id);
+                  const selectedP11 = targetP11 && String(targetP11.playerId) === String(p.id) && String(targetP11.cardId) === String(it.card?.id);
+                  const selectedP13 = targetP13 && String(targetP13.playerId) === String(p.id) && String(targetP13.cardId) === String(it.card?.id);
+                  const selectedP14 = targetP14 && String(targetP14.playerId) === String(p.id) && String(targetP14.cardId) === String(it.card?.id);
+                  const selectedP21 = targetP21 && String(targetP21.playerId) === String(p.id) && String(targetP21.cardId) === String(it.card?.id);
+                  const selectedP26 = targetP26 && String(targetP26.playerId) === String(p.id) && String(targetP26.cardId) === String(it.card?.id);
+                  const selectedP28 = targetP28 && String(targetP28.playerId) === String(p.id) && String(targetP28.cardId) === String(it.card?.id);
+                  const selectedP37 = targetP37 && String(targetP37.playerId) === String(p.id) && String(targetP37.cardId) === String(it.card?.id);
+
+                  const isSelected = selectedA7 || selectedA17 || selectedP5 || selectedP11 || selectedP13 || selectedP14 || selectedP21 || selectedP26 || selectedP28 || selectedP37;
+
                   const canClickFace = canClickFaceForOppPlace || canClickFaceForP8Swap || canClickFaceForP21 || canClickFaceForP26 || canClickFaceForP28 || canClickFaceForP37 || canClickFaceForP3A || canClickFaceForA7 || canClickFaceForA13 || canClickFaceForP7 || canClickFaceForP14 || canClickFaceForP11 || canClickFaceForP13 || canClickFaceForP5 || canClickFaceForA17;
                   return (
                     <div
                       key={`${p.id}-${i}-${id}`}
-                      className={"absolute bottom-[20px] w-40 aspect-[2/3] rounded-2xl overflow-visible border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "")}
+                      className={"absolute bottom-[20px] w-40 aspect-[2/3] rounded-2xl overflow-visible border border-black/40 shadow-2xl " + (canClickFace ? "cursor-pointer ring-2 ring-emerald-400/40" : "") + (isSelected ? " ring-4 ring-amber-300/80" : "")}
                       style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${scale})`, transformOrigin: 'center center' }}
                       title={id}
                       onClick={(e) => {
@@ -4155,19 +4224,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                           return;
                         }
                         if (canClickFaceForP21) {
-                          try { playSfx('ui', 0.35); moves.persona21InvertTokens(String(p.id), it.card.id); } catch {}
+                          setTargetP21({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForP26) {
-                          try { playSfx('ui', 0.35); moves.persona26PurgeRedNationalist(String(p.id), it.card.id); } catch {}
+                          setTargetP26({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForP28) {
-                          try { playSfx('ui', 0.35); moves.persona28StealPlusTokens(String(p.id), it.card.id, 3); } catch {}
+                          setTargetP28({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForP37) {
-                          try { playSfx('ui', 0.35); moves.persona37BribeAndSilence(String(p.id), it.card.id); } catch {}
+                          setTargetP37({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForP3A) {
@@ -4180,7 +4249,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                           return;
                         }
                         if (canClickFaceForA7) {
-                          try { playSfx('ui', 0.35); moves.blockPersonaForAction7(String(p.id), it.card.id); } catch {}
+                          setTargetA7({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForA13) {
@@ -4199,26 +4268,26 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                           return;
                         }
                         if (canClickFaceForP14) {
-                          try { playSfx('ui', 0.35); moves.discardPersonaFromCoalition(String(p.id), it.card.id); } catch {}
+                          setTargetP14({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForP11) {
-                          try { playSfx('ui', 0.35); moves.persona11DiscardOpponentPersona(String(p.id), it.card.id); } catch {}
+                          setTargetP11({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForP13) {
-                          try { playSfx('ui', 0.35); moves.persona13PickTarget(String(p.id), it.card.id); } catch {}
+                          setTargetP13({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (MOBILE) {
                           try { setMobileOppZoomPid(String(p.id)); } catch {}
                         }
                         if (canClickFaceForP5) {
-                          try { playSfx('ui', 0.35); moves.persona5PickLiberal(String(p.id), it.card.id); } catch {}
+                          setTargetP5({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                         if (canClickFaceForA17) {
-                          try { playSfx('ui', 0.35); moves.applyAction17ToPersona(it.card.id); } catch {}
+                          setTargetA17({ playerId: String(p.id), cardId: String(it.card.id) });
                           return;
                         }
                       }}
@@ -4734,6 +4803,188 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           >
             Отмена
           </button>
+        </div>
+      )}
+
+      {pickTargetForAction9 && targetAction9Id && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>Action 9: confirm target</span>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70"
+              onClick={() => {
+                try { playSfx('ui', 0.35); moves.playAction(pickTargetForAction9.cardId, targetAction9Id); } catch {}
+                setPickTargetForAction9(null);
+                setTargetAction9Id(null);
+              }}
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60"
+              onClick={() => { setTargetAction9Id(null); setPickTargetForAction9(null); }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(pendingA7 && targetA7) && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>Action 7: confirm persona</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.blockPersonaForAction7(String(targetA7.playerId), String(targetA7.cardId)); } catch {}
+              setTargetA7(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetA7(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {(pendingA13 && targetA13) && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>Action 13: confirm shield</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.shieldPersonaForAction13(String(targetA13.cardId)); } catch {}
+              setTargetA13(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetA13(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {(pendingA17 && targetA17) && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>Action 17: confirm persona</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.applyAction17ToPersona(String(targetA17.cardId)); } catch {}
+              setTargetA17(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetA17(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP5 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p5: confirm liberal target</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona5PickLiberal(String(targetP5.playerId), String(targetP5.cardId)); } catch {}
+              setTargetP5(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP5(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP11 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p11: confirm persona discard</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona11DiscardOpponentPersona(String(targetP11.playerId), String(targetP11.cardId)); } catch {}
+              setTargetP11(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP11(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP13 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p13: confirm target</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona13PickTarget(String(targetP13.playerId), String(targetP13.cardId)); } catch {}
+              setTargetP13(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP13(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP14 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p14: confirm discard</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.discardPersonaFromCoalition(String(targetP14.playerId), String(targetP14.cardId)); } catch {}
+              setTargetP14(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP14(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP21 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p21: confirm invert</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona21InvertTokens(String(targetP21.playerId), String(targetP21.cardId)); } catch {}
+              setTargetP21(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP21(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP26 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p26: confirm purge</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona26PurgeRedNationalist(String(targetP26.playerId), String(targetP26.cardId)); } catch {}
+              setTargetP26(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP26(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP28 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p28: confirm steal</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona28StealPlusTokens(String(targetP28.playerId), String(targetP28.cardId), 3); } catch {}
+              setTargetP28(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP28(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {targetP37 && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p37: confirm bribe</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.persona37BribeAndSilence(String(targetP37.playerId), String(targetP37.cardId)); } catch {}
+              setTargetP37(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP37(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {(pendingTokens && pendingTokensBase === 'persona_40' && targetP40) && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+          <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
+            <span>p40: confirm token</span>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
+              try { playSfx('ui', 0.35); moves.applyPendingToken(String(targetP40.cardId)); } catch {}
+              setTargetP40(null);
+            }}>Confirm</button>
+            <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setTargetP40(null)}>Cancel</button>
+          </div>
         </div>
       )}
 
@@ -5315,8 +5566,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
       {!logCollapsed && (
       <div className={
-        "fixed top-[calc(50%-80px)] -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
-        (logCollapsed ? "translate-x-[-392px]" : "translate-x-0")
+        "fixed bottom-4 right-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
+        (logCollapsed ? "translate-y-[240px] opacity-0" : "translate-y-0")
       }>
         <div className="w-[420px] bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
@@ -5457,6 +5708,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 const canUseP11 = pendingP11Offer && isP11;
                 const finalScale = pendingP28Here ? 1 : ((hoverMyCoalition == null ? 1 : scaleByDist3(dist)) * (canUseP11 ? 1.2 : 1));
 
+                const selectedA13 = targetA13 && String(targetA13.cardId) === String(c.id);
+                const selectedP14 = targetP14 && String(targetP14.cardId) === String(c.id);
+                const selectedP21 = targetP21 && String(targetP21.cardId) === String(c.id);
+                const selectedP26 = targetP26 && String(targetP26.cardId) === String(c.id);
+                const selectedP28 = targetP28 && String(targetP28.cardId) === String(c.id);
+                const selectedP40 = targetP40 && String(targetP40.cardId) === String(c.id);
+                const isSelected = selectedA13 || selectedP14 || selectedP21 || selectedP26 || selectedP28 || selectedP40;
+
                 return (
                   <button
                     type="button"
@@ -5469,7 +5728,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                           ? (canUseP39Here
                             ? "border-emerald-300/80 hover:border-emerald-200 cursor-pointer ring-4 ring-emerald-400/25 shadow-[0_0_45px_rgba(16,185,129,0.28)]"
                             : ((pendingP14Here || pendingA13Here) ? "border-emerald-400/60 hover:border-emerald-300 cursor-pointer" : "border-emerald-400/50 hover:border-emerald-300 cursor-pointer"))
-                          : "border-black/40 cursor-default"))
+                          : "border-black/40 cursor-default")) +
+                      (isSelected ? " ring-4 ring-amber-300/80" : "")
                     }
                     style={{ left, zIndex: z, transform: `rotate(${rot}deg) scale(${finalScale})`, transformOrigin: 'bottom center' }}
                     title={c.id}
@@ -5504,12 +5764,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         return;
                       }
                       if (pendingP21Here) {
-                        try { moves.persona21InvertTokens(String(playerID), c.id); } catch {}
+                        setTargetP21({ playerId: String(playerID), cardId: String(c.id) });
                         return;
                       }
                       if (pendingP26Here) {
                         // Can't pick red nationalist from own coalition usually, but allow.
-                        try { moves.persona26PurgeRedNationalist(String(playerID), c.id); } catch {}
+                        setTargetP26({ playerId: String(playerID), cardId: String(c.id) });
                         return;
                       }
                       if (MOBILE && !pendingTokens && !pendingEvent16 && !pendingA4A9Discard && !pendingA13Here && !pendingP21Here && !pendingP26Here && !pendingP28Here && !pendingP32Here && !pendingP12Here && !pendingP7Here && !canUseP39Here && !pendingP14Here && !placementMode) {
@@ -5517,7 +5777,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         return;
                       }
                       if (pendingP28Here) {
-                        try { moves.persona28StealPlusTokens(String(playerID), c.id, 3); } catch {}
+                        setTargetP28({ playerId: String(playerID), cardId: String(c.id) });
                         return;
                       }
                       if (pendingP32Here) {
@@ -5544,14 +5804,18 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         return;
                       }
                       if (pendingP14Here) {
-                        try { moves.discardPersonaFromCoalition(String(playerID), c.id); } catch {}
+                        setTargetP14({ playerId: String(playerID), cardId: String(c.id) });
                         return;
                       }
                       if (pendingA13Here) {
-                        try { moves.shieldPersonaForAction13(c.id); } catch {}
+                        setTargetA13({ playerId: String(playerID), cardId: String(c.id) });
                         return;
                       }
                       if (!pendingTokens) return;
+                      if (pendingTokensBase === 'persona_40') {
+                        setTargetP40({ cardId: String(c.id) });
+                        return;
+                      }
                       if (pendingTokensSingleTarget) {
                         const tid = pendingTokensTargetId || c.id;
                         if (!pendingTokensTargetId) setPendingTokensTargetId(tid);
