@@ -4307,24 +4307,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               >
                 Рука
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    if (!MOBILE) return;
-                    if (!isMyTurn) return;
-                    const hand = (me?.hand || []);
-                    if (hand.length <= 7) return;
-                    const card = hand[Math.floor(Math.random() * hand.length)];
-                    if (!card) return;
-                    moves.discardFromHandDownTo7(card.id);
-                  } catch {}
-                }}
-                className="px-3 py-2 rounded-xl bg-violet-700/90 border border-violet-400/40 text-violet-50 font-mono font-black text-[11px]"
-                title="Сбросить случайную"
-              >
-                Сбросить
-              </button>
             </div>
           </>
         ) : (
