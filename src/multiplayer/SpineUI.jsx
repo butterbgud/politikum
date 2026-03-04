@@ -6961,16 +6961,6 @@ export default function SpineUI() {
         </div>
       )}
 
-      <div className="fixed bottom-3 left-3 z-[9999] pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => { if (confirm('Forget this match and return to lobby?')) forgetMatch(); }}
-          className="px-3 py-2 rounded-xl bg-black/55 border border-red-500/40 text-red-200/90 font-mono font-black text-[11px] hover:bg-black/70"
-          title="Clears localStorage politikum.lastMatch*"
-        >
-          
-        </button>
-      </div>
     </div>
   );
 }
