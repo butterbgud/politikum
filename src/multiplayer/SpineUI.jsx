@@ -3178,6 +3178,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
   const [mobileHandOpen, setMobileHandOpen] = useState(false);
   const [mobileOppInspect, setMobileOppInspect] = useState(null); // playerId
   const [mobileOppZoomImg, setMobileOppZoomImg] = useState(null);
+  const [mobileMyZoomCard, setMobileMyZoomCard] = useState(null);
 
   // Mobile: when the hand drawer is closed, reset any zoom/selection so cards return to small size.
   useEffect(() => {
@@ -3659,7 +3660,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     if (!showEventSplash) return;
     // When no pending decisions remain, fade the event card shortly after.
     if (G.pending) return;
-    const t = setTimeout(() => setShowEventSplash(false), 800);
+    const t = setTimeout(() => setShowEventSplash(false), 5000);
     return () => clearTimeout(t);
   }, [showEventSplash, G.pending]);
 
@@ -5416,6 +5417,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         try { moves.persona26PurgeRedNationalist(String(playerID), c.id); } catch {}
                         return;
                       }
+                      if (MOBILE && !pendingTokens && !pendingEvent16 && !pendingA4A9Discard && !pendingA13Here && !pendingP21Here && !pendingP26Here && !pendingP28Here && !pendingP32Here && !pendingP12Here && !pendingP7Here && !canUseP39Here && !pendingP14Here && !placementMode) {
+                        setMobileMyZoomCard(c);
+                        return;
+                      }
                       if (pendingP28Here) {
                         try { moves.persona28StealPlusTokens(String(playerID), c.id, 3); } catch {}
                         return;
@@ -5539,7 +5544,36 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Mobile: opponent inspect modal */}
-            {MOBILE && mobileOppZoomImg && (
+            {MOBILE && mobileMyZoomCard && (
+        <div className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileMyZoomCard(null)}>
+          <div className="relative w-[min(82vw,380px)] max-h-[88vh] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/60" style={{ transform: 'translateY(-40px)' }}>
+            <img src={mobileMyZoomCard.img} alt="zoom" className="w-full h-full object-cover" draggable={false} />
+            {(Number(mobileMyZoomCard.vpDelta || 0) !== 0) && (
+              <div className={
+                "absolute left-2 top-2 z-20 w-8 h-8 rounded-full border flex items-center justify-center text-white font-black text-[14px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] " +
+                (Number(mobileMyZoomCard.vpDelta || 0) < 0 ? "bg-red-700/95 border-red-200/50" : "bg-emerald-700/95 border-emerald-200/50")
+              }>
+                {mobileMyZoomCard.vpDelta}
+              </div>
+            )}
+            {(Number(mobileMyZoomCard.passiveVpDelta || 0) !== 0) && (
+              <TokenPips delta={mobileMyZoomCard.passiveVpDelta} right dim top />
+            )}
+            {(mobileMyZoomCard.shielded || mobileMyZoomCard.blockedAbilities) && (
+              <div className="absolute top-2 right-2 flex gap-1 text-[9px] font-mono font-black">
+                {mobileMyZoomCard.shielded && String(mobileMyZoomCard?.shieldedBy || '') !== 'action_13' && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
+                )}
+                {mobileMyZoomCard.blockedAbilities && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {MOBILE && mobileOppZoomImg && (
         <div className="fixed inset-0 z-[99998] bg-black/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center" onClick={() => setMobileOppZoomImg(null)}>
           <div className="w-[min(80vw,360px)] max-h-[88vh] aspect-[2/3] rounded-2xl overflow-hidden border border-amber-900/30 shadow-2xl bg-black/60">
             <img src={mobileOppZoomImg} alt="zoom" className="w-full h-full object-contain" draggable={false} />
