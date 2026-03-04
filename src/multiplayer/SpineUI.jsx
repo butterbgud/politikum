@@ -4022,6 +4022,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         const focusId = String(mobileOppFocus || opponents[0]?.id);
         const op = opponents.find((o) => String(o.id) === focusId) || opponents[0];
         const nHand = (op?.hand || []).length;
+        const pts = (op?.coalition || []).reduce((s, c) => s + Number(c.vp || 0), 0);
         return (
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[2100] flex items-center gap-2 pointer-events-auto">
             {opponents.length > 1 && (
@@ -4043,6 +4044,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             <div className="flex items-center gap-2 bg-black/65 border border-amber-900/20 rounded-full px-4 py-1 text-[11px] font-mono font-black tracking-widest text-amber-200/90 whitespace-nowrap">
               <span>{op?.name || op?.id}</span>
               <span className="text-amber-200/70">к: {nHand}</span>
+              <span className="text-amber-200/50">•</span>
+              <span className="text-amber-200/80">{pts}p</span>
             </div>
             {opponents.length > 1 && (
               <button
