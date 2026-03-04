@@ -3911,9 +3911,9 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           const oppFanCards = MOBILE ? faces : [...backs.slice(0, backsShown), ...faces];
 
           const show = oppFanCards.length;
-          const stepBack = 6;  // tight
+          const stepBack = 9;  // tight (+50%)
           const flatP5 = MOBILE && opponents.length === 1 && G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending?.playerId);
-          const stepFace = flatP5 ? 34 : (MOBILE ? 22 : 24); // flat row for p5 targeting
+          const stepFace = flatP5 ? 51 : (MOBILE ? 33 : 36); // flat row for p5 targeting (+50%)
 
           const calcWidth = () => {
             const shown = oppFanCards.slice(0, show);
