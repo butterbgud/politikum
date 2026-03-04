@@ -5337,7 +5337,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             return {
               left: '50%',
               bottom: `calc(24px + env(safe-area-inset-bottom, 0px))`,
-              transform: `translateX(-50%) translateY(calc(${mobileOppZoomPid ? dy + ' + 120vh' : dy}))`,
+              transform: `translateX(-50%) translateY(calc(${mobileOppZoomPid ? dy + ' + 120vh' : dy} + ${mobileHandOpen ? '30px' : '0px'}))`,
             };
           }
           return { left: '50%', bottom: '1.5rem', transform: 'translateX(calc(-50% - 300px))' };
