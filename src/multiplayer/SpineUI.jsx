@@ -4170,7 +4170,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         <TokenPips delta={it.card.passiveVpDelta} compact right dim />
                       )}
                       {it.kind === 'face' && it.card?.blockedAbilities && (
-                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
+                        <div className="absolute top-[22px] left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black z-40">
                           <span className="px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300/40 text-red-50 shadow-md">X</span>
                         </div>
                       )}
@@ -5495,7 +5495,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       <TokenPips delta={c.passiveVpDelta} right dim />
                     )}
                     {(c.shielded || c.blockedAbilities) && (
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black">
+                      <div className="absolute top-[22px] left-1/2 -translate-x-1/2 flex gap-1 text-[9px] font-mono font-black z-40">
                         {c.shielded && String(c?.shieldedBy || '') !== 'action_13' && (
                           <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                         )}
@@ -5560,7 +5560,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               <TokenPips delta={mobileMyZoomCard.passiveVpDelta} right dim top />
             )}
             {(mobileMyZoomCard.shielded || mobileMyZoomCard.blockedAbilities) && (
-              <div className="absolute top-2 right-2 flex gap-1 text-[9px] font-mono font-black">
+              <div className="absolute top-[22px] right-2 flex gap-1 text-[9px] font-mono font-black z-40">
                 {mobileMyZoomCard.shielded && String(mobileMyZoomCard?.shieldedBy || '') !== 'action_13' && (
                   <span className="px-1.5 py-0.5 rounded-full bg-sky-700/90 border border-sky-300/40 text-sky-50 shadow-md">SH</span>
                 )}
