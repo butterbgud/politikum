@@ -5758,6 +5758,24 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           >
             {pendingP16 ? "Сбросить" : "Сыграть"}
           </button>
+          {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (!mobileHandSelected) return;
+                if (G.pending?.kind !== 'discard_down_to_7') {
+                  setMobileAutoDiscardId(mobileHandSelected);
+                  try { moves.endTurn(); } catch {}
+                  return;
+                }
+                try { moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+                setMobileHandSelected(null);
+              }}
+              className="mt-2 px-6 py-3 rounded-xl bg-violet-600/90 text-violet-50 font-mono font-black text-[13px]"
+            >
+              Сбросить
+            </button>
+          )}
         </div>
       )}
       {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
