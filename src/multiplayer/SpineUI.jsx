@@ -4478,8 +4478,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 <div className="text-[11px] opacity-80">Колесо мыши: листай варианты. Клик по окошку — подтвердить.</div>
               </div>
 
-
-
               <div className="mt-3 text-amber-200/60 text-[10px] font-mono text-center">
                 (исключены: сыгранные/в сбросе + те, что у тебя в руке)
               </div>
@@ -5217,6 +5215,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           <div className="px-3 py-2 rounded-xl bg-black/60 border border-amber-900/25 text-amber-100/90 font-mono font-black text-[11px]">VP: {myCoalitionPoints}</div>
         </div>
       )}
+      {!logCollapsed && (
       <div className={
         "fixed top-[calc(50%-80px)] -translate-y-1/2 left-4 z-[950] pointer-events-auto transition-transform duration-300 ease-out " +
         (logCollapsed ? "translate-x-[-392px]" : "translate-x-0")
@@ -5276,6 +5275,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* My coalition (built row fan) */}
       <div className={"fixed -ml-[100px] z-[5000] pointer-events-auto transition-all " + (G.gameOver ? "opacity-0 pointer-events-none blur-sm" : "opacity-100")}
