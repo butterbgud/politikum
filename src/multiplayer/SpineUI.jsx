@@ -5831,9 +5831,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
             const canCancelEffectOnMe = responseKind === 'cancel_action' && responseTargetsMe && baseIs14;
 
             const canDiscardDownTo7 = G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId);
+            const canDiscardDownTo7Mobile = pendingHandLimit; // mobile uses select+button
 
             const canClickP16 = pendingP16; // select cards to discard
-            const canClick = canDiscardDownTo7 || canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
+            const canClick = canDiscardDownTo7 || canDiscardDownTo7Mobile || canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
 
             return (
               <button
@@ -5842,7 +5843,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   if (!canClick) return;
 
                   // Mobile: tap the peeking hand to expand; when expanded, first tap selects (preview), second confirms.
-                  if (MOBILE && !canDiscardDownTo7 && !canClickP16) {
+                  if (MOBILE && !canClickP16) {
                     if (!mobileHandOpen) {
                       try { setMobileHandOpen(true); } catch {}
                       try { playSfx('ui', 0.12); } catch {}
@@ -5854,6 +5855,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                       return;
                     }
                     // second tap → proceed
+                    if (pendingHandLimit) return; // wait for Discard button
                     setMobileHandSelected(null);
                   }
 
