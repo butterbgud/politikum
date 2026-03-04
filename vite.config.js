@@ -24,6 +24,7 @@ const ENGINE_SHA_SHORT = (() => {
 
 export default defineConfig({
   plugins: [react()],
+  build: { sourcemap: true },
   define: {
     __GIT_SHA__: JSON.stringify(GIT_SHA),
     __GIT_SHA_SHORT__: JSON.stringify(GIT_SHA_SHORT),
