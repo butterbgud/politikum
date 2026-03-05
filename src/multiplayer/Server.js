@@ -306,6 +306,33 @@ async function listInProgressMatches(db, limit = 20) {
   };
 }
 
+
+function getMatchFlatFile(matchId) {
+  const dir = FLATFILE_DIR;
+  try {
+    const files = fs.readdirSync(dir);
+    for (const f of files) {
+      const fp = path.join(dir, f);
+      try {
+        const raw = fs.readFileSync(fp, 'utf8');
+        const j = JSON.parse(raw);
+        const k = String(j?.key || '');
+        if (k.startsWith(String(matchId) + ':')) return { file: fp, data: j };
+      } catch {}
+    }
+  } catch {}
+  return null;
+}
+
+function canOwnerKill(matchId, playerId) {
+  const rec = getMatchFlatFile(matchId);
+  if (!rec) return { ok: false, reason: 'not_found' };
+  const players = rec?.data?.state?.G?.players || [];
+  const humans = players.filter(p => !p?.isBot && p?.active !== false);
+  if (humans.length === 1 && String(humans[0].id) === String(playerId)) return { ok: true };
+  return { ok: false, reason: 'not_owner_or_not_solo' };
+}
+
 function killMatchFlatFile(matchId) {
   const dir = FLATFILE_DIR;
   let removed = 0;
@@ -574,6 +601,23 @@ server.run({ port: PORT, host: '0.0.0.0' }, () => {
 
     {
       const m = String(ctx.path || '').match(/^\/admin\/match\/([^\/]+)\/kill$/);
+
+    {
+      const m = String(ctx.path || '').match(/^\/match\/([^\/]+)\/kill_owner$/);
+      if (m && ctx.method === 'POST') {
+        const auth = String(ctx.request.headers['authorization'] || '');
+        const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+        const sess = authGetSession(token);
+        if (!sess) ctx.throw(401, 'Unauthorized');
+        const matchId = m[1];
+        const gate = canOwnerKill(matchId, sess.playerId);
+        if (!gate.ok) ctx.throw(403, gate.reason || 'forbidden');
+        const r = killMatchFlatFile(matchId);
+        ctx.body = { ok: true, matchId, ...r };
+        return;
+      }
+    }
+
       if (m && ctx.method === 'POST') {
         requireAdmin(ctx);
         const matchId = m[1];
