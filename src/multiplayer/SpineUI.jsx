@@ -5618,68 +5618,91 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
         (logCollapsed ? (MOBILE ? "translate-y-[240px] opacity-0" : "-translate-x-[calc(100%-20px)] opacity-70") : "translate-x-0")
       } style={{ bottom: MOBILE ? "1rem" : undefined, top: MOBILE ? undefined : "30%", left: MOBILE ? undefined : "0px" }}>
         <div className={"bg-black/55 backdrop-blur-md border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden " + (MOBILE ? "w-[90vw]" : "w-[525px]")}>
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-900/10">
-            <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
+          <div className="flex flex-col gap-1 px-3 py-2 border-b border-amber-900/10">
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] uppercase tracking-widest text-amber-200/70 font-black">Chronicles</div>
 
-            <div className="ml-auto flex items-center gap-2">
-              {!logCollapsed && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      try { playSfx('ui', 0.4); } catch {}
-                      try { forgetMatch(); } catch {}
-                    }}
-                    className="px-2 py-0.5 rounded-md border border-red-500/40 bg-red-600/80 text-red-50 text-[10px] font-black"
-                    title="Quit"
-                  >
-                    Quit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTutorial((v) => !v)}
-                    className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showTutorial ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
-                    title="Tutorial (T)"
-                  >
-                    T
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowHotkeys((v) => !v)}
-                    className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showHotkeys ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
-                    title="Hotkeys (H)"
-                  >
-                    H
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSoundOn((v) => {
-                        const nv = !v;
-                        try { localStorage.setItem('politikum:soundOn', nv ? '1' : '0'); } catch {}
-                        return nv;
-                      });
-                      playSfx('ui', 0.4);
-                    }}
-                    className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (soundOn ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
-                    title="Sound (M)"
-                  >
-                    M
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={() => setLogCollapsed((v) => !v)}
-                className="px-2 py-0.5 rounded-md border border-amber-900/20 bg-black/20 text-amber-200/70 hover:text-amber-200 text-[12px] font-black"
-                title="Toggle log (L)"
-              >
-                {logCollapsed ? ">" : "<"}
-              </button>
+              <div className="ml-auto flex items-center gap-2">
+                {!logCollapsed && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try { playSfx('ui', 0.4); } catch {}
+                        try { forgetMatch(); } catch {}
+                      }}
+                      className="px-2 py-0.5 rounded-md border border-red-500/40 bg-red-600/80 text-red-50 text-[10px] font-black"
+                      title="Quit"
+                    >
+                      Quit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { try { setBugModal(true); setBugSent(null); } catch {} }}
+                      className="px-2 py-0.5 rounded-md border border-amber-900/30 bg-black/30 text-amber-100/80 text-[10px] font-black"
+                      title="Report bug"
+                    >
+                      Bug
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowTutorial((v) => !v)}
+                      className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showTutorial ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
+                      title="Tutorial (T)"
+                    >
+                      T
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowHotkeys((v) => !v)}
+                      className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (showHotkeys ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
+                      title="Hotkeys (H)"
+                    >
+                      H
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSoundOn((v) => {
+                          const nv = !v;
+                          try { localStorage.setItem('politikum:soundOn', nv ? '1' : '0'); } catch {}
+                          return nv;
+                        });
+                        playSfx('ui', 0.4);
+                      }}
+                      className={("px-2 py-0.5 rounded-md border text-[10px] font-black transition-colors " + (soundOn ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-100" : "bg-black/20 border-amber-900/20 text-amber-200/70 hover:text-amber-200"))}
+                      title="Sound (M)"
+                    >
+                      M
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setLogCollapsed((v) => !v)}
+                  className="px-2 py-0.5 rounded-md border border-amber-900/20 bg-black/20 text-amber-200/70 hover:text-amber-200 text-[12px] font-black"
+                  title="Toggle log (L)"
+                >
+                  {logCollapsed ? ">" : "<"}
+                </button>
+              </div>
+            </div>
+            <div className="text-[10px] font-mono text-amber-200/70 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis" title="Click to copy version + match" onClick={() => {
+              try {
+                const app = (typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : (typeof __GIT_SHA__ !== 'undefined' ? String(__GIT_SHA__).slice(0,7) : 'nogit'));
+                const eng = (typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? __ENGINE_GIT_SHA_SHORT__ : 'nogit');
+                const mid = String(matchID || '');
+                copyText(`main@${app} · eng@${eng} · match:${mid}`);
+              } catch {}
+            }}>
+              main@{typeof __GIT_SHA_SHORT__ !== 'undefined' ? __GIT_SHA_SHORT__ : (typeof __GIT_SHA__ !== 'undefined' ? String(__GIT_SHA__).slice(0,7) : 'nogit')} · eng@{typeof __ENGINE_GIT_SHA_SHORT__ !== 'undefined' ? __ENGINE_GIT_SHA_SHORT__ : 'nogit'} · match:{matchID ? String(matchID).slice(0,8) : '—'}
             </div>
           </div>
-          <div ref={logRef} className={"px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 overflow-y-auto custom-scrollbar " + (MOBILE ? "max-h-[260px]" : "max-h-[188px]")}>
+<div ref={logRef} className={"px-3 py-3 font-mono text-[12px] whitespace-pre-wrap text-amber-100/80 overflow-y-auto custom-scrollbar " + (MOBILE ? "max-h-[260px]" : "max-h-[188px]")}>
             {(G.log || []).slice(-40).join("\n")}
+          </div>
+          <div className="px-3 py-2 border-t border-amber-900/10 text-[10px] font-mono text-amber-200/70 whitespace-nowrap overflow-hidden text-ellipsis">
+            turn:{String(ctx.currentPlayer) === String(playerID) ? 'YOU' : String(ctx.currentPlayer)}  drawn:{String(!!G.hasDrawn)}  played:{String(!!G.hasPlayed)}  event:{String(!!G.lastEvent)}
           </div>
         </div>
       </div>
