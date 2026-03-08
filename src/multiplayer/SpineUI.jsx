@@ -186,7 +186,7 @@ function TournamentPage() {
   return (
     <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-baseline justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Турниры</div>
@@ -351,7 +351,7 @@ function TournamentDetailPage({ tournamentId }) {
   return (
     <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-4xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-baseline justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Tournament</div>
             {t && (
@@ -639,12 +639,12 @@ function AdminTournamentPage() {
   return (
     <div className="min-h-screen w-screen text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-baseline justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Admin / tournaments (v1)</div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full">
             <button type="button" onClick={() => { window.location.hash = '#/admin'; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Stats</button>
             <button type="button" disabled className="text-xs font-mono text-amber-50/90 font-black">Турниры</button>
             <button type="button" onClick={() => { window.location.hash = ''; }} className="text-xs font-mono text-amber-200/60 hover:text-amber-50">Exit</button>
@@ -1532,7 +1532,7 @@ function AdminPage() {
       )}
 
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-baseline justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Admin / stats (MVP)</div>
@@ -1543,7 +1543,7 @@ function AdminPage() {
                 value={matchLogId}
                 onChange={(e) => setMatchLogId(e.target.value)}
                 placeholder="Match ID"
-                className="px-3 py-2 rounded-xl bg-black/40 border border-amber-900/30 text-amber-50/90 font-mono text-xs w-[190px]"
+                className="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-amber-900/30 text-amber-50/90 font-mono text-xs"
               />
               <button
                 type="button"
@@ -2052,7 +2052,7 @@ function AdminBugreportsPage() {
   return (
     <div className="min-h-screen w-screen overflow-x-hidden text-amber-50 flex items-center justify-center p-4 bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/assets/lobby_bg.webp')" }}>
       <div className="w-full max-w-5xl bg-slate-950/80 border border-amber-900/40 rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-baseline justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6">
           <div>
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Admin / bugreports</div>
