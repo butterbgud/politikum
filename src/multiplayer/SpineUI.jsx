@@ -5009,25 +5009,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Event_12b: each affected player discards 1 card from hand */}
       {G.pending?.kind === 'event_12b_discard_from_hand' && Array.isArray(G.pending.targetIds) && G.pending.targetIds.includes(String(playerID)) && (
-        <div className="fixed inset-0 z-[3200] flex items-center justify-center bg-transparent pointer-events-auto">
-          <div className="bg-black/70 border border-amber-900/30 rounded-3xl shadow-2xl p-5 w-[700px] max-w-[94vw]">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Discard from hand</div>
-            <div className="mt-2 text-amber-100/80 text-sm">EVENT {G.pending.sourceCardId}: choose 1 card from your hand to discard.</div>
-            <div className="mt-4 flex gap-3 flex-wrap">
-              {(me?.hand || []).map((c) => (
-                <button
-                  key={c.id}
-                  className="w-40 aspect-[2/3] rounded-2xl overflow-hidden border border-black/40 shadow-2xl hover:scale-[1.02] transition-transform"
-                  onClick={() => moves.discardFromHandForEvent12b(c.id)}
-                  title={c.name || c.id}
-                >
-                  <img src={c.img} alt={c.id} className="w-full h-full object-cover" draggable={false} />
-                </button>
-              ))}
-              {!(me?.hand || []).length && (
-                <div className="text-amber-200/70 text-sm">You have no cards to discard.</div>
-              )}
-            </div>
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
+            <span>Секс-скандал: выбери карту в руке и сбрось её</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (!mobileHandSelected) return;
+                try { playSfx('ui', 0.25); moves.discardFromHandForEvent12b(mobileHandSelected); } catch {}
+                setMobileHandSelected(null);
+              }}
+              className={("px-3 py-1 rounded-full border font-black text-[11px] " + (mobileHandSelected ? "bg-red-600/90 border-red-300/30 text-red-50" : "bg-red-900/40 border-red-900/20 text-red-200/40"))}
+              disabled={!mobileHandSelected}
+            >
+              Сбросить
+            </button>
           </div>
         </div>
       )}
@@ -6205,9 +6201,10 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
             const canDiscardDownTo7 = G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId);
             const canDiscardDownTo7Mobile = pendingHandLimit; // mobile uses select+button
+            const canDiscardEvent12b = G.pending?.kind === 'event_12b_discard_from_hand' && Array.isArray(G.pending?.targetIds) && G.pending.targetIds.includes(String(playerID));
 
             const canClickP16 = pendingP16; // select cards to discard
-            const canClick = canDiscardDownTo7 || canDiscardDownTo7Mobile || canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
+            const canClick = canDiscardDownTo7 || canDiscardDownTo7Mobile || canDiscardEvent12b || canClickP16 || canPlayPersona || canPlayAction || canCancelAction || canCancelPersona || canCancelEffectOnMe || canCancelWithPersona10;
 
             return (
               <button
@@ -6247,6 +6244,11 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   }
 
                   if (canDiscardDownTo7) {
+                    try { playSfx('ui', 0.18); } catch {}
+                    setMobileHandSelected((prev) => String(prev || '') === String(card.id) ? null : card.id);
+                    return;
+                  }
+                  if (canDiscardEvent12b) {
                     try { playSfx('ui', 0.18); } catch {}
                     setMobileHandSelected((prev) => String(prev || '') === String(card.id) ? null : card.id);
                     return;
