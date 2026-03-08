@@ -4455,6 +4455,26 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
               >
                 Взять карту
               </button>
+
+              {!MOBILE && G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!mobileHandSelected) return;
+                    try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+                    setMobileHandSelected(null);
+                  }}
+                  className={
+                    "mt-2 px-4 py-2 rounded-xl border font-mono font-black text-[12px] transition-colors shadow-lg " +
+                    (mobileHandSelected
+                      ? "bg-red-600/90 border-red-300/30 text-red-50"
+                      : "opacity-50 bg-black/60 border-red-900/25 text-red-200/50")
+                  }
+                  disabled={!mobileHandSelected}
+                >
+                  Сбросить
+                </button>
+              )}
             </div>
           </>
         )}
