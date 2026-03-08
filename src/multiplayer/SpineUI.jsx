@@ -6329,6 +6329,15 @@ Click their hand. (Esc to cancel)`}</div>
                 <div className="w-full h-full rounded-2xl overflow-hidden">
                   <img src={card.img} alt={card.id} className="w-full h-full object-cover" draggable={false} />
                 </div>
+                {!MOBILE && G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId) && String(mobileHandSelected || '') === String(card.id) && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(card.id); } catch {} setMobileHandSelected(null); }}
+                    className="absolute inset-x-4 bottom-4 z-[2500] rounded-xl bg-red-600/95 hover:bg-red-500 border border-red-300/30 text-red-50 font-black text-[12px] py-2 shadow-2xl"
+                  >
+                    Сбросить
+                  </button>
+                )}
                 {showHotkeys && (
                   <div className="absolute left-2 -top-8 px-2 py-1 rounded-full bg-black/65 border border-amber-900/30 text-amber-100 font-mono font-black text-[11px]">
                     ({idx + 1})
