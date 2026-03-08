@@ -4541,13 +4541,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pendingP32 && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-2">
-            <span>{pendingP32Source}: click a persona in YOUR coalition to return it to hand</span>
+            <span>{pendingP32Source}: выбери персону в СВОЕЙ коалиции, чтобы вернуть её в руку</span>
             <button
               type="button"
               className="ml-2 px-3 py-1 rounded-full bg-slate-800/70 hover:bg-slate-700/70 border border-amber-900/20 text-amber-50 font-black text-[11px]"
               onClick={() => { try { moves.persona32CancelBounce(); } catch {} }}
             >
-              Cancel
+              Отмена
             </button>
           </div>
         </div>
