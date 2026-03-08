@@ -4474,7 +4474,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP11Offer && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-auto select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
             <span>Соловьёв: использовать способность или пропустить? (блокирует добор)</span>
             <button
@@ -4496,7 +4496,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-auto select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
             <span>SVTV: click leftwing persona to discard (A) OR click any opponent card for -tokens (B)</span>
             <button
@@ -4511,7 +4511,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP21 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP21Source}: click any persona on the table to invert its tokens
           </div>
@@ -4519,7 +4519,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP26 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP26Source}: click a red_nationalist persona to discard + inherit its +1
           </div>
@@ -4527,7 +4527,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP28 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP28Source}: click a non-FBK persona to steal up to 3 × +1 (auto)
           </div>
@@ -4550,7 +4550,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP32 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-2">
             <span>{pendingP32Source}: click a persona in YOUR coalition to return it to hand</span>
             <button
@@ -4565,7 +4565,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP37 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             {pendingP37Source}: click an opponent persona to bribe (+2) and block abilities
           </div>
@@ -4573,7 +4573,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP13 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-none select-none">
           <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] pointer-events-auto">
             p13 ({pendingP13Source}): кликни по персоне атакующего чтобы дать -1 · Esc пропустить
           </div>
@@ -4666,7 +4666,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       })()}
 
             {pendingP16 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-none select-none">
           <div className="bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             Сбросьте 3 карты ({(p16DiscardPick || []).length}/3)
           </div>
@@ -4674,7 +4674,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingHandLimit && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-none select-none">
           <div className="bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
             Сбросьте лишние карты ({(me?.hand || []).length} / 7)
           </div>
@@ -4800,7 +4800,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pickTargetForAction9 && targetAction9Id && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>Action 9: confirm target</span>
             <button
@@ -4826,7 +4826,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {(pendingA7 && targetA7) && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>Action 7: confirm persona</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4839,7 +4839,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {(pendingA13 && targetA13) && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>Action 13: confirm shield</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4852,7 +4852,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {(pendingA17 && targetA17) && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>Action 17: confirm persona</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4865,7 +4865,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP5 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p5: confirm liberal target</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4878,7 +4878,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP11 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p11: confirm persona discard</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4891,7 +4891,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP13 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p13: confirm target</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4904,7 +4904,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP14 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p14: confirm discard</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4917,7 +4917,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP21 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p21: confirm invert</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4930,7 +4930,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP26 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p26: confirm purge</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4943,7 +4943,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP28 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p28: confirm steal</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4956,7 +4956,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {targetP37 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p37: confirm bribe</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -4969,7 +4969,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {(pendingTokens && pendingTokensBase === 'persona_40' && targetP40) && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9600] pointer-events-auto select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             <span>p40: confirm token</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70" onClick={() => {
@@ -5055,7 +5055,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona prompts (no modals) */}
       {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             SVTV (p3): click a LEFTWING persona to discard it, or press B for option B
           </div>
@@ -5063,7 +5063,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP12 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Savin (p12): click one adjacent red_nationalist to get +2
           </div>
@@ -5071,7 +5071,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
             {pendingP7 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>
               p7: {p7FirstPick ? 'pick SECOND persona (same coalition)' : 'pick FIRST persona'}
@@ -5091,7 +5091,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_5 target prompt */}
       {G.pending?.kind === 'persona_5_pick_liberal' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             p5: click a LIBERAL persona in an opponent’s coalition
           </div>
@@ -5100,7 +5100,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_14 discard prompt (no modal) */}
       {G.pending?.kind === 'discard_one_persona_from_any_coalition' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             p14: click any persona on the table to discard it
           </div>
@@ -5111,7 +5111,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_17 pick opponent */}
       {pendingP17PickOpp && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             p17: click an opponent to reveal their hand and steal 1 persona
           </div>
@@ -5149,7 +5149,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Persona_45: choose opponent (no modal) */}
       {pendingPersona45 && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             {pendingPersona45Source}: click an opponent to steal 1 random card
           </div>
@@ -5157,7 +5157,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {canPersona8Swap && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             persona_8: click the just-played persona to SWAP with it
           </div>
@@ -5165,7 +5165,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {canPersona10Cancel && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Вы можете позвать маму Наки чтобы отменить действие
           </div>
@@ -5174,7 +5174,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Event_16: discard one of YOUR personas, then draw 1 (no modal) */}
       {G.pending?.kind === 'event_16_discard_self_persona_then_draw1' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             EVENT {G.pending.sourceCardId}: click a persona in YOUR coalition to discard it (then draw 1)
           </div>
@@ -5183,7 +5183,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_7: click a persona on the table to block (no modal) */}
       {G.pending?.kind === 'action_7_block_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Экшен 7: ткни по любой персоне на столе чтобы запретить ей способности
           </div>
@@ -5192,7 +5192,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_13: shield one of YOUR personas (no modal) */}
       {G.pending?.kind === 'action_13_shield_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Белое пальто: ткни по персоне в СВОЕЙ коалиции чтобы защитить
           </div>
@@ -5201,7 +5201,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Action_17: click any opponent persona on the table (no modal) */}
       {G.pending?.kind === 'action_17_choose_opponent_persona' && String(playerID) === String(G.pending.attackerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
             Action 17: ткни по персоне любого оппонента (Esc чтобы отменить)
           </div>
@@ -5923,7 +5923,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Placement mode prompt (no modal) */}
       {!!placementMode && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>Place persona: click LEFT/RIGHT half of a coalition card to insert before/after</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setPlacementMode(null)}>Cancel</button>
@@ -5932,7 +5932,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {!!placementModeOpp && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
           <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
             <span>Place into opponent: click LEFT/RIGHT half of their coalition card to insert</span>
             <button type="button" className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60" onClick={() => setPlacementModeOpp(null)}>Cancel</button>
