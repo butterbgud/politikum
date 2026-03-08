@@ -5035,13 +5035,6 @@ Click their hand. (Esc to cancel)`}</div>
       )}
 
       {/* Persona prompts (no modals) */}
-      {G.pending?.kind === 'persona_3_choice' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
-          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
-            SVTV (p3): click a LEFTWING persona to discard it, or press B for option B
-          </div>
-        </div>
-      )}
 
       {pendingP12 && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
