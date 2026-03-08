@@ -4669,17 +4669,13 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
           </div>
         </div>
       )}
-
-      {/* Targeting prompt (action_4) */}
-      {((!!pickTargetForAction4) || (!!pickTargetForAction9)) && (
+      {/* Targeting prompt (action_4 only) */}
+      {!!pickTargetForAction4 && (
         <div className="fixed inset-0 z-[3200] pointer-events-none select-none">
           <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 bg-black/55 border border-amber-900/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-2xl">
-            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">{pickTargetForAction4 ? 'Action 4' : 'Action 9'}</div>
-            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">
-              {pickTargetForAction4
-                ? `Pick an opponent. They will discard 1 coalition card of their choice.\nClick their hand. (Esc to cancel)`
-                : `Pick an opponent. Discard 1 persona from their coalition.\nClick their hand. (Esc to cancel)`}
-            </div>
+            <div className="text-amber-200/80 text-[10px] uppercase tracking-[0.3em] font-black">Action 4</div>
+            <div className="mt-2 text-amber-100/85 text-sm font-mono whitespace-pre">{`Pick an opponent. They will discard 1 coalition card of their choice.
+Click their hand. (Esc to cancel)`}</div>
           </div>
         </div>
       )}
@@ -4791,7 +4787,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       {pickTargetForAction9 && targetAction9Id && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-auto select-none">
           <div className="flex items-center gap-3 bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
-            <span>Action 9: confirm target</span>
+            <span>Вывод во внешний контур: подтвердить выбор цели</span>
             <button
               type="button"
               className="px-3 py-1 rounded-full text-[11px] font-black border border-emerald-400/40 bg-emerald-700/60 hover:bg-emerald-600/70"
@@ -4801,14 +4797,14 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                 setTargetAction9Id(null);
               }}
             >
-              Confirm
+              Подтвердить
             </button>
             <button
               type="button"
               className="px-3 py-1 rounded-full text-[11px] font-black border border-amber-900/20 bg-slate-800/60 hover:bg-slate-700/60"
               onClick={() => { setTargetAction9Id(null); setPickTargetForAction9(null); }}
             >
-              Cancel
+              Отмена
             </button>
           </div>
         </div>
