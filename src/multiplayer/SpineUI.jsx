@@ -4465,13 +4465,6 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       </div>
 
       {/* Pending banner */}
-      {pendingTokens && pendingTokensRemaining > 0 && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingTokensSource || 'EVENT'}: {pendingTokensSingleTarget ? 'choose ONE persona, then place all +1 on it' : 'place +1 tokens on your coalition'} — click a coalition card ({pendingTokensRemaining} left)
-          </div>
-        </div>
-      )}
 
       {pendingP11Offer && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] pointer-events-auto select-none">
@@ -5524,7 +5517,7 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {/* Event card: big centered while resolving */}
-      {ENABLE_EVENT_SPLASH && showEventSplash && !!G.lastEvent && !MOBILE && (
+      {(ENABLE_EVENT_SPLASH && (!!G.lastEvent) && !MOBILE && (showEventSplash || pendingTokens)) && (
         <div className="fixed inset-0 z-[9500] pointer-events-none select-none">
           <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex flex-col items-center">
             <div className="mb-3 text-amber-100/90 font-black text-2xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.8)]">Ой!</div>
