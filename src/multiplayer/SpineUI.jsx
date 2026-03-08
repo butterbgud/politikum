@@ -5573,9 +5573,19 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   <>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         try { playSfx('ui', 0.4); } catch {}
+                        try {
+                          const tok = String(window.localStorage.getItem('politikum.authToken') || '');
+                          if (tok && matchID) {
+                            await fetch(`/match/${encodeURIComponent(String(matchID))}/kill_owner`, {
+                              method: 'POST',
+                              headers: { Authorization: 'Bearer ' + tok },
+                            });
+                          }
+                        } catch {}
                         try { forgetMatch(); } catch {}
+                        try { window.location.hash = ''; } catch {}
                       }}
                       className="px-2 py-0.5 rounded-md border border-red-500/40 bg-red-600/80 text-red-50 text-[10px] font-black"
                       title="Quit"
@@ -7300,6 +7310,7 @@ export default function SpineUI() {
       window.localStorage.removeItem('politikum.lastMatchID');
       window.localStorage.removeItem('politikum.lastPlayerID');
       window.localStorage.removeItem('politikum.lastCredentials');
+      window.localStorage.removeItem('politikum.prejoinMatchId');
     } catch {}
     try { setMatchID(null); } catch {}
     try { setPlayerID(null); } catch {}
