@@ -3790,38 +3790,30 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
     return () => clearInterval(t);
   }, [moves, G?.response, G?.pending?.kind, G?.gameOver, shouldDriveTick]);
 
-  // Event splash: show only when an event is actively being resolved AND it just changed.
-  // On refresh, G.lastEvent can still point at an old event; never full-screen it on first render.
+  // Event splash: show when lastEvent changes, but do not replay an old event on first render.
   const lastEventSeenRef = useRef(null);
   useEffect(() => {
     const id = G.lastEvent?.id ? String(G.lastEvent.id) : '';
     if (!id) { setShowEventSplash(false); lastEventSeenRef.current = null; return; }
 
-    // First render for this client session: mark seen and do not show.
     if (lastEventSeenRef.current == null) {
       lastEventSeenRef.current = id;
       setShowEventSplash(false);
       return;
     }
 
-    // Only show when the event id changes, and only if something is pending.
-    if (String(lastEventSeenRef.current) !== id && G.pending) {
+    if (String(lastEventSeenRef.current) !== id) {
       lastEventSeenRef.current = id;
       setShowEventSplash(true);
       return;
     }
-
-    // Otherwise keep it hidden.
-    setShowEventSplash(false);
-  }, [G.lastEvent?.id, !!G.pending]);
+  }, [G.lastEvent?.id]);
 
   useEffect(() => {
     if (!showEventSplash) return;
-    // When no pending decisions remain, fade the event card shortly after.
-    if (G.pending) return;
-    const t = setTimeout(() => setShowEventSplash(false), 5000);
+    const t = setTimeout(() => setShowEventSplash(false), 3000);
     return () => clearTimeout(t);
-  }, [showEventSplash, G.pending]);
+  }, [showEventSplash, G.lastEvent?.id]);
 
   // Autoscroll log to bottom on new lines
   useEffect(() => {
