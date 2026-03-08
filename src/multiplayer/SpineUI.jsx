@@ -4543,9 +4543,16 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
       )}
 
       {pendingP23 && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none select-none">
-          <div className="bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            {pendingP23Source}: тап по Волкову — минус 1 и добор (до 3). Esc — закончить.
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[6000] select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
+            <span>{pendingP23Source}: тап по Волкову — минус 1 и добор (до 3).</span>
+            <button
+              type="button"
+              onClick={() => { try { moves.persona23ChooseSelfInflict(0); } catch {} }}
+              className="px-3 py-1 rounded-full bg-zinc-700/70 border border-zinc-300/20 hover:bg-zinc-700/90 text-zinc-100 font-black text-[11px]"
+            >
+              Хватит
+            </button>
           </div>
         </div>
       )}
