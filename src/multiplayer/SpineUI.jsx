@@ -5042,9 +5042,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
       {/* Hand limit: discard down to 7 (no modal) */}
       {G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId) && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none select-none">
-          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] shadow-2xl">
-            У тебя больше 7 карт: сбрось лишние кликом по картам на руке
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9500] pointer-events-none select-none">
+          <div className="pointer-events-auto bg-black/70 border border-amber-900/30 rounded-2xl px-4 py-3 text-amber-100/90 font-mono text-[12px] shadow-2xl flex items-center gap-3">
+            <span>У тебя больше 7 карт: выбери карту на руке и сбрось её</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (!mobileHandSelected) return;
+                try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+                setMobileHandSelected(null);
+              }}
+              className={("px-3 py-1 rounded-full border font-black text-[11px] " + (mobileHandSelected ? "bg-red-600/90 border-red-300/30 text-red-50" : "bg-red-900/40 border-red-900/20 text-red-200/40"))}
+              aria-disabled={!mobileHandSelected}
+            >
+              Сбросить
+            </button>
           </div>
         </div>
       )}
@@ -6243,7 +6255,8 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                   }
 
                   if (canDiscardDownTo7) {
-                    try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(card.id); } catch {}
+                    try { playSfx('ui', 0.18); } catch {}
+                    setMobileHandSelected((prev) => String(prev || '') === String(card.id) ? null : card.id);
                     return;
                   }
                   if (canClickP16) {
