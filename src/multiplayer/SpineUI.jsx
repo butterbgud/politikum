@@ -1612,27 +1612,29 @@ function AdminPage() {
               {/* Copy moved into the match log panel */}
             </div>
 
-            <button
-              type="button"
-              onClick={() => { window.location.hash = '#/admin/tournament'; }}
-              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
-            >
-              Tournaments
-            </button>
-            <button
-              type="button"
-              onClick={() => { window.location.hash = '#/admin/bugreports'; }}
-              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
-            >
-              Bugreports
-            </button>
-            <button
-              type="button"
-              onClick={() => { window.location.hash = ''; }}
-              className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
-            >
-              Exit
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => { window.location.hash = '#/admin/tournament'; }}
+                className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+              >
+                Tournaments
+              </button>
+              <button
+                type="button"
+                onClick={() => { window.location.hash = '#/admin/bugreports'; }}
+                className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+              >
+                Bugreports
+              </button>
+              <button
+                type="button"
+                onClick={() => { window.location.hash = ''; }}
+                className="text-xs font-mono text-amber-200/60 hover:text-amber-50"
+              >
+                Exit
+              </button>
+            </div>
           </div>
         </div>
 
