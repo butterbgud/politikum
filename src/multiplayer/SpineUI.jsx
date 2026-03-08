@@ -2403,14 +2403,12 @@ function DesktopLobbyBoard({ G, ctx, moves, playerID }) {
                       {it.kind === 'face' && String(it.card?.shieldedBy || '') === 'action_13' && (
                         <img src={'/cards/action_13.webp'} alt={'action_13'} className="absolute z-30 pointer-events-none select-none opacity-95" style={{ width: '50%', aspectRatio: '2 / 3', right: '6%', top: '-6%', transform: 'rotate(-18deg)' }} draggable={false} />
                       )}
-                      {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
-                        <div className={
-                          "absolute left-2 bottom-2 z-20 w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] " +
-                          (Number(it.card?.vpDelta || 0) < 0 ? "bg-red-700/95 border-red-200/50" : "bg-emerald-700/95 border-emerald-200/50")
-                        }>
-                          {it.card.vpDelta}
-                        </div>
-                      )}
+                      {it.kind === 'face' && (() => {
+                        const plus = Number(it.card?.plusTokens ?? Math.max(0, Number(it.card?.vpDelta || 0)));
+                        const minus = Number(it.card?.minusTokens ?? Math.max(0, -Number(it.card?.vpDelta || 0)));
+                        if (!plus && !minus) return null;
+                        return <div className="absolute left-2 bottom-2 z-20 flex items-center gap-1">{minus > 0 && <div className="w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] bg-red-700/95 border-red-200/50">-{minus}</div>}{plus > 0 && <div className="w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] bg-emerald-700/95 border-emerald-200/50">+{plus}</div>}</div>;
+                      })()}
                       {(it.kind === 'face' && Number(it.card?.passiveVpDelta || 0) !== 0) && (
                         <TokenPips delta={it.card.passiveVpDelta} compact right dim />
                       )}
@@ -4326,14 +4324,12 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
                         />
                       )}
                       <img src={img} alt={id} className="relative z-10 w-full h-full object-cover" draggable={false} />
-                      {(it.kind === 'face' && Number(it.card?.vpDelta || 0) !== 0) && (
-                        <div className={
-                          "absolute left-2 bottom-2 z-20 w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] " +
-                          (Number(it.card?.vpDelta || 0) < 0 ? "bg-red-700/95 border-red-200/50" : "bg-emerald-700/95 border-emerald-200/50")
-                        }>
-                          {it.card.vpDelta}
-                        </div>
-                      )}
+                      {it.kind === 'face' && (() => {
+                        const plus = Number(it.card?.plusTokens ?? Math.max(0, Number(it.card?.vpDelta || 0)));
+                        const minus = Number(it.card?.minusTokens ?? Math.max(0, -Number(it.card?.vpDelta || 0)));
+                        if (!plus && !minus) return null;
+                        return <div className="absolute left-2 bottom-2 z-20 flex items-center gap-1">{minus > 0 && <div className="w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] bg-red-700/95 border-red-200/50">-{minus}</div>}{plus > 0 && <div className="w-7 h-7 rounded-full border flex items-center justify-center text-white font-black text-[13px] shadow-[0_2px_10px_rgba(0,0,0,0.6)] bg-emerald-700/95 border-emerald-200/50">+{plus}</div>}</div>;
+                      })()}
                       {(it.kind === 'face' && Number(it.card?.passiveVpDelta || 0) !== 0) && (
                         <TokenPips delta={it.card.passiveVpDelta} compact right dim />
                       )}
