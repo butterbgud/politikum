@@ -1554,7 +1554,8 @@ function AdminPage() {
               >
                 Fetch log
               </button>
-
+            </div>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 disabled={loading || !token}
@@ -1607,6 +1608,7 @@ function AdminPage() {
               >
                 Clear
               </button>
+            </div>
 
               {/* Copy moved into the match log panel */}
             </div>
