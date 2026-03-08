@@ -6033,6 +6033,21 @@ Click their hand. (Esc to cancel)`}</div>
       )}
 
       
+
+      {!MOBILE && G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId) && mobileHandSelected && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[13000] pointer-events-auto select-none">
+          <button
+            type="button"
+            onClick={() => {
+              try { playSfx('ui', 0.25); moves.discardFromHandDownTo7(mobileHandSelected); } catch {}
+              setMobileHandSelected(null);
+            }}
+            className="px-4 py-2 rounded-full bg-red-600/95 hover:bg-red-500 border border-red-300/30 text-red-50 font-black text-[12px] shadow-2xl"
+          >
+            Сбросить
+          </button>
+        </div>
+      )}
       {MOBILE && (pendingHandLimit || (G.pending?.kind === 'discard_down_to_7' && String(playerID) === String(G.pending.playerId)) || (G.pending?.kind === 'persona_16_discard3_from_hand' && String(playerID) === String(G.pending.playerId))) && mobileHandOpen && (
         <div className="fixed left-3 z-[2600] pointer-events-auto select-none" style={{ bottom: `calc(150px + env(safe-area-inset-bottom, 0px))` }}>
           <button
@@ -6158,7 +6173,7 @@ Click their hand. (Esc to cancel)`}</div>
 
             const dist = hoverHandIndex == null ? 99 : Math.abs(idx - hoverHandIndex);
             const scale0 = hoverHandIndex == null ? 1 : scaleByDist(dist);
-            const isSelected = MOBILE && String(mobileHandSelected || '') === String(card.id);
+            const isSelected = String(mobileHandSelected || '') === String(card.id);
             const scale = isSelected ? Math.max(1.06, scale0) : scale0;
             const z = isSelected ? 2000 : (hoverHandIndex == null ? idx : (1000 - dist));
 
