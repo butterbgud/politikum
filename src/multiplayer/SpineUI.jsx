@@ -4676,8 +4676,21 @@ function ActionBoard({ G, ctx, moves, playerID, matchID }) {
 
             {pendingP16 && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9600] pointer-events-none select-none">
-          <div className="bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px]">
-            Сбросьте 3 карты ({(p16DiscardPick || []).length}/3)
+          <div className="pointer-events-auto bg-black/60 border border-amber-900/30 rounded-full px-4 py-2 text-amber-100/90 font-mono text-[12px] flex items-center gap-3">
+            <span>Сбросьте 3 карты ({(p16DiscardPick || []).length}/3)</span>
+            <button
+              type="button"
+              onClick={() => {
+                const ids = (p16DiscardPick || []).slice(0, 3);
+                if (ids.length < 3) return;
+                try { moves.persona16Discard3FromHand?.(ids[0], ids[1], ids[2]); } catch {}
+                setP16DiscardPick([]);
+              }}
+              className={("px-3 py-1 rounded-full border font-black text-[11px] " + ((p16DiscardPick || []).length >= 3 ? "bg-red-600/90 border-red-300/30 text-red-50" : "bg-red-900/40 border-red-900/20 text-red-200/40"))}
+              disabled={(p16DiscardPick || []).length < 3}
+            >
+              Сбросить
+            </button>
           </div>
         </div>
       )}
