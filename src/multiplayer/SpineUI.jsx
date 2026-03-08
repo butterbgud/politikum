@@ -1537,7 +1537,7 @@ function AdminPage() {
             <div className="text-amber-600 font-black uppercase tracking-[0.3em]">Politikum</div>
             <div className="text-amber-100/70 font-serif mt-1">Admin / stats (MVP)</div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <input
                 value={matchLogId}
@@ -1554,7 +1554,8 @@ function AdminPage() {
               >
                 Fetch log
               </button>
-
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 disabled={loading || !token}
